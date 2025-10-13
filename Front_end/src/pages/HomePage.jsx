@@ -21,7 +21,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          <p style={{marginTop:14}}>Hệ thống hỗ trợ (tóm tắt từ repo):</p>
+          <p style={{marginTop:14}}>Hệ thống hỗ trợ:</p>
           <ul className="features">
             <li>Đăng ký/đăng nhập Khách hàng để mua hàng trực tuyến.</li>
             <li>Đăng nhập Admin/Pharmacist để quản lý sản phẩm, tồn kho, và đơn hàng.</li>
