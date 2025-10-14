@@ -15,7 +15,10 @@ app.use(express.json());
 
 // Routes
 const authRoutes = require("./src/routes/authRoutes");
+const medicineRoutes = require("./src/routes/medicineRoutes"); // Import medicine routes
+
 app.use("/api/auth", authRoutes);
+app.use("/api/medicines", medicineRoutes); // Sử dụng medicine routes
 
 // Swagger setup
 const swaggerOptions = {
@@ -27,9 +30,23 @@ const swaggerOptions = {
       description: "API cho website hiệu thuốc trực tuyến",
     },
     servers: [{ url: `http://localhost:${PORT}` }],
+    // Thêm securitySchemes để hỗ trợ token trong Swagger
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+        }
+      }
+    },
+    security: [{
+      bearerAuth: []
+    }]
   },
   apis: [path.join(__dirname, "./src/routes/*.js")],
 };
+
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerJsdoc(swaggerOptions)));
 
 // Default route

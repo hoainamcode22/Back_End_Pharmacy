@@ -1,0 +1,53 @@
+.shop-page h1 {
+  margin-bottom: 2rem;
+}
+
+.medicine-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1.5rem;
+}
+
+.medicine-card {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  padding: 1.5rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+}
+
+.medicine-image-placeholder {
+  height: 150px;
+  background-color: #f0f0f0;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+}
+
+.medicine-card h3 {
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+  flex-grow: 1;
+}
+
+.medicine-price {
+  color: var(--primary);
+  font-weight: bold;
+  font-size: 1.2rem;
+  margin-bottom: 1rem;
+}
+
+.add-to-cart-btn {
+  background-color: var(--primary-dark);
+  color: white;
+  border: none;
+  padding: 0.75rem;
+  border-radius: 5px;
+  cursor: pointer;
+  width: 100%;
+}
+
+.error-message {
+  color: red;
+}

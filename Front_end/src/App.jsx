@@ -5,7 +5,9 @@ import Login from "./pages/Login.jsx";
 import AdminLogin from "./pages/AdminLogin.jsx";
 import AdminDashboard from "./pages/AdminDashboard.jsx";
 import MedicineManagement from "./pages/MedicineManagement.jsx";
+import CustomerLayout from "./components/CustomerLayout.jsx";
 import AdminLayout from "./components/AdminLayout.jsx";
+import ShopPage from "./pages/ShopPage.jsx";
 import { useAuth } from "./context/AuthContext.jsx";
 
 /**
@@ -25,11 +27,22 @@ function AdminRoute() {
   return <AdminLayout />;
 }
 
+function CustomerRoutes() {
+  return (
+    <CustomerLayout>
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/shop" element={<ShopPage />} />
+      </Routes>
+    </CustomerLayout>
+  );
+}
+
 export default function App() {
   return (
     <Routes>
-      {/* --- Các Route Công Khai --- */}
-      <Route path="/" element={<HomePage />} />
+      {/* --- Các Route Công Khai và Khách hàng --- */}
+      <Route path="/*" element={<CustomerRoutes />} />
       <Route path="/register" element={<Register />} />
       <Route path="/login" element={<Login />} />
       <Route path="/admin-login" element={<AdminLogin />} />

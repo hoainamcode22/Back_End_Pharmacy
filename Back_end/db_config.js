@@ -6,7 +6,7 @@ const pool = new Pool({
   user: process.env.DB_USER || 'postgres',
   host: process.env.DB_HOST || 'localhost',
   database: process.env.DB_NAME || 'pharmacy_db',
-  password: process.env.DB_PASS || '2208',
+  password: process.env.DB_PASS || '181004',
   port: parseInt(process.env.DB_PORT, 10) || 5432,
   options: '-c search_path=public'   // ✅ thêm dòng này
 });
