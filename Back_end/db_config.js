@@ -3,11 +3,12 @@ const { Pool } = require('pg');
 
 // Tạo Pool kết nối PostgreSQL
 const pool = new Pool({
-  user: process.env.DB_USER || 'postgres',         // từ .env
+  user: process.env.DB_USER || 'postgres',
   host: process.env.DB_HOST || 'localhost',
-  database: process.env.DB_NAME || 'pharmacy_db',  // chú ý trùng DB_NAME trong .env
-  password: process.env.DB_PASS || '2208',         // phải là string
+  database: process.env.DB_NAME || 'pharmacy_db',
+  password: process.env.DB_PASS || '2208',
   port: parseInt(process.env.DB_PORT, 10) || 5432,
+  options: '-c search_path=public'   // ✅ thêm dòng này
 });
 
 // Kiểm tra kết nối ngay khi khởi động
@@ -18,7 +19,6 @@ pool.connect()
     process.exit(1);
   });
 
-// Xuất query function và pool
 module.exports = {
   query: (text, params) => pool.query(text, params),
   pool
