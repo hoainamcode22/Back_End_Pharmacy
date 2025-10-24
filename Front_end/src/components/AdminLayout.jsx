@@ -19,6 +19,7 @@ export default function AdminLayout() {
         <nav>
           <Link to="/admin/dashboard">Tổng quan</Link>
           <Link to="/admin/medicines">Quản lý thuốc</Link>
+          <Link to="/admin/chat">Hỗ trợ khách hàng</Link>
           {/* Thêm các link khác ở đây sau */}
         </nav>
         <div className="sidebar-footer">
