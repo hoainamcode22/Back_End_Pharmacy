@@ -1,6 +1,6 @@
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import api, { setAuthToken } from "../api";
+import { setAuthToken } from "../api";
 
 export default function AdminDashboard() {
   const { user, logout } = useAuth();

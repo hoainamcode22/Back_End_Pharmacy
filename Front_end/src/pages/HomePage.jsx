@@ -30,16 +30,25 @@ export default function HomePage() {
           </ul>
 
           <div style={{marginTop:18}}>
-            <Link to="/register"><button className="btn">Đăng ký Khách</button></Link>
-            <Link to="/login" style={{marginLeft:12}}><button className="btn secondary">Đăng nhập Khách</button></Link>
+            {!user && (
+              <>
+                <Link to="/register"><button className="btn">Đăng ký Khách</button></Link>
+                <Link to="/login" style={{marginLeft:12}}><button className="btn secondary">Đăng nhập</button></Link>
+              </>
+            )}
+            {user && user.role === "admin" && (
+              <button className="btn" onClick={() => nav("/admin/dashboard")}>Vào Dashboard</button>
+            )}
           </div>
 
+          {
+            
+          }
           <div className="adminNotice" style={{marginTop:18}}>
             <div className="center">
-              <div className="small">🔒 Admin & Nhân viên</div>
-              <div style={{marginLeft:12}}><Link to="/admin-login" className="link">Cổng Admin</Link></div>
+              <div className="small">🔒 Admin & Nhân viên đăng nhập tại trang “Đăng nhập” chung.</div>
             </div>
-            <div className="footer">Admin sẽ dùng tài khoản được tạo bởi hệ thống (hoặc superadmin) — không khuyến nghị đăng ký public.</div>
+            <div className="footer">Tài khoản admin do hệ thống/superadmin cấp — không khuyến nghị đăng ký public.</div>
           </div>
         </div>
       </div>
