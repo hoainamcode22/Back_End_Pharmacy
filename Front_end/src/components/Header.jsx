@@ -1,8 +1,9 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { getCart } from "../api";
+// import { getCart } from "../api";
 import { useAuth } from "../context/AuthContext";
-import AddressChip from "./address/AddressChip";
+import { setAuthToken } from "../api";
+// import AddressChip from "./address/AddressChip";
 
 export default function Header() {
   const { logout, user } = useAuth() ?? {};
@@ -10,26 +11,33 @@ export default function Header() {
   const nav = useNavigate();
   const [open, setOpen] = useState(false);
 
-  useEffect(() => {
-    let ignore = false;
-    getCart()
-      .then((d) => {
-        if (!ignore)
-          setCartCount((d?.items || []).reduce((s, i) => s + (i.qty || 0), 0));
-      })
-      .catch(() => {});
-    return () => {
-      ignore = true;
-    };
-  }, []);
+  // TODO: Bật lại khi có API cart
+  // useEffect(() => {
+  //   let ignore = false;
+  //   getCart()
+  //     .then((d) => {
+  //       if (!ignore)
+  //         setCartCount((d?.items || []).reduce((s, i) => s + (i.qty || 0), 0));
+  //     })
+  //     .catch(() => {});
+  //   return () => {
+  //     ignore = true;
+  //   };
+  // }, []);
+
+  const handleLogout = () => {
+    setAuthToken(null);  // Xóa token khỏi axios headers
+    logout();            // Xóa khỏi context + localStorage
+    nav("/login");       // Chuyển về trang login
+  };
 
   return (
     <header className="site-header">
       <div className="container bar">
         <Link to="/shop" className="brand">Pharmacy</Link>
 
-        {/* Địa chỉ nhận hàng */}
-        <AddressChip />
+        {/* Địa chỉ nhận hàng - TODO: Bật khi có component */}
+        {/* <AddressChip /> */}
 
         <button className="menu-btn btn ghost" onClick={() => setOpen(o=>!o)} title="Menu" aria-label="Menu" style={{ display: 'none' }}>☰</button>
         <nav className={`nav ${open ? 'open' : ''}`} onClick={() => setOpen(false)}>
@@ -46,7 +54,7 @@ export default function Header() {
             {cartCount > 0 && <span className="count">{cartCount}</span>}
           </button>
           <span style={{ fontSize: 13, color: "var(--muted)" }}>{user?.name}</span>
-          <button className="btn ghost" onClick={logout}>Đăng xuất</button>
+          <button className="btn ghost" onClick={handleLogout}>Đăng xuất</button>
         </div>
       </div>
     </header>

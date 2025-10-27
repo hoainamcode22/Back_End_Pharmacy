@@ -8,7 +8,7 @@ const pool = new Pool({
   database: process.env.DB_NAME || 'pharmacy_db',
   password: process.env.DB_PASS || '2208',
   port: parseInt(process.env.DB_PORT, 10) || 5432,
-  options: '-c search_path=public'   // ✅ thêm dòng này
+  options: '-c search_path=public'   
 });
 
 // Kiểm tra kết nối ngay khi khởi động

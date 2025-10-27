@@ -1,31 +1,56 @@
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import "./ProductCard.css";
 
-export default function ProductCard({ product, onAdd, label = "Chọn sản phẩm" }) {
-  const handleAdd = () => {
-    if (typeof onAdd === "function") onAdd(product.id);
+export default function ProductCard({ product, onAddToCart }) {
+  const nav = useNavigate();
+
+  const handleAddToCart = (e) => {
+    e.stopPropagation();
+    if (onAddToCart) onAddToCart(product);
   };
-  return (
-    <div className="card p-card">
-      <Link to={`/product/${product.id}`} style={{ flex: 1, textDecoration: "none", color: "inherit" }}>
-        <div className="p-thumb">
-          {product.image ? (
-            <img src={product.image} alt={product.name} />
-          ) : (
-            <div style={{
-              width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center",
-              color: "#9aa4b2", fontSize: 12
-            }}>
-              150×150
-            </div>
-          )}
-        </div>
-        <div className="p-name">{product.name}</div>
-        <div className="p-desc">{product.shortDesc}</div>
-      </Link>
 
-      <div className="p-foot">
-        <div className="p-price">{(product.price || 0).toLocaleString()} đ</div>
-        <button className="btn" onClick={handleAdd}>{label}</button>
+  return (
+    <div 
+      className="product-card" 
+      onClick={() => nav(`/product/${product.id}`)}
+    >
+      <div className="product-image">
+        <img 
+          src={product.image || "https://via.placeholder.com/300x300?text=Thuốc"} 
+          alt={product.name}
+        />
+        {product.discount && (
+          <div className="product-badge">-{product.discount}%</div>
+        )}
+        {product.stock < 10 && product.stock > 0 && (
+          <div className="product-badge stock-low">Sắp hết</div>
+        )}
+        {product.stock === 0 && (
+          <div className="product-badge out-of-stock">Hết hàng</div>
+        )}
+      </div>
+      
+      <div className="product-info">
+        <h3 className="product-name">{product.name}</h3>
+        
+        <div className="product-price-section">
+          {product.originalPrice && (
+            <span className="original-price">
+              {product.originalPrice.toLocaleString()}đ
+            </span>
+          )}
+          <span className="current-price">
+            {product.price.toLocaleString()} đ/{product.unit || "Chai"}
+          </span>
+        </div>
+        
+        <button 
+          className="btn-add-cart"
+          onClick={handleAddToCart}
+          disabled={product.stock === 0}
+        >
+          {product.stock === 0 ? "Hết hàng" : "Chọn sản phẩm"}
+        </button>
       </div>
     </div>
   );
