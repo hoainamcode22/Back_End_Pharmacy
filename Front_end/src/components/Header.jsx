@@ -1,5 +1,7 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
+import "./Header.css";
+
 // import { getCart } from "../api";
 import { useAuth } from "../context/AuthContext";
 import { setAuthToken } from "../api";
@@ -44,8 +46,7 @@ export default function Header() {
           <NavLink to="/shop" className={({ isActive }) => (isActive ? "active" : "")}>Sản phẩm</NavLink>
           <NavLink to="/orders" className={({ isActive }) => (isActive ? "active" : "")}>Đơn hàng</NavLink>
           <NavLink to="/profile" className={({ isActive }) => (isActive ? "active" : "")}>Hồ sơ</NavLink>
-          <NavLink to="/prescriptions" className={({ isActive }) => (isActive ? "active" : "")}>Đơn thuốc</NavLink>
-          <NavLink to="/support" className={({ isActive }) => (isActive ? "active" : "")}>Hỗ trợ</NavLink>
+          <NavLink to="/diseases" className={({ isActive }) => (isActive ? "active" : "")}>Tra cứu bệnh</NavLink>
         </nav>
 
         <div className="right">

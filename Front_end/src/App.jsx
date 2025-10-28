@@ -7,6 +7,7 @@ import Profile from "./pages/user/Profile.jsx";
 import Cart from "./pages/user/Cart.jsx";
 import Orders from "./pages/user/Orders.jsx";
 import Checkout from "./pages/user/Checkout.jsx";
+import Diseases from "./pages/user/Diseases.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import UserLayout from "./components/UserLayout.jsx";
 
@@ -74,6 +75,16 @@ export default function App() {
           <ProtectedRoute>
             <UserLayout>
               <Profile />
+            </UserLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/diseases"
+        element={
+          <ProtectedRoute>
+            <UserLayout>
+              <Diseases />
             </UserLayout>
           </ProtectedRoute>
         }

@@ -2,16 +2,18 @@
    0) VARIABLES & RESET
 ========================= */
 :root{
-  --primary: #007bff;
-  --primary-dark:#0056b3;
-  --bg:#f5f8ff;
+  --primary: #00a859;
+  --primary-dark:#008a48;
+  --secondary: #0066C0;
+  --bg:#f8fafb;
   --card:#ffffff;
-  --text:#212529;
+  --text:#2d3436;
+  --muted: #636e72;
 
-  --radius: 12px;
-  --shadow: 0 8px 24px rgba(0,0,0,0.06);
-  --shadow-soft: 0 4px 12px rgba(0,0,0,0.05);
-  --border: 1px solid #e9eef7;
+  --radius: 8px;
+  --shadow: 0 2px 8px rgba(0,0,0,0.08);
+  --shadow-soft: 0 1px 4px rgba(0,0,0,0.06);
+  --border: 1px solid #e8eaed;
 }
 
 *{box-sizing:border-box;margin:0;padding:0}
@@ -19,12 +21,13 @@ html,body,#root{min-height:100%}
 
 body{
   font-family: Inter, Roboto, "Segoe UI", Arial, sans-serif;
-  background: linear-gradient(135deg,#eaf4ff,#ffffff);
+  background: #f8fafb;
   color:var(--text);
   display:flex;
   justify-content:center;
   align-items:flex-start;
-  padding:40px 16px;
+  padding:0;
+  margin: 0;
 }
 
 /* =========================
@@ -168,13 +171,12 @@ body{
   display: none !important;
 }
 **/
-
 /* =========================
    4) HEADER & FOOTER (User Layout)
 ========================= */
 .site-header {
-  background: var(--card);
-  box-shadow: var(--shadow-soft);
+  background: linear-gradient(135deg, #00a859 0%, #00c16e 100%);
+  box-shadow: 0 2px 8px rgba(0, 168, 89, 0.15);
   position: sticky;
   top: 0;
   z-index: 100;
@@ -184,42 +186,90 @@ body{
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 12px 20px;
+  padding: 14px 24px;
   max-width: 1400px;
   margin: 0 auto;
 }
 
 .site-header .brand {
   font-weight: 800;
-  font-size: 1.2rem;
-  color: var(--primary);
+  font-size: 1.4rem;
+  color: white;
   text-decoration: none;
   letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.site-header .brand::before {
+  content: "💊";
+  font-size: 1.6rem;
 }
 
 .site-header .nav {
   display: flex;
-  gap: 20px;
+  gap: 6px;
   flex: 1;
-  margin-left: 20px;
+  margin-left: 24px;
+  align-items: center;
 }
 
 .site-header .nav a {
-  color: var(--text);
+  color: rgba(255, 255, 255, 0.95);
   text-decoration: none;
-  font-weight: 500;
-  transition: color 0.2s ease;
+  font-weight: 600;
+  font-size: 15px;
+  padding: 10px 24px;
+  border-radius: 10px;
+  transition: all 0.25s ease;
+  white-space: nowrap;
+  text-align: center;
+  letter-spacing: 0.2px;
+  min-width: 110px;
 }
 
-.site-header .nav a:hover,
+.site-header .nav a:hover {
+  color: white;
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
 .site-header .nav a.active {
-  color: var(--primary);
+  color: white;
+  background: rgba(255, 255, 255, 0.25);
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .site-header .right {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
+}
+
+.site-footer {
+  background: #2d3436;
+  margin-top: 80px;
+  border-top: none;
+  color: rgba(255, 255, 255, 0.8);
+  padding: 40px 0 20px;
+}
+
+.site-header .btn.ghost {
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.site-header .btn.ghost:hover {
+  background: rgba(255, 255, 255, 0.25);
+  color: white;
+  transform: translateY(-1px);
 }
 
 .site-header .badge {
@@ -228,20 +278,23 @@ body{
 
 .site-header .badge .count {
   position: absolute;
-  top: -6px;
-  right: -6px;
-  background: #dc3545;
+  top: -8px;
+  right: -8px;
+  background: #ff4757;
   color: white;
-  border-radius: 10px;
-  padding: 2px 6px;
+  border-radius: 12px;
+  padding: 2px 7px;
   font-size: 11px;
   font-weight: 700;
+  border: 2px solid #00a859;
 }
 
 .site-footer {
-  background: #f8f9fa;
-  margin-top: 60px;
-  border-top: var(--border);
+  background: #2d3436;
+  margin-top: 80px;
+  border-top: none;
+  color: rgba(255, 255, 255, 0.8);
+  padding: 40px 0 20px;
 }
 
 .page {
@@ -268,11 +321,13 @@ body{
   background: transparent;
   color: var(--text);
   box-shadow: none;
+  border: 1px solid #e8eaed;
 }
 
 .btn.ghost:hover {
-  background: rgba(0, 123, 255, 0.1);
+  background: rgba(0, 168, 89, 0.08);
   color: var(--primary);
+  border-color: var(--primary);
 }
 
 .small {
