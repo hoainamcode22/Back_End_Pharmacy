@@ -1,0 +1,160 @@
+// src/api.jsx
+import axios from "axios";
+import { API_BASE } from "./config";
+
+const api = axios.create({
+  baseURL: API_BASE,
+  headers: { "Content-Type": "application/json" },
+});
+
+// ========== AUTO-INIT TOKEN FROM LOCALSTORAGE ==========
+// Tự động set token khi app load
+try {
+  const auth = JSON.parse(localStorage.getItem("ph_auth") || "{}");
+  if (auth.token) {
+    api.defaults.headers.common["Authorization"] = `Bearer ${auth.token}`;
+  }
+} catch {
+  // No auth token found
+}
+
+// ========== INTERCEPTOR: TỰ ĐỘNG XÓA TOKEN KHI HẾT HẠN ==========
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // Nếu lỗi 401 (Unauthorized) hoặc 403 (Forbidden) liên quan đến token
+    if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+      const errorMsg = error.response.data?.error || '';
+
+      // Kiểm tra message có chứa "token" hoặc "hết hạn"
+      if (errorMsg.toLowerCase().includes('token') ||
+        errorMsg.toLowerCase().includes('hết hạn') ||
+        errorMsg.toLowerCase().includes('không hợp lệ')) {
+
+        // XÓA TOKEN CŨ tự động
+        localStorage.removeItem('ph_auth');
+        delete api.defaults.headers.common["Authorization"];
+
+        // Thông báo cho user
+        alert('⚠️ Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!');
+
+        // Chuyển về trang login
+        window.location.href = '/login';
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);
+
+// ========== AUTH ==========
+// Giữ nguyên logic cũ để tương thích login hiện có.
+export function setAuthToken(token) {
+  if (token) api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+  else delete api.defaults.headers.common["Authorization"];
+}
+
+/** [PUBLIC] Đăng ký tài khoản mới */
+export const register = (userData) =>
+  api.post("/auth/register", userData).then((r) => r.data);
+
+/** [PUBLIC] Đăng nhập */
+export const login = (email, password) =>
+  api.post("/auth/login", { email, password }).then((r) => r.data);
+
+/** [ADMIN-ONLY] Tạo tài khoản admin (one-time) */
+export const initAdmin = (adminData) =>
+  api.post("/auth/admin-init", adminData).then((r) => r.data);
+
+// ========== PRODUCT (Danh mục/Chi tiết) ==========
+/** [USER] Lấy danh sách sản phẩm (có tìm kiếm/lọc) */
+export const fetchProducts = (params = {}) =>
+  api.get("/products", { params }).then((r) => r.data);
+
+/** [USER] Lấy chi tiết 1 sản phẩm theo id */
+export const getProductDetail = (id) =>
+  api.get(`/products/${id}`).then((r) => r.data);
+
+// Alias for compatibility
+export const fetchProductById = getProductDetail;
+
+// ========== CART (Giỏ hàng) ==========
+/** [USER] Lấy giỏ hàng hiện tại của user */
+export const getCart = () => api.get("/cart").then((r) => r.data);
+
+/** [USER] Thêm sản phẩm vào giỏ { productId, qty } */
+export const addToCart = (productId, qty = 1) =>
+  api.post("/cart/items", { productId, qty }).then((r) => r.data);
+
+/** [USER] Cập nhật số lượng 1 item trong giỏ */
+export const updateCartItem = (itemId, qty) =>
+  api.patch(`/cart/items/${itemId}`, { qty }).then((r) => r.data);
+
+/** [USER] Xoá 1 item khỏi giỏ */
+export const removeFromCart = (itemId) =>
+  api.delete(`/cart/items/${itemId}`).then((r) => r.data);
+
+// Alias for compatibility
+export const removeCartItem = removeFromCart;
+
+// ========== ORDER (Đơn hàng/Checkout) ==========
+/** [USER] Tạo đơn hàng từ giỏ */
+export const checkout = (payload) =>
+  api.post("/orders/checkout", payload).then((r) => r.data);
+
+/** [USER] Danh sách đơn hàng của user */
+export const getOrders = (params = {}) =>
+  api.get("/orders", { params }).then((r) => r.data);
+
+/** [USER] Chi tiết 1 đơn hàng */
+export const getOrderDetail = (id) =>
+  api.get(`/orders/${id}`).then((r) => r.data);
+
+/** [USER] Hủy đơn hàng (chỉ status = pending) */
+export const cancelOrder = (orderId) =>
+  api.patch(`/orders/${orderId}/cancel`).then((r) => r.data);
+
+// Aliases for compatibility
+export const fetchOrders = getOrders;
+export const fetchOrderDetail = getOrderDetail;
+
+// ========== USER PROFILE ==========
+/** [USER] Lấy thông tin cá nhân */
+export const getMe = () => api.get("/users/me").then((r) => r.data);
+
+/** [USER] Cập nhật thông tin cá nhân */
+export const updateMe = (payload) =>
+  api.patch("/users/me", payload).then((r) => r.data);
+
+/** [USER] Đổi mật khẩu */
+export const changePassword = (currentPassword, newPassword) =>
+  api.patch("/users/change-password", { currentPassword, newPassword }).then((r) => r.data);
+
+// ========== CHAT (Support Chat) ==========
+/** [USER] Lấy danh sách chat threads */
+export const getChatThreads = () =>
+  api.get("/chat/threads").then((r) => r.data);
+
+/** [USER] Tạo chat thread mới */
+export const createChatThread = (payload) =>
+  api.post("/chat/threads", payload).then((r) => r.data);
+
+/** [USER] Lấy tin nhắn trong 1 thread */
+export const getChatMessages = (threadId) =>
+  api.get(`/chat/threads/${threadId}/messages`).then((r) => r.data);
+
+/** [USER] Gửi tin nhắn */
+export const sendChatMessage = (threadId, message) =>
+  api.post(`/chat/threads/${threadId}/messages`, { message }).then((r) => r.data);
+
+// ========== DISEASE ENCYCLOPEDIA ==========
+/** [PUBLIC] Tìm kiếm bệnh */
+export const searchDiseases = (query) =>
+  api.get("/diseases/search", { params: { q: query } }).then((r) => r.data);
+
+// ========== ANNOUNCEMENTS ==========
+/** [PUBLIC] Lấy danh sách thông báo */
+export const getAnnouncements = () =>
+  api.get("/announcements").then((r) => r.data);
+
+export default api;

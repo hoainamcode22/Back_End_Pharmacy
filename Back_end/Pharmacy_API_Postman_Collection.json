@@ -1,0 +1,506 @@
+{
+  "info": {
+    "name": "Pharmacy System API - FULL",
+    "_postman_id": "pharmacy-api-collection-v2-complete",
+    "description": "✅ COMPLETE API Collection - Tất cả 19 endpoints đã sẵn sàng!\n\n**Base URL:** http://localhost:5001\n**Version:** 2.0 Complete\n**Updated:** 28/10/2025\n\n**APIs hoàn chỉnh:**\n- ✅ Auth (3): register, login, admin-init\n- ✅ Products (2): list, detail  \n- ✅ Cart (4): get, add, update, delete\n- ✅ Orders (4): checkout, list, detail, cancel\n- ✅ Users (3): profile, update, change-password",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "BASE_URL",
+      "value": "http://localhost:5001",
+      "type": "string"
+    },
+    {
+      "key": "TOKEN",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "🔐 Authentication",
+      "item": [
+        {
+          "name": "1. Tạo Admin (One-time)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"admin123\",\n  \"email\": \"admin@pharmacy.com\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/auth/admin-init",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "auth", "admin-init"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2. Đăng ký Customer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"customer01\",\n  \"password\": \"123456\",\n  \"fullname\": \"Nguyễn Văn A\",\n  \"email\": \"customer01@gmail.com\",\n  \"phone\": \"0901234567\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/auth/register",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "auth", "register"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3. Đăng nhập",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Tự động lưu token vào biến môi trường",
+                  "if (pm.response.code === 200) {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.collectionVariables.set(\"TOKEN\", jsonData.token);",
+                  "    console.log(\"✅ Token đã được lưu:\", jsonData.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"customer01@gmail.com\",\n  \"password\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/auth/login",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "auth", "login"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🛍️ Products",
+      "item": [
+        {
+          "name": "4. Lấy danh sách sản phẩm",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/products?page=1&limit=10",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "products"],
+              "query": [
+                {
+                  "key": "category",
+                  "value": "thuoc",
+                  "disabled": true
+                },
+                {
+                  "key": "search",
+                  "value": "para",
+                  "disabled": true
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "5. Chi tiết sản phẩm",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/products/1",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "products", "1"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🛒 Cart (Cần Auth)",
+      "item": [
+        {
+          "name": "6. Xem giỏ hàng",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/cart",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "cart"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "7. Thêm vào giỏ hàng",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": 1,\n  \"qty\": 2\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/cart/items",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "cart", "items"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "8. Cập nhật số lượng",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"qty\": 5\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/cart/items/1",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "cart", "items", "1"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "9. Xóa khỏi giỏ hàng",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/cart/items/1",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "cart", "items", "1"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "📦 Orders (Cần Auth)",
+      "item": [
+        {
+          "name": "10. Đặt hàng (Checkout)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"address\": \"123 Nguyễn Trãi, Quận 1, TP.HCM\",\n  \"phone\": \"0901234567\",\n  \"note\": \"Giao giờ hành chính\",\n  \"paymentMethod\": \"COD\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/orders/checkout",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "orders", "checkout"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "11. Danh sách đơn hàng",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/orders?status=pending",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "orders"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "pending",
+                  "disabled": true
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "12. Chi tiết đơn hàng",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/orders/1",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "orders", "1"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "13. Hủy đơn hàng",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/orders/1/cancel",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "orders", "1", "cancel"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "👤 User Profile (Cần Auth)",
+      "item": [
+        {
+          "name": "14. Xem thông tin cá nhân",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/users/me",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "users", "me"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "15. Cập nhật thông tin",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullname\": \"Nguyễn Văn B\",\n  \"phone\": \"0909999999\",\n  \"address\": \"456 Lê Lợi, Quận 3, TP.HCM\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/users/me",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "users", "me"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "16. Đổi mật khẩu",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"currentPassword\": \"123456\",\n  \"newPassword\": \"newpass123\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/users/change-password",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "users", "change-password"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "💬 Chat Support (Cần Auth)",
+      "item": [
+        {
+          "name": "17. Danh sách chat threads",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/chat/threads",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "chat", "threads"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "18. Tạo chat thread mới",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{TOKEN}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Hỏi về sản phẩm Paracetamol\",\n  \"attachmentType\": \"product\",\n  \"attachmentId\": \"1\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/chat/threads",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "chat", "threads"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🔍 Disease Encyclopedia",
+      "item": [
+        {
+          "name": "19. Tìm kiếm bệnh",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/api/diseases/search?q=tiểu đường",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "diseases", "search"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "tiểu đường"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
