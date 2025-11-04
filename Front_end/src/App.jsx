@@ -1,15 +1,16 @@
 import { Routes, Route, Navigate } from "react-router-dom";
-import Login from "./pages/auth/Login.jsx";
-import Register from "./pages/auth/Register.jsx";
-import Shop from "./pages/user/Shop.jsx";
-import ProductDetail from "./pages/user/ProductDetail.jsx";
-import Profile from "./pages/user/Profile.jsx";
-import Cart from "./pages/user/Cart.jsx";
-import Orders from "./pages/user/Orders.jsx";
-import Checkout from "./pages/user/Checkout.jsx";
-import Diseases from "./pages/user/Diseases.jsx";
-import ProtectedRoute from "./components/ProtectedRoute.jsx";
-import UserLayout from "./components/UserLayout.jsx";
+import Login from "./pages/auth/Login/Login.jsx";
+import Register from "./pages/auth/Login/Register.jsx";
+import Shop from "./pages/user/Shop/Shop.jsx";
+import ProductDetail from "./pages/user/ProductDetail/ProductDetail.jsx";
+import Profile from "./pages/user/Profile/Profile.jsx";
+import Cart from "./pages/user/Cart/Cart.jsx";
+import Orders from "./pages/user/Orders/Orders.jsx";
+import OrderDetail from "./pages/user/OrderDetail/OrderDetail.jsx";
+import Checkout from "./pages/user/Checkout/Checkout.jsx";
+import Diseases from "./pages/user/Diseases/Diseases.jsx";
+import ProtectedRoute from "./components/ProtectedRoute/ProtectedRoute.jsx";
+import UserLayout from "./components/UserLayout/UserLayout.jsx";
 
 export default function App() {
   return (
@@ -55,6 +56,16 @@ export default function App() {
           <ProtectedRoute>
             <UserLayout>
               <Orders />
+            </UserLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/orders/:id"
+        element={
+          <ProtectedRoute>
+            <UserLayout>
+              <OrderDetail />
             </UserLayout>
           </ProtectedRoute>
         }

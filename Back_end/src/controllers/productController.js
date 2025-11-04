@@ -197,6 +197,7 @@ const getProductById = async (req, res) => {
       if (typeof image === 'string' && (image.startsWith('http://') || image.startsWith('https://'))) {
         imageUrl = image;
       } else if (typeof image === 'string' && image.startsWith('/')) {
+        // relative path on backend; prefix with baseUrl
         imageUrl = `${baseUrl}${image}`;
       } else {
         imageUrl = `${baseUrl}/images/${image}`;
