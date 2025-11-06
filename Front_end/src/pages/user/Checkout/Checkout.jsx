@@ -1,10 +1,11 @@
-// Front_end/src/pages/user/Checkout.jsx
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getCart, checkout } from '../../../api';
+import * as provinces from 'vietnam-provinces'; // ✅ FIXED: correct import
 import './Checkout.css';
 
-const BACKEND_URL = import.meta.env.VITE_API_BASE?.replace('/api', '') || 'http://localhost:5001';
+const BACKEND_URL =
+  import.meta.env.VITE_API_BASE?.replace('/api', '') || 'http://localhost:5001';
 
 function Checkout() {
   const navigate = useNavigate();
@@ -25,18 +26,94 @@ function Checkout() {
     note: ''
   });
 
+  const [districtList, setDistrictList] = useState([]);
+  const [wardList, setWardList] = useState([]);
+  const [provinceList, setProvinceList] = useState([]);
+  const [allDistricts, setAllDistricts] = useState([]);
+  const [allWards, setAllWards] = useState([]);
+
+  // Load danh sách tỉnh, quận, phường khi component mount
+  useEffect(() => {
+    try {
+      const provinces_data = provinces.getProvinces();
+      const districts_data = provinces.getDistricts();
+      const wards_data = provinces.getWards();
+      
+      setProvinceList(provinces_data || []);
+      setAllDistricts(districts_data || []);
+      setAllWards(wards_data || []);
+    } catch (error) {
+      console.error('Error loading provinces data:', error);
+      setProvinceList([]);
+      setAllDistricts([]);
+      setAllWards([]);
+    }
+  }, []);
+
+  // Khi chọn tỉnh -> load quận/huyện
+  useEffect(() => {
+    if (formData.city && provinceList.length > 0) {
+      const selectedProvince = provinceList.find(
+        (p) => p.name === formData.city
+      );
+      if (selectedProvince) {
+        // ✅ Filter districts theo province_code
+        const filteredDistricts = allDistricts.filter(
+          (d) => d.province_code === selectedProvince.code
+        );
+        setDistrictList(filteredDistricts);
+      } else {
+        setDistrictList([]);
+      }
+      setWardList([]);
+    } else {
+      setDistrictList([]);
+      setWardList([]);
+    }
+  }, [formData.city, provinceList, allDistricts]);
+
+  // Khi chọn quận/huyện -> load phường/xã
+  useEffect(() => {
+    if (formData.district && districtList.length > 0) {
+      const selectedDistrict = districtList.find(
+        (d) => d.name === formData.district
+      );
+      if (selectedDistrict) {
+        // ✅ Filter wards theo district_code
+        const filteredWards = allWards.filter(
+          (w) => w.district_code === selectedDistrict.code
+        );
+        setWardList(filteredWards);
+      } else {
+        setWardList([]);
+      }
+    } else {
+      setWardList([]);
+    }
+  }, [formData.district, districtList, allWards]);
+
   useEffect(() => {
     const loadCart = async () => {
       try {
         setLoading(true);
         const data = await getCart();
-        const transformedItems = (data.cartItems || []).map(item => ({
-          id: item.Id,
-          name: item.ProductName,
-          price: parseFloat(item.Price),
-          quantity: item.Qty,
-          image: item.ProductImage ? `${BACKEND_URL}${item.ProductImage}` : `${BACKEND_URL}/images/products/default.jpg`
-        }));
+        const transformedItems = (data.cartItems || []).map((item) => {
+          // ✅ Backend đã trả về URL tuyệt đối, sử dụng trực tiếp
+          let imageUrl = item.ProductImage || `${BACKEND_URL}/images/default.jpg`;
+          
+          // Nếu chưa có http -> thêm BACKEND_URL
+          if (imageUrl && !imageUrl.startsWith('http')) {
+            imageUrl = `${BACKEND_URL}${imageUrl.startsWith('/') ? '' : '/'}${imageUrl}`;
+          }
+
+          return {
+            id: item.Id,
+            name: item.ProductName,
+            price: parseFloat(item.Price),
+            quantity: item.Qty,
+            image: imageUrl
+          };
+        });
         setCartItems(transformedItems);
 
         if (transformedItems.length === 0) {
@@ -61,11 +138,33 @@ function Checkout() {
   const shippingFee = 30000;
   const total = subtotal + shippingFee;
 
-  const handleInputChange = e => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    
+    // Nếu thay đổi city -> reset district và ward
+    if (name === 'city') {
+      setFormData({
+        ...formData,
+        city: value,
+        district: '',
+        ward: ''
+      });
+    } 
+    // Nếu thay đổi district -> reset ward
+    else if (name === 'district') {
+      setFormData({
+        ...formData,
+        district: value,
+        ward: ''
+      });
+    }
+    // Các trường khác
+    else {
+      setFormData({
+        ...formData,
+        [name]: value
+      });
+    }
   };
 
   const validateStep1 = () => {
@@ -94,9 +193,14 @@ function Checkout() {
     try {
       const fullAddress = `${formData.address}, ${formData.ward}, ${formData.district}, ${formData.city}`;
       const payload = {
+        fullName: formData.fullName,
+        email: formData.email,
         address: fullAddress,
         phone: formData.phone,
         note: formData.note,
+        city: formData.city,
+        district: formData.district,
+        ward: formData.ward,
         paymentMethod: paymentMethod
       };
 
@@ -197,9 +301,11 @@ function Checkout() {
                     onChange={handleInputChange}
                   >
                     <option value="">Chọn Tỉnh/Thành phố</option>
-                    <option value="Hà Nội">Hà Nội</option>
-                    <option value="TP. Hồ Chí Minh">TP. Hồ Chí Minh</option>
-                    <option value="Đà Nẵng">Đà Nẵng</option>
+                    {provinceList.map((p) => (
+                      <option key={p.code} value={p.name}>
+                        {p.name}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
@@ -209,11 +315,14 @@ function Checkout() {
                     name="district"
                     value={formData.district}
                     onChange={handleInputChange}
+                    disabled={!districtList.length}
                   >
                     <option value="">Chọn Quận/Huyện</option>
-                    <option value="Quận 1">Quận 1</option>
-                    <option value="Quận Ba Đình">Quận Ba Đình</option>
-                    <option value="Quận Sơn Trà">Quận Sơn Trà</option>
+                    {districtList.map((d) => (
+                      <option key={d.code} value={d.name}>
+                        {d.name}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
@@ -223,11 +332,14 @@ function Checkout() {
                     name="ward"
                     value={formData.ward}
                     onChange={handleInputChange}
+                    disabled={!wardList.length}
                   >
                     <option value="">Chọn Phường/Xã</option>
-                    <option value="Phường Cống Vị">Phường Cống Vị</option>
-                    <option value="Phường Bến Nghé">Phường Bến Nghé</option>
-                    <option value="Phường An Hải Bắc">Phường An Hải Bắc</option>
+                    {wardList.map((w) => (
+                      <option key={w.code} value={w.name}>
+                        {w.name}
+                      </option>
+                    ))}
                   </select>
                 </div>
 
@@ -261,68 +373,32 @@ function Checkout() {
             <div className="form-section">
               <h2>Phương thức thanh toán</h2>
               <div className="payment-methods">
-                <label
-                  className={`payment-option ${
-                    paymentMethod === 'cod' ? 'selected' : ''
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="payment"
-                    value="cod"
-                    checked={paymentMethod === 'cod'}
-                    onChange={e => setPaymentMethod(e.target.value)}
-                  />
-                  <div className="payment-info">
-                    <span className="payment-icon">💵</span>
-                    <div>
-                      <strong>Thanh toán khi nhận hàng (COD)</strong>
-                      <p>Thanh toán bằng tiền mặt khi nhận hàng</p>
+                {[
+                  { id: 'cod', icon: '💵', label: 'Thanh toán khi nhận hàng (COD)' },
+                  { id: 'bank', icon: '🏦', label: 'Chuyển khoản ngân hàng' },
+                  { id: 'momo', icon: '📱', label: 'Ví điện tử MoMo' }
+                ].map((method) => (
+                  <label
+                    key={method.id}
+                    className={`payment-option ${
+                      paymentMethod === method.id ? 'selected' : ''
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="payment"
+                      value={method.id}
+                      checked={paymentMethod === method.id}
+                      onChange={(e) => setPaymentMethod(e.target.value)}
+                    />
+                    <div className="payment-info">
+                      <span className="payment-icon">{method.icon}</span>
+                      <div>
+                        <strong>{method.label}</strong>
+                      </div>
                     </div>
-                  </div>
-                </label>
-
-                <label
-                  className={`payment-option ${
-                    paymentMethod === 'bank' ? 'selected' : ''
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="payment"
-                    value="bank"
-                    checked={paymentMethod === 'bank'}
-                    onChange={e => setPaymentMethod(e.target.value)}
-                  />
-                  <div className="payment-info">
-                    <span className="payment-icon">🏦</span>
-                    <div>
-                      <strong>Chuyển khoản ngân hàng</strong>
-                      <p>Chuyển khoản qua Internet Banking hoặc ATM</p>
-                    </div>
-                  </div>
-                </label>
-
-                <label
-                  className={`payment-option ${
-                    paymentMethod === 'momo' ? 'selected' : ''
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="payment"
-                    value="momo"
-                    checked={paymentMethod === 'momo'}
-                    onChange={e => setPaymentMethod(e.target.value)}
-                  />
-                  <div className="payment-info">
-                    <span className="payment-icon">📱</span>
-                    <div>
-                      <strong>Ví điện tử MoMo</strong>
-                      <p>Thanh toán qua ví MoMo</p>
-                    </div>
-                  </div>
-                </label>
+                  </label>
+                ))}
               </div>
 
               <div className="step-actions">
@@ -344,9 +420,15 @@ function Checkout() {
               <div className="confirmation-section">
                 <h3>Thông tin giao hàng</h3>
                 <div className="info-box">
-                  <p><strong>Người nhận:</strong> {formData.fullName}</p>
-                  <p><strong>Số điện thoại:</strong> {formData.phone}</p>
-                  <p><strong>Email:</strong> {formData.email || 'Không có'}</p>
+                  <p>
+                    <strong>Người nhận:</strong> {formData.fullName}
+                  </p>
+                  <p>
+                    <strong>Số điện thoại:</strong> {formData.phone}
+                  </p>
+                  <p>
+                    <strong>Email:</strong> {formData.email || 'Không có'}
+                  </p>
                   <p>
                     <strong>Địa chỉ:</strong>{' '}
                     {`${formData.address}, ${formData.ward}, ${formData.district}, ${formData.city}`}
@@ -393,12 +475,12 @@ function Checkout() {
         <div className="order-summary">
           <h2>Đơn hàng của bạn</h2>
           <div className="summary-items">
-            {cartItems.map(item => (
+            {cartItems.map((item) => (
               <div key={item.id} className="summary-item">
                 <img
                   src={item.image}
                   alt={item.name}
-                  onError={e => {
+                  onError={(e) => {
                     e.target.src = '/images/products/placeholder.jpg';
                   }}
                 />

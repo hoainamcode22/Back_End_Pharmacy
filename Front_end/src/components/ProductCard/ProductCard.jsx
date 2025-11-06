@@ -70,7 +70,7 @@ export default function ProductCard({ product, onAddToCart }) {
           onClick={handleAddToCart}
           disabled={product.stock === 0}
         >
-          {product.stock === 0 ? "Hết hàng" : "Chọn sản phẩm"}
+          {product.stock === 0 ? "Hết hàng" : "Chọn mua"}
         </button>
       </div>
     </div>

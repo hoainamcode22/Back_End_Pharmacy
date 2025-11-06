@@ -90,11 +90,25 @@ export default function Shop() {
 
   const handleAddToCart = async (product) => {
     try {
-      await addToCart(product.id, 1);
+      console.log('=== handleAddToCart START ===');
+      console.log('Product:', product);
+      console.log('Product ID:', product.id);
+      console.log('Calling addToCart API...');
+      
+      const result = await addToCart(product.id, 1);
+      
+      console.log('addToCart result:', result);
+      console.log('=== handleAddToCart SUCCESS ===');
+      
       alert(`✓ Đã thêm "${product.name}" vào giỏ hàng!`);
     } catch (err) {
-      console.error("Error adding to cart:", err);
-      alert("❌ Lỗi: " + (err.response?.data?.error || "Không thể thêm vào giỏ hàng"));
+      console.error('=== handleAddToCart ERROR ===');
+      console.error("Full error:", err);
+      console.error("Error response:", err.response);
+      console.error("Error response data:", err.response?.data);
+      console.error("Error message:", err.message);
+      
+      alert("❌ Lỗi: " + (err.response?.data?.error || err.message || "Không thể thêm vào giỏ hàng"));
     }
   };
 
@@ -159,9 +173,8 @@ export default function Shop() {
               {/* Section Header */}
               <div className="section-header">
                 <h2 className="section-title">
-                  <span className="section-icon">{group.icon}</span>
+                  <span className="section-icon"></span>
                   {group.name}
-                  <span className="product-count">({group.products.length} sản phẩm)</span>
                 </h2>
                 {group.totalProducts > 5 && (
                   <button

@@ -1,15 +1,26 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { getProductDetail, addToCart } from "../../../api";
+import { AuthContext } from "../../../context/AuthContext/AuthContext";
+import axios from "axios";
 import "./ProductDetail.css";
 
 export default function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useContext(AuthContext);
   const [product, setProduct] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  // Comment states
+  const [comments, setComments] = useState([]);
+  const [commentStats, setCommentStats] = useState({ averageRating: 0, totalComments: 0 });
+  const [canReview, setCanReview] = useState(false);
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [reviewForm, setReviewForm] = useState({ rating: 5, content: "" });
+  const [activeTab, setActiveTab] = useState("description");
   // const [selectedImage, setSelectedImage] = useState(0); // TODO: For gallery
 
   useEffect(() => {
@@ -48,7 +59,60 @@ export default function ProductDetail() {
     loadProduct();
   }, [id, navigate]);
 
+  // Load comments
+  useEffect(() => {
+    const loadComments = async () => {
+      try {
+        const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001';
+        const response = await axios.get(`${baseURL}/api/comments/${id}`);
+        setComments(response.data.comments || []);
+        setCommentStats({
+          averageRating: response.data.averageRating || 0,
+          totalComments: response.data.totalComments || 0
+        });
+      } catch (err) {
+        console.error("Error loading comments:", err);
+      }
+    };
+
+    if (id) {
+      loadComments();
+    }
+  }, [id]);
+
+  // Check if user can review
+  useEffect(() => {
+    const checkReviewPermission = async () => {
+      if (!user) {
+        setCanReview(false);
+        return;
+      }
+
+      try {
+        const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001';
+        const token = localStorage.getItem('token');
+        const response = await axios.get(`${baseURL}/api/comments/check/${id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setCanReview(response.data.canReview);
+      } catch (err) {
+        console.error("Error checking review permission:", err);
+        setCanReview(false);
+      }
+    };
+
+    if (id) {
+      checkReviewPermission();
+    }
+  }, [id, user]);
+
   const handleAddToCart = async () => {
+    if (!user) {
+      alert("⚠️ Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng!");
+      navigate("/login");
+      return;
+    }
+
     try {
       await addToCart(product.id, quantity);
       alert(`✓ Đã thêm ${quantity} ${product.name} vào giỏ hàng!`);
@@ -59,9 +123,78 @@ export default function ProductDetail() {
     }
   };
 
-  const handleBuyNow = () => {
-    handleAddToCart();
-    navigate("/cart");
+  const handleBuyNow = async () => {
+    if (!user) {
+      alert("⚠️ Vui lòng đăng nhập để mua hàng!");
+      navigate("/login");
+      return;
+    }
+
+    try {
+      // Thêm vào giỏ trước
+      await addToCart(product.id, quantity);
+      // Sau đó chuyển đến trang checkout luôn
+      navigate("/checkout");
+    } catch (err) {
+      console.error("Error in buy now:", err);
+      alert("❌ Lỗi: " + (err.response?.data?.error || "Không thể mua hàng"));
+    }
+  };
+
+  const handleSubmitReview = async (e) => {
+    e.preventDefault();
+    
+    if (!user) {
+      alert("Vui lòng đăng nhập để đánh giá!");
+      navigate("/login");
+      return;
+    }
+
+    if (!reviewForm.content.trim()) {
+      alert("Vui lòng nhập nội dung đánh giá!");
+      return;
+    }
+
+    try {
+      const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001';
+      const token = localStorage.getItem('token');
+      
+      await axios.post(`${baseURL}/api/comments`, {
+        productId: id,
+        rating: reviewForm.rating,
+        content: reviewForm.content
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      alert("✓ Đánh giá của bạn đã được gửi thành công!");
+      
+      // Reload comments
+      const response = await axios.get(`${baseURL}/api/comments/${id}`);
+      setComments(response.data.comments || []);
+      setCommentStats({
+        averageRating: response.data.averageRating || 0,
+        totalComments: response.data.totalComments || 0
+      });
+
+      // Reset form
+      setReviewForm({ rating: 5, content: "" });
+      setShowReviewForm(false);
+      setCanReview(false);
+    } catch (err) {
+      console.error("Error submitting review:", err);
+      alert("❌ " + (err.response?.data?.error || "Không thể gửi đánh giá!"));
+    }
+  };
+
+  const renderStars = (rating) => {
+    return (
+      <div className="star-rating">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <span key={star} className={star <= rating ? "star filled" : "star"}>★</span>
+        ))}
+      </div>
+    );
   };
 
   const increaseQty = () => {
@@ -227,29 +360,152 @@ export default function ProductDetail() {
       {/* Product Details Tabs */}
       <div className="product-tabs">
         <div className="tab-header">
-          <button className="tab-btn active">Mô tả sản phẩm</button>
-          <button className="tab-btn">Thành phần & Liều dùng</button>
-          <button className="tab-btn">Đánh giá (0)</button>
+          <button 
+            className={`tab-btn ${activeTab === 'description' ? 'active' : ''}`}
+            onClick={() => setActiveTab('description')}
+          >
+            Mô tả sản phẩm
+          </button>
+          <button 
+            className={`tab-btn ${activeTab === 'specs' ? 'active' : ''}`}
+            onClick={() => setActiveTab('specs')}
+          >
+            Thành phần & Liều dùng
+          </button>
+          <button 
+            className={`tab-btn ${activeTab === 'reviews' ? 'active' : ''}`}
+            onClick={() => setActiveTab('reviews')}
+          >
+            Đánh giá ({commentStats.totalComments})
+          </button>
         </div>
+
         <div className="tab-content">
-          <div className="description-content">
-            <h3>Thông tin chi tiết</h3>
-            <p>{product.details}</p>
-            <div className="product-specs">
-              <div className="spec-row">
-                <span className="spec-label">Thương hiệu:</span>
-                <span className="spec-value">{product.brand || "Đang cập nhật"}</span>
-              </div>
-              <div className="spec-row">
-                <span className="spec-label">Xuất xứ:</span>
-                <span className="spec-value">{product.origin || "Đang cập nhật"}</span>
-              </div>
-              <div className="spec-row">
-                <span className="spec-label">Danh mục:</span>
-                <span className="spec-value">{product.category}</span>
+          {activeTab === 'description' && (
+            <div className="description-content">
+              <h3>Thông tin chi tiết</h3>
+              <p>{product.details}</p>
+              <div className="product-specs">
+                <div className="spec-row">
+                  <span className="spec-label">Thương hiệu:</span>
+                  <span className="spec-value">{product.brand || "Đang cập nhật"}</span>
+                </div>
+                <div className="spec-row">
+                  <span className="spec-label">Xuất xứ:</span>
+                  <span className="spec-value">{product.origin || "Đang cập nhật"}</span>
+                </div>
+                <div className="spec-row">
+                  <span className="spec-label">Danh mục:</span>
+                  <span className="spec-value">{product.category}</span>
+                </div>
               </div>
             </div>
-          </div>
+          )}
+
+          {activeTab === 'specs' && (
+            <div className="specs-content">
+              <h3>Thành phần & Liều dùng</h3>
+              <p>Thông tin chi tiết đang được cập nhật...</p>
+            </div>
+          )}
+
+          {activeTab === 'reviews' && (
+            <div className="reviews-content">
+              {/* Rating Summary */}
+              <div className="rating-summary">
+                <div className="average-rating">
+                  <div className="rating-number">{commentStats.averageRating}</div>
+                  <div className="rating-stars">
+                    {renderStars(Math.round(commentStats.averageRating))}
+                  </div>
+                  <div className="rating-count">{commentStats.totalComments} đánh giá</div>
+                </div>
+              </div>
+
+              {/* Write Review Button */}
+              {user && canReview && !showReviewForm && (
+                <button 
+                  className="btn-write-review"
+                  onClick={() => setShowReviewForm(true)}
+                >
+                  ✍️ Viết đánh giá
+                </button>
+              )}
+
+              {/* Review Form */}
+              {showReviewForm && (
+                <div className="review-form-container">
+                  <h3>Viết đánh giá của bạn</h3>
+                  <form onSubmit={handleSubmitReview} className="review-form">
+                    <div className="form-group">
+                      <label>Đánh giá của bạn:</label>
+                      <div className="star-selector">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <span
+                            key={star}
+                            className={star <= reviewForm.rating ? "star filled" : "star"}
+                            onClick={() => setReviewForm({ ...reviewForm, rating: star })}
+                            style={{ cursor: 'pointer', fontSize: '24px' }}
+                          >
+                            ★
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="form-group">
+                      <label>Nội dung đánh giá:</label>
+                      <textarea
+                        value={reviewForm.content}
+                        onChange={(e) => setReviewForm({ ...reviewForm, content: e.target.value })}
+                        placeholder="Chia sẻ trải nghiệm của bạn về sản phẩm này..."
+                        rows="5"
+                        required
+                      />
+                    </div>
+                    <div className="form-actions">
+                      <button type="submit" className="btn-submit-review">
+                        Gửi đánh giá
+                      </button>
+                      <button 
+                        type="button" 
+                        className="btn-cancel-review"
+                        onClick={() => {
+                          setShowReviewForm(false);
+                          setReviewForm({ rating: 5, content: "" });
+                        }}
+                      >
+                        Hủy
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              )}
+
+              {/* Comments List */}
+              <div className="comments-list">
+                {comments.length === 0 ? (
+                  <p className="no-reviews">Chưa có đánh giá nào cho sản phẩm này.</p>
+                ) : (
+                  comments.map((comment) => (
+                    <div key={comment.Id} className="comment-item">
+                      <div className="comment-header">
+                        <div className="comment-user">
+                          <strong>{comment.Fullname || comment.Username}</strong>
+                          {renderStars(comment.Rating)}
+                        </div>
+                        <div className="comment-date">
+                          {new Date(comment.CreatedAt).toLocaleDateString('vi-VN')}
+                        </div>
+                      </div>
+                      <div className="comment-content">
+                        {comment.Content}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

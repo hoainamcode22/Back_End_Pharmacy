@@ -33,11 +33,34 @@ const getCart = async (req, res) => {
 
     const result = await db.query(query, [userId]);
 
+    // Build absolute URL for images
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    const cartItemsWithAbsoluteUrls = result.rows.map(item => {
+      let imageUrl = `${baseUrl}/images/default.jpg`;
+      const img = item.ProductImage;
+      
+      if (img) {
+        if (typeof img === 'string' && (img.startsWith('http://') || img.startsWith('https://'))) {
+          imageUrl = img;
+        } else if (typeof img === 'string' && img.startsWith('/images/')) {
+          imageUrl = `${baseUrl}${img}`;
+        } else {
+          // Filename only (e.g., "paracetamol.jpg")
+          imageUrl = `${baseUrl}/images/${img}`;
+        }
+      }
+      
+      return {
+        ...item,
+        ProductImage: imageUrl // Return absolute URL
+      };
+    });
+
     // Tính tổng tiền
-    const total = result.rows.reduce((sum, item) => sum + parseFloat(item.Subtotal), 0);
+    const total = cartItemsWithAbsoluteUrls.reduce((sum, item) => sum + parseFloat(item.Subtotal), 0);
 
     res.json({
-      cartItems: result.rows,
+      cartItems: cartItemsWithAbsoluteUrls,
       total: total
     });
 
@@ -72,44 +95,64 @@ const getCart = async (req, res) => {
  */
 const addToCart = async (req, res) => {
   try {
+    console.log('=== addToCart START ===');
+    console.log('req.user:', req.user);
+    console.log('req.body:', req.body);
+    
     const userId = req.user.Id;
     const { productId, qty = 1 } = req.body;
 
+    console.log('userId:', userId);
+    console.log('productId:', productId);
+    console.log('qty:', qty);
+
     // Validate
     if (!productId) {
+      console.log('ERROR: Thiếu productId');
       return res.status(400).json({ error: 'Thiếu thông tin sản phẩm!' });
     }
 
     // Kiểm tra sản phẩm tồn tại
+    console.log('Checking product in DB...');
     const productCheck = await db.query(
       'SELECT "Id", "Stock" FROM "Products" WHERE "Id" = $1 AND "IsActive" = true',
       [productId]
     );
 
+    console.log('productCheck result:', productCheck.rows);
+
     if (productCheck.rows.length === 0) {
+      console.log('ERROR: Sản phẩm không tồn tại');
       return res.status(404).json({ error: 'Sản phẩm không tồn tại!' });
     }
 
     // Kiểm tra tồn kho
+    console.log('Checking stock...');
     if (productCheck.rows[0].Stock < qty) {
+      console.log('ERROR: Không đủ số lượng. Stock:', productCheck.rows[0].Stock, 'Requested:', qty);
       return res.status(400).json({ error: 'Sản phẩm không đủ số lượng trong kho!' });
     }
 
     // Kiểm tra sản phẩm đã có trong giỏ chưa
+    console.log('Checking existing cart item...');
     const existingItem = await db.query(
       'SELECT "Id", "Qty" FROM "CartItems" WHERE "UserId" = $1 AND "ProductId" = $2',
       [userId, productId]
     );
 
+    console.log('existingItem result:', existingItem.rows);
+
     if (existingItem.rows.length > 0) {
       // Update số lượng nếu đã có
       const newQty = existingItem.rows[0].Qty + qty;
+      console.log('Updating existing item. New qty:', newQty);
       
       await db.query(
         'UPDATE "CartItems" SET "Qty" = $1 WHERE "Id" = $2',
         [newQty, existingItem.rows[0].Id]
       );
 
+      console.log('=== addToCart SUCCESS (UPDATE) ===');
       return res.json({ 
         message: 'Đã cập nhật số lượng trong giỏ hàng!',
         cartItemId: existingItem.rows[0].Id
@@ -117,6 +160,7 @@ const addToCart = async (req, res) => {
     }
 
     // Thêm mới vào giỏ
+    console.log('Inserting new cart item...');
     const insertQuery = `
       INSERT INTO "CartItems" ("UserId", "ProductId", "Qty")
       VALUES ($1, $2, $3)
@@ -124,14 +168,19 @@ const addToCart = async (req, res) => {
     `;
 
     const result = await db.query(insertQuery, [userId, productId, qty]);
+    console.log('Insert result:', result.rows);
 
+    console.log('=== addToCart SUCCESS (INSERT) ===');
     res.json({ 
       message: 'Đã thêm vào giỏ hàng!',
       cartItemId: result.rows[0].Id
     });
 
   } catch (error) {
-    console.error('Lỗi addToCart:', error);
+    console.error('=== addToCart ERROR ===');
+    console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
+    console.error('Error full:', error);
     res.status(500).json({ error: 'Lỗi server khi thêm vào giỏ hàng!' });
   }
 };

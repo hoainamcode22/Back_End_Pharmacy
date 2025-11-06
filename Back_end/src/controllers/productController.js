@@ -85,23 +85,22 @@ const getProducts = async (req, res) => {
 
     const result = await db.query(productsQuery, queryParams);
 
-    // Map image field to a public URL (Image may be stored as filename in DB)
-    // Normalize DB columns to JS-friendly/camelCase properties and build absolute image URL
+    // Map image field to a public URL (Image stored as filename in DB)
+    // Build absolute image URL for frontend
     const mappedRows = result.rows.map(r => {
       const image = r.Image || null;
-
-      // build base url from request (so frontend can use absolute URL and avoid same-origin issues)
       const baseUrl = `${req.protocol}://${req.get('host')}`;
 
       let imageUrl = `${baseUrl}/images/default.jpg`;
       if (image) {
         if (typeof image === 'string' && (image.startsWith('http://') || image.startsWith('https://'))) {
+          // Already absolute URL
           imageUrl = image;
-        } else if (typeof image === 'string' && image.startsWith('/')) {
-          // relative path on backend; prefix with baseUrl
+        } else if (typeof image === 'string' && image.startsWith('/images/')) {
+          // Old format: /images/filename.jpg
           imageUrl = `${baseUrl}${image}`;
         } else {
-          // assume it's a filename stored in DB
+          // New format: just filename (e.g., "paracetamol.jpg")
           imageUrl = `${baseUrl}/images/${image}`;
         }
       }
@@ -114,8 +113,8 @@ const getProducts = async (req, res) => {
         shortDesc: r.ShortDesc,
         category: r.Category,
         brand: r.Brand,
-        image: r.Image || null, // raw DB value (filename or url)
-        imageUrl: imageUrl, // absolute URL clients should use
+        image: r.Image || null, // raw DB value (filename)
+        imageUrl: imageUrl, // absolute URL for frontend
         price: r.Price,
         stock: r.Stock,
         isActive: r.IsActive,
@@ -195,11 +194,13 @@ const getProductById = async (req, res) => {
     let imageUrl = `${baseUrl}/images/default.jpg`;
     if (image) {
       if (typeof image === 'string' && (image.startsWith('http://') || image.startsWith('https://'))) {
+        // Already absolute URL
         imageUrl = image;
-      } else if (typeof image === 'string' && image.startsWith('/')) {
-        // relative path on backend; prefix with baseUrl
+      } else if (typeof image === 'string' && image.startsWith('/images/')) {
+        // Old format: /images/filename.jpg
         imageUrl = `${baseUrl}${image}`;
       } else {
+        // New format: just filename (e.g., "paracetamol.jpg")
         imageUrl = `${baseUrl}/images/${image}`;
       }
     }

@@ -1,30 +1,44 @@
 const db = require('../../db_config');
 
-// THAY ĐỔI 1: Thêm hàm helper để map giá trị
+// Helper: map phương thức thanh toán
 const mapPaymentMethod = (method) => {
-  const lowerMethod = String(method).toLowerCase();
+  const lowerMethod = String(method || '').toLowerCase();
   if (lowerMethod === 'bank' || lowerMethod === 'banking') return 'Banking';
   if (lowerMethod === 'momo') return 'Momo';
-  return 'COD'; // Mặc định là COD
+  return 'COD';
 };
 
-// Checkout - Đặt hàng
+// =================== CHECKOUT ===================
 const checkout = async (req, res) => {
   const client = await db.pool.connect();
-  
+
   try {
     const userId = req.user.Id;
-    const { address, phone, note = '', paymentMethod = 'COD' } = req.body;
+    const {
+      fullName = '',
+      email = '',
+      address = '',
+      phone = '',
+      note = '',
+      city = '',
+      district = '',
+      ward = '',
+      paymentMethod = 'COD'
+    } = req.body;
 
-    // Validate
+    // Validate cơ bản
     if (!address || !phone) {
       return res.status(400).json({ error: 'Thiếu địa chỉ hoặc số điện thoại!' });
     }
 
-    // Lấy Origin của backend
+    // Build địa chỉ đầy đủ
+    const fullAddress = `${address}, ${ward || ''}, ${district || ''}, ${city || ''}`
+      .replace(/(,\s*)+/g, ', ')
+      .trim();
+
     const host = req.get('host');
     const protocol = req.protocol;
-    const baseUrl = `${protocol}://${host}`; 
+    const baseUrl = `${protocol}://${host}`;
 
     await client.query('BEGIN');
 
@@ -42,7 +56,6 @@ const checkout = async (req, res) => {
       JOIN "Products" p ON ci."ProductId" = p."Id"
       WHERE ci."UserId" = $1
     `;
-
     const cartResult = await client.query(cartQuery, [userId]);
 
     if (cartResult.rows.length === 0) {
@@ -50,67 +63,86 @@ const checkout = async (req, res) => {
       return res.status(400).json({ error: 'Giỏ hàng trống!' });
     }
 
+    // Xử lý từng item
     const itemsWithUrls = [];
     let subtotal = 0;
 
     for (const item of cartResult.rows) {
-      // Kiểm tra tồn kho
       if (item.Stock < item.Qty) {
         await client.query('ROLLBACK');
-        return res.status(400).json({ 
-          error: `Sản phẩm "${item.ProductName}" không đủ số lượng trong kho!` 
+        return res.status(400).json({
+          error: `Sản phẩm "${item.ProductName}" không đủ số lượng trong kho!`
         });
       }
 
-      // Tạo URL ảnh tuyệt đối
-      const imageUrl = item.ProductImage.startsWith('/') 
-        ? item.ProductImage 
-        : `/${item.ProductImage}`;
-      const absoluteImageUrl = `${baseUrl}${imageUrl}`;
-      
+      // ✅ build URL ảnh đúng tuyệt đối, không đổi logic
+      let imageUrl = `${baseUrl}/images/default.jpg`;
+      const img = item.ProductImage;
+      if (img) {
+        if (img.startsWith('http')) imageUrl = img;
+        else imageUrl = `${baseUrl}/images/${img.replace(/^\/+/, '')}`;
+      }
+
       itemsWithUrls.push({
         ...item,
-        ProductImageUrl: absoluteImageUrl
+        ProductImage: imageUrl
       });
 
       subtotal += parseFloat(item.Price) * item.Qty;
     }
 
-    // Tính tổng cuối cùng (bao gồm ship)
     const shippingFee = 30000;
     const finalTotal = subtotal + shippingFee;
-
-    // THAY ĐỔI 2: Sử dụng hàm helper để lấy giá trị đúng
     const dbPaymentMethod = mapPaymentMethod(paymentMethod);
 
-    // Tạo đơn hàng
+    // ✅ Tạo đơn hàng
     const orderQuery = `
-      INSERT INTO "Orders" ("UserId", "Total", "Address", "Phone", "Note", "PaymentMethod", "Status")
-      VALUES ($1, $2, $3, $4, $5, $6, 'pending')
-      RETURNING "Id", "Code", "Total", "Status", "CreatedAt"
+      INSERT INTO "Orders" 
+        ("UserId", "Total", "Address", "Phone", "Note", "PaymentMethod", "Status", "CreatedAt")
+      VALUES ($1, $2, $3, $4, $5, $6, 'pending', NOW())
+      RETURNING "Id", "Total", "Status", "CreatedAt"
     `;
-
     const orderResult = await client.query(orderQuery, [
-      userId, finalTotal, address, phone, note, dbPaymentMethod // Sử dụng giá trị đã map
+      userId, finalTotal, fullAddress, phone, note, dbPaymentMethod
     ]);
-
     const order = orderResult.rows[0];
 
-    // Thêm OrderItems
+    // ✅ Lưu thông tin người nhận (chỉ khi bảng OrderRecipients tồn tại)
+    try {
+      await client.query(`
+        INSERT INTO "OrderRecipients"
+        ("OrderId", "FullName", "Email", "Phone", "Address", "City", "District", "Ward")
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      `, [
+        order.Id,
+        fullName || '(Chưa nhập)',
+        email || null,
+        phone,
+        address,
+        city,
+        district,
+        ward
+      ]);
+    } catch (e) {
+      console.warn('⚠️ Bỏ qua lưu OrderRecipients (bảng có thể chưa tồn tại)');
+    }
+
+    // ✅ Thêm OrderItems
     for (const item of itemsWithUrls) {
       await client.query(`
-        INSERT INTO "OrderItems" ("OrderId", "ProductId", "ProductName", "ProductImage", "Qty", "Price")
+        INSERT INTO "OrderItems" 
+        ("OrderId", "ProductId", "ProductName", "ProductImage", "Qty", "Price")
         VALUES ($1, $2, $3, $4, $5, $6)
-      `, [order.Id, item.ProductId, item.ProductName, item.ProductImage, item.Qty, item.Price]); 
+      `, [order.Id, item.ProductId, item.ProductName, item.ProductImage, item.Qty, item.Price]);
 
-      // Trừ số lượng tồn kho
+      // Cập nhật kho
       await client.query(
         'UPDATE "Products" SET "Stock" = "Stock" - $1 WHERE "Id" = $2',
         [item.Qty, item.ProductId]
       );
     }
 
-    // Xóa giỏ hàng
+    // ✅ Xóa giỏ hàng
     await client.query('DELETE FROM "CartItems" WHERE "UserId" = $1', [userId]);
 
     await client.query('COMMIT');
@@ -119,10 +151,9 @@ const checkout = async (req, res) => {
       message: 'Đặt hàng thành công!',
       order: {
         Id: order.Id,
-        Code: order.Code,
         Total: order.Total,
         Status: order.Status,
-        Address: address,
+        Address: fullAddress,
         Phone: phone,
         PaymentMethod: dbPaymentMethod,
         CreatedAt: order.CreatedAt
@@ -131,19 +162,14 @@ const checkout = async (req, res) => {
 
   } catch (error) {
     await client.query('ROLLBACK');
-    console.error('Lỗi checkout:', error); // Dòng này đã in ra lỗi cho bạn
+    console.error('Lỗi checkout:', error);
     res.status(500).json({ error: 'Lỗi server khi đặt hàng!' });
   } finally {
     client.release();
   }
 };
 
-/* --- CÁC HÀM KHÁC (getOrders, getOrderById, cancelOrder) --- */
-/* (Giữ nguyên các hàm getOrders, getOrderById, cancelOrder như file cũ) */
-/* (Copy 3 hàm đó từ file cũ của bạn dán vào đây) */
-/* (Nếu bạn không chắc, mình sẽ gửi lại cả 3 hàm đó) */
-
-// Lấy danh sách đơn hàng
+// =================== GET ORDERS ===================
 const getOrders = async (req, res) => {
   try {
     const userId = req.user.Id;
@@ -171,11 +197,12 @@ const getOrders = async (req, res) => {
   }
 };
 
-// Lấy chi tiết đơn hàng
+// =================== GET ORDER BY ID ===================
 const getOrderById = async (req, res) => {
   try {
     const userId = req.user.Id;
     const { id } = req.params;
+
     const orderQuery = `
       SELECT "Id", "Code", "Status", "Total", "Address", "Phone",
              "Note", "PaymentMethod", "ETA", "CreatedAt", "UpdatedAt"
@@ -186,6 +213,7 @@ const getOrderById = async (req, res) => {
     if (orderResult.rows.length === 0) {
       return res.status(404).json({ error: 'Không tìm thấy đơn hàng!' });
     }
+
     const order = orderResult.rows[0];
     const itemsQuery = `
       SELECT "ProductId", "ProductName", "ProductImage", "Qty", "Price", ("Qty" * "Price") as "Subtotal"
@@ -193,43 +221,58 @@ const getOrderById = async (req, res) => {
       WHERE "OrderId" = $1
     `;
     const itemsResult = await db.query(itemsQuery, [id]);
-    res.json({ ...order, items: itemsResult.rows });
+
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    const itemsWithAbsoluteUrls = itemsResult.rows.map(item => {
+      const imageUrl = item.ProductImage?.startsWith('http')
+        ? item.ProductImage
+        : `${baseUrl}/images/${item.ProductImage?.replace(/^\/+/, '') || 'default.jpg'}`;
+      return { ...item, ProductImage: imageUrl };
+    });
+
+    res.json({ ...order, items: itemsWithAbsoluteUrls });
   } catch (error) {
     console.error('Lỗi getOrderById:', error);
     res.status(500).json({ error: 'Lỗi server khi lấy chi tiết đơn hàng!' });
   }
 };
 
-// Hủy đơn hàng
+// =================== CANCEL ORDER ===================
 const cancelOrder = async (req, res) => {
   const client = await db.pool.connect();
   try {
     const userId = req.user.Id;
     const { id } = req.params;
     await client.query('BEGIN');
+
     const checkQuery = `SELECT "Id", "Status" FROM "Orders" WHERE "Id" = $1 AND "UserId" = $2`;
     const checkResult = await client.query(checkQuery, [id, userId]);
     if (checkResult.rows.length === 0) {
       await client.query('ROLLBACK');
       return res.status(404).json({ error: 'Không tìm thấy đơn hàng!' });
     }
+
     const currentStatus = checkResult.rows[0].Status;
     if (currentStatus !== 'pending') {
       await client.query('ROLLBACK');
       return res.status(400).json({ error: 'Chỉ có thể hủy đơn hàng đang chờ xác nhận!' });
     }
+
     const itemsQuery = `SELECT "ProductId", "Qty" FROM "OrderItems" WHERE "OrderId" = $1`;
     const itemsResult = await client.query(itemsQuery, [id]);
+
     for (const item of itemsResult.rows) {
       await client.query(
         'UPDATE "Products" SET "Stock" = "Stock" + $1 WHERE "Id" = $2',
         [item.Qty, item.ProductId]
       );
     }
+
     await client.query(
       'UPDATE "Orders" SET "Status" = $1 WHERE "Id" = $2',
       ['cancelled', id]
     );
+
     await client.query('COMMIT');
     res.json({ message: 'Đã hủy đơn hàng thành công!' });
   } catch (error) {
@@ -241,9 +284,4 @@ const cancelOrder = async (req, res) => {
   }
 };
 
-module.exports = {
-  checkout,
-  getOrders,
-  getOrderById,
-  cancelOrder
-};
+module.exports = { checkout, getOrders, getOrderById, cancelOrder };

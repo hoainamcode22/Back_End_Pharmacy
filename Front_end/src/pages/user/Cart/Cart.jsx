@@ -20,14 +20,14 @@ function Cart() {
     try {
       setLoading(true);
       const data = await getCart();
-      // Transform API data
+      // Backend now returns absolute URLs, use them directly
       const transformedItems = (data.cartItems || []).map(item => ({
         id: item.Id,
         productId: item.ProductId,
         name: item.ProductName,
         price: parseFloat(item.Price),
         quantity: item.Qty,
-        image: item.ProductImage ? `${BACKEND_URL}${item.ProductImage}` : `${BACKEND_URL}/images/products/default.jpg`,
+        image: item.ProductImage || `${BACKEND_URL}/images/default.jpg`, // Backend returns absolute URL
         subtotal: parseFloat(item.Subtotal)
       }));
       setCartItems(transformedItems);
