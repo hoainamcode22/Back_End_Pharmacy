@@ -1,19 +1,26 @@
 const express = require('express');
 const router = express.Router();
-const commentController = require('../controllers/commentController');
-const { authenticate } = require('../middleware/auth');
+const { authenticateToken } = require('../middleware/auth');
+
+// Import từng function riêng biệt để debug
+const {
+  getCommentsByProduct,
+  addComment,
+  checkCanReview,
+  deleteComment
+} = require('../controllers/commentController');
 
 // ✅ GET /api/comments/check/:productId - Kiểm tra quyền đánh giá (cần đăng nhập)
 // ⚠️ PHẢI ĐẶT TRƯỚC /:productId để không bị nhầm
-router.get('/check/:productId', authenticate, commentController.checkCanReview);
+router.get('/check/:productId', authenticateToken, checkCanReview);
 
 // ✅ GET /api/comments/:productId - Lấy tất cả đánh giá của sản phẩm (public)
-router.get('/:productId', commentController.getCommentsByProduct);
+router.get('/:productId', getCommentsByProduct);
 
 // ✅ POST /api/comments - Thêm đánh giá mới (cần đăng nhập)
-router.post('/', authenticate, commentController.addComment);
+router.post('/', authenticateToken, addComment);
 
 // ✅ DELETE /api/comments/:id - Xóa đánh giá (admin hoặc chủ comment)
-router.delete('/:id', authenticate, commentController.deleteComment);
+router.delete('/:id', authenticateToken, deleteComment);
 
 module.exports = router;
