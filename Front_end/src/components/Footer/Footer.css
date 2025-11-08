@@ -1,0 +1,52 @@
+.site-footer {
+  /* THAY ĐỔI: Nền trắng, chữ xám đậm */
+  background-color: #ffffff; 
+  color: #374151; /* Màu chữ mặc định */
+  padding: 40px 0;
+  border-top: 1px solid #e5e7eb; /* Viền xám nhạt */
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.footer-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.footer-grid {
+  display: grid;
+  /* Giữ nguyên layout 3 cột của bạn */
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 30px;
+}
+
+.footer-column {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.footer-title {
+  font-size: 16px;
+  font-weight: 700;
+  /* THAY ĐỔI: Tiêu đề màu đen */
+  color: #000000;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.footer-link {
+  /* THAY ĐỔI: Link màu xám đậm */
+  color: #374151;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.2s ease-in-out;
+}
+
+/* Hiệu ứng khi rê chuột vào link (vẫn giữ màu xanh lá của web) */
+.footer-link:hover {
+  color: #00a859; /* Màu xanh lá chủ đạo của web */
+  text-decoration: underline;
+}

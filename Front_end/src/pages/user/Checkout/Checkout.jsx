@@ -205,12 +205,14 @@ function Checkout() {
       };
 
       await checkout(payload);
-
-      alert('Đặt hàng thành công! Cảm ơn bạn đã mua hàng.');
+      
+      // Clear cart count and redirect
+      window.dispatchEvent(new Event('cart:updated'));
+      alert('Đặt hàng thành công!');
       navigate('/orders');
     } catch (err) {
       console.error('Checkout error:', err);
-      alert(err.response?.data?.error || 'Không thể đặt hàng. Vui lòng thử lại.');
+      alert('Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại!');
       setIsPlacingOrder(false);
     }
   };

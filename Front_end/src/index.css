@@ -249,13 +249,41 @@ body{
   gap: 16px;
 }
 
+/* === ĐÂY LÀ CODE FOOTER ĐÃ SỬA (NỀN TRẮNG) === */
 .site-footer {
-  background: #2d3436;
-  margin-top: 80px;
-  border-top: none;
-  color: rgba(255, 255, 255, 0.8);
-  padding: 40px 0 20px;
+  /* THAY ĐỔI: Nền trắng, chữ xám đậm */
+  background-color: #ffffff; 
+  color: #374151; /* Màu chữ mặc định */
+  padding: 40px 0 20px; /* Giữ padding của bạn */
+  margin-top: 80px; /* Giữ margin-top của bạn */
+  border-top: 1px solid #e5e7eb; /* Thêm viền xám nhạt */
+  font-size: 14px;
+  line-height: 1.6;
 }
+
+/* Code này sẽ áp dụng cho các link bên trong footer */
+.site-footer .footer-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #000000;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.site-footer .footer-link {
+  color: #374151;
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.2s ease-in-out;
+}
+
+.site-footer .footer-link:hover {
+  color: #00a859; /* Màu xanh lá chủ đạo của web */
+  text-decoration: underline;
+}
+/* === KẾT THÚC CODE FOOTER === */
+
 
 .site-header .btn.ghost {
   background: rgba(255, 255, 255, 0.15);
@@ -289,13 +317,7 @@ body{
   border: 2px solid #00a859;
 }
 
-.site-footer {
-  background: #2d3436;
-  margin-top: 80px;
-  border-top: none;
-  color: rgba(255, 255, 255, 0.8);
-  padding: 40px 0 20px;
-}
+/* Đã xóa code .site-footer bị trùng lặp ở đây */
 
 .page {
   min-height: 100vh;

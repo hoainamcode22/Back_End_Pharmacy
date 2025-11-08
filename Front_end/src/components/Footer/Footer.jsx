@@ -1,25 +1,36 @@
+import { Link } from 'react-router-dom'; // Dùng Link để chuyển trang
+import './Footer.css';
+
 export default function Footer() {
   return (
     <footer className="site-footer">
-      <div className="container" style={{ padding: '18px 0', color: 'var(--muted)', fontSize: 13 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: 12 }}>
-          <div>
-            <div style={{ fontWeight: 800, color: 'var(--text)' }}>Về chúng tôi</div>
-            <div>Giới thiệu</div>
-            <div>Hệ thống cửa hàng</div>
-            <div>Chính sách bảo mật</div>
+      <div className="footer-container">
+        <div className="footer-grid">
+          
+          {/* Cột 1: Về chúng tôi */}
+          <div className="footer-column">
+            <div className="footer-title">Về chúng tôi</div>
+            <Link to="/about" className="footer-link">Giới thiệu</Link>
+            <Link to="/stores" className="footer-link">Hệ thống cửa hàng</Link>
+            <Link to="/policy" className="footer-link">Chính sách bảo mật</Link>
           </div>
-          <div>
-            <div style={{ fontWeight: 800, color: 'var(--text)' }}>Danh mục</div>
-            <div>Thuốc</div>
-            <div>Thực phẩm bảo vệ sức khỏe</div>
-            <div>Chăm sóc cá nhân</div>
+
+          {/* Cột 2: Danh mục */}
+          <div className="footer-column">
+            <div className="footer-title">Danh mục</div>
+            <Link to="/shop?category=thuoc" className="footer-link">Thuốc</Link>
+            <Link to="/shop?category=tpcn" className="footer-link">Thực phẩm bảo vệ sức khỏe</Link>
+            <Link to="/shop?category=personal-care" className="footer-link">Chăm sóc cá nhân</Link>
           </div>
-          <div>
-            <div style={{ fontWeight: 800, color: 'var(--text)' }}>Hỗ trợ</div>
-            <div>1800 6821</div>
-            <div>support@pharmacy.local</div>
+
+          {/* Cột 3: Hỗ trợ */}
+          <div className="footer-column">
+            <div className="footer-title">Hỗ trợ</div>
+            {/* Dùng <a> cho số điện thoại và email */}
+            <a href="tel:18006821" className="footer-link">1800 6821</a>
+            <a href="mailto:support@pharmacy.local" className="footer-link">support@pharmacy.local</a>
           </div>
+
         </div>
       </div>
     </footer>

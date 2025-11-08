@@ -150,7 +150,11 @@ export const sendChatMessage = (threadId, message) =>
 // ========== DISEASE ENCYCLOPEDIA ==========
 /** [PUBLIC] Tìm kiếm bệnh */
 export const searchDiseases = (query) =>
-  api.get("/diseases/search", { params: { q: query } }).then((r) => r.data);
+  api.get("/diseases", { params: { q: query } }).then((r) => r.data);
+
+/** [PUBLIC] Lấy chi tiết bệnh theo slug */
+export const getDiseaseBySlug = (slug) =>
+  api.get(`/diseases/slug/${slug}`).then((r) => r.data);
 
 // ========== ANNOUNCEMENTS ==========
 /** [PUBLIC] Lấy danh sách thông báo */

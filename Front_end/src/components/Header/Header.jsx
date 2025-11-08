@@ -1,48 +1,48 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "./Header.css";
-
-// import { getCart } from "../api";
 import { useAuth } from "../../context/AuthContext/AuthContext.jsx";
-import { setAuthToken } from "../../api";
-// import AddressChip from "./address/AddressChip";
+import { setAuthToken, getCart } from "../../api";
 
 export default function Header() {
   const { logout, user } = useAuth() ?? {};
-  const [cartCount] = useState(0); // TODO: Sẽ cập nhật từ API
   const nav = useNavigate();
-  const [open, setOpen] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
 
-  // TODO: Bật lại khi có API cart
-  // useEffect(() => {
-  //   let ignore = false;
-  //   getCart()
-  //     .then((d) => {
-  //       if (!ignore)
-  //         setCartCount((d?.items || []).reduce((s, i) => s + (i.qty || 0), 0));
-  //     })
-  //     .catch(() => {});
-  //   return () => {
-  //     ignore = true;
-  //   };
-  // }, []);
+  // Fetch cart count on mount and when 'cart:updated' event fires
+  useEffect(() => {
+    const fetchCount = async () => {
+      try {
+        const data = await getCart();
+        const totalQty = Array.isArray(data.cartItems)
+          ? data.cartItems.reduce((s, it) => s + (Number(it.Qty) || 0), 0)
+          : 0;
+        setCartCount(totalQty);
+      } catch {
+        setCartCount(0);
+      }
+    };
+    fetchCount();
+
+    const handler = () => fetchCount();
+    window.addEventListener('cart:updated', handler);
+    return () => window.removeEventListener('cart:updated', handler);
+  }, []);
+
 
   const handleLogout = () => {
-    setAuthToken(null);  // Xóa token khỏi axios headers
-    logout();            // Xóa khỏi context + localStorage
-    nav("/login");       // Chuyển về trang login
+    setAuthToken(null);
+    logout();
+    nav("/login");
   };
 
   return (
     <header className="site-header">
-      <div className="container bar">
+      {/* Container đã đổi tên class để khớp CSS mới */}
+      <div className="header-container bar">
         <Link to="/shop" className="brand">Pharmacy</Link>
 
-        {/* Địa chỉ nhận hàng - TODO: Bật khi có component */}
-        {/* <AddressChip /> */}
-
-        <button className="menu-btn btn ghost" onClick={() => setOpen(o=>!o)} title="Menu" aria-label="Menu" style={{ display: 'none' }}>☰</button>
-        <nav className={`nav ${open ? 'open' : ''}`} onClick={() => setOpen(false)}>
+        <nav className="nav">
           <NavLink to="/shop" className={({ isActive }) => (isActive ? "active" : "")}>Sản phẩm</NavLink>
           <NavLink to="/orders" className={({ isActive }) => (isActive ? "active" : "")}>Đơn hàng</NavLink>
           <NavLink to="/profile" className={({ isActive }) => (isActive ? "active" : "")}>Hồ sơ</NavLink>
@@ -50,12 +50,21 @@ export default function Header() {
         </nav>
 
         <div className="right">
-          <button className="btn ghost badge" onClick={() => nav("/cart")}>
-            Giỏ hàng
-            {cartCount > 0 && <span className="count">{cartCount}</span>}
+          <button id="cart-icon-button" className="btn ghost" onClick={() => nav("/cart")}>
+            Giỏ hàng{cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
           </button>
-          <span style={{ fontSize: 13, color: "var(--muted)" }}>{user?.name}</span>
-          <button className="btn ghost" onClick={handleLogout}>Đăng xuất</button>
+          
+          {/* Hiển thị tên user nếu đã đăng nhập */}
+          {user ? (
+            <>
+              <span className="user-name">{user?.name || user?.email}</span>
+              <button className="btn ghost" onClick={handleLogout}>Đăng xuất</button>
+            </>
+          ) : (
+            <button className="btn ghost" onClick={() => nav("/login")}>
+              Đăng nhập
+            </button>
+          )}
         </div>
       </div>
     </header>

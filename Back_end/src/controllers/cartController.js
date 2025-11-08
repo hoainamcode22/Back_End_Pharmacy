@@ -98,19 +98,28 @@ const addToCart = async (req, res) => {
     console.log('=== addToCart START ===');
     console.log('req.user:', req.user);
     console.log('req.body:', req.body);
-    
-    const userId = req.user.Id;
-    const { productId, qty = 1 } = req.body;
+
+    // Bảo vệ: yêu cầu phải đăng nhập
+    const userId = req.user?.Id;
+    if (!userId) {
+      console.log('ERROR: Missing req.user');
+      return res.status(401).json({ error: 'Chưa đăng nhập! Vui lòng đăng nhập để tiếp tục.' });
+    }
+
+    // Parse & validate input
+    const productId = Number.parseInt(req.body?.productId, 10);
+    let qty = Number.parseInt(req.body?.qty ?? 1, 10);
 
     console.log('userId:', userId);
-    console.log('productId:', productId);
-    console.log('qty:', qty);
+    console.log('productId (parsed):', productId);
+    console.log('qty (parsed):', qty);
 
-    // Validate
-    if (!productId) {
-      console.log('ERROR: Thiếu productId');
-      return res.status(400).json({ error: 'Thiếu thông tin sản phẩm!' });
+    if (!Number.isFinite(productId)) {
+      console.log('ERROR: Thiếu/không hợp lệ productId');
+      return res.status(400).json({ error: 'Thiếu hoặc sai thông tin sản phẩm!' });
     }
+
+    if (!Number.isFinite(qty) || qty < 1) qty = 1; // ép về tối thiểu 1
 
     // Kiểm tra sản phẩm tồn tại
     console.log('Checking product in DB...');
@@ -126,12 +135,7 @@ const addToCart = async (req, res) => {
       return res.status(404).json({ error: 'Sản phẩm không tồn tại!' });
     }
 
-    // Kiểm tra tồn kho
-    console.log('Checking stock...');
-    if (productCheck.rows[0].Stock < qty) {
-      console.log('ERROR: Không đủ số lượng. Stock:', productCheck.rows[0].Stock, 'Requested:', qty);
-      return res.status(400).json({ error: 'Sản phẩm không đủ số lượng trong kho!' });
-    }
+    const stock = Number(productCheck.rows[0].Stock) || 0;
 
     // Kiểm tra sản phẩm đã có trong giỏ chưa
     console.log('Checking existing cart item...');
@@ -144,37 +148,66 @@ const addToCart = async (req, res) => {
 
     if (existingItem.rows.length > 0) {
       // Update số lượng nếu đã có
-      const newQty = existingItem.rows[0].Qty + qty;
-      console.log('Updating existing item. New qty:', newQty);
-      
+      const currentQty = Number(existingItem.rows[0].Qty) || 0;
+      const newQty = currentQty + qty;
+
+      if (newQty > stock) {
+        console.log('ERROR: Vượt quá tồn kho. Stock:', stock, 'Requested newQty:', newQty);
+        return res.status(400).json({ error: 'Sản phẩm không đủ số lượng trong kho!' });
+      }
+
       await db.query(
         'UPDATE "CartItems" SET "Qty" = $1 WHERE "Id" = $2',
         [newQty, existingItem.rows[0].Id]
       );
 
       console.log('=== addToCart SUCCESS (UPDATE) ===');
-      return res.json({ 
+      return res.json({
         message: 'Đã cập nhật số lượng trong giỏ hàng!',
-        cartItemId: existingItem.rows[0].Id
+        cartItemId: existingItem.rows[0].Id,
+        qty: newQty
       });
     }
 
     // Thêm mới vào giỏ
+    if (qty > stock) {
+      console.log('ERROR: Không đủ số lượng để thêm mới. Stock:', stock, 'Requested qty:', qty);
+      return res.status(400).json({ error: 'Sản phẩm không đủ số lượng trong kho!' });
+    }
+
     console.log('Inserting new cart item...');
     const insertQuery = `
       INSERT INTO "CartItems" ("UserId", "ProductId", "Qty")
       VALUES ($1, $2, $3)
-      RETURNING "Id"
+      RETURNING "Id", "Qty"
     `;
 
-    const result = await db.query(insertQuery, [userId, productId, qty]);
-    console.log('Insert result:', result.rows);
+    try {
+      const result = await db.query(insertQuery, [userId, productId, qty]);
+      console.log('Insert result:', result.rows);
 
-    console.log('=== addToCart SUCCESS (INSERT) ===');
-    res.json({ 
-      message: 'Đã thêm vào giỏ hàng!',
-      cartItemId: result.rows[0].Id
-    });
+      console.log('=== addToCart SUCCESS (INSERT) ===');
+      return res.json({
+        message: 'Đã thêm vào giỏ hàng!',
+        cartItemId: result.rows[0].Id,
+        qty: result.rows[0].Qty
+      });
+    } catch (err) {
+      // Xử lý trùng UNIQUE("UserId","ProductId"): update cộng dồn thay vì 500
+      if (err && err.code === '23505') { // unique_violation
+        console.log('Conflict UNIQUE, fallback to increment update');
+        const upd = await db.query(
+          'UPDATE "CartItems" SET "Qty" = LEAST("Qty" + $1, $4) WHERE "UserId"=$2 AND "ProductId"=$3 RETURNING "Id", "Qty"',
+          [qty, userId, productId, stock]
+        );
+        return res.json({
+          message: 'Đã cập nhật số lượng trong giỏ hàng!',
+          cartItemId: upd.rows[0].Id,
+          qty: upd.rows[0].Qty
+        });
+      }
+      throw err; // rethrow để vào catch ngoài
+    }
 
   } catch (error) {
     console.error('=== addToCart ERROR ===');

@@ -5,10 +5,24 @@ import { AuthProvider } from "./context/AuthContext/AuthContext.jsx";
 import App from "./App.jsx";
 import "./index.css";
 
-ReactDOM.createRoot(document.getElementById("root")).render(
-  <BrowserRouter>
-    <AuthProvider>
-      <App />
-    </AuthProvider>
-  </BrowserRouter>
-);
+console.log("🚀 Main.jsx loaded!");
+console.log("Root element:", document.getElementById("root"));
+
+try {
+  const root = ReactDOM.createRoot(document.getElementById("root"));
+  console.log("✅ Root created successfully");
+  
+  root.render(
+    <React.StrictMode>
+      <BrowserRouter>
+        <AuthProvider>
+          <App />
+        </AuthProvider>
+      </BrowserRouter>
+    </React.StrictMode>
+  );
+  console.log("✅ App rendered successfully");
+} catch (error) {
+  console.error("❌ Error rendering app:", error);
+  document.body.innerHTML = `<h1 style="color: red;">Error: ${error.message}</h1>`;
+}

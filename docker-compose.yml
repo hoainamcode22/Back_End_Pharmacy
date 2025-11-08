@@ -29,6 +29,7 @@ services:
       DB_HOST: db
       DB_PORT: 5432
       PORT: 5001
+      PGCLIENTENCODING: UTF8
     depends_on:
       - db
     ports:

@@ -33,12 +33,12 @@ const registerUser = async (req, res) => {
   try {
     let { username, fullname, email, phone, password } = req.body;
     if (!email || !password)
-      return res.status(400).json({ message: "Thiếu email hoặc mật khẩu" });
+      return res.status(400).json({ error: "Thiếu email hoặc mật khẩu" });
 
     email = email.toLowerCase().trim();
 
     if (await checkExists("Email", email))
-      return res.status(400).json({ message: "Email đã tồn tại" });
+      return res.status(400).json({ error: "Email đã tồn tại" });
 
     const hashed = await bcrypt.hash(password, 10);
     const finalUsername = username?.trim() || email.split("@")[0];
@@ -60,12 +60,19 @@ const registerUser = async (req, res) => {
 
     res.status(201).json({
       message: "Đăng ký thành công",
-      user: excludePassword(user),
+      user: {
+        id: user.Id,
+        username: user.Username,
+        fullname: user.Fullname,
+        email: user.Email,
+        role: user.Role,
+        Role: user.Role, // Để tương thích
+      },
       token: generateToken(user.Id, user.Role),
     });
   } catch (err) {
     console.error("❌ Lỗi register:", err);
-    res.status(500).json({ message: "Lỗi server khi đăng ký" });
+    res.status(500).json({ error: "Lỗi server khi đăng ký" });
   }
 };
 
@@ -74,7 +81,7 @@ const loginUser = async (req, res) => {
   try {
     let { email, password } = req.body;
     if (!email || !password)
-      return res.status(400).json({ message: "Thiếu email hoặc mật khẩu" });
+      return res.status(400).json({ error: "Thiếu email hoặc mật khẩu" });
 
     email = email.toLowerCase().trim();
 
@@ -84,13 +91,13 @@ const loginUser = async (req, res) => {
     );
 
     if (!result.rows.length)
-      return res.status(401).json({ message: "Email hoặc mật khẩu không chính xác" });
+      return res.status(401).json({ error: "Email hoặc mật khẩu không chính xác" });
 
     const user = result.rows[0];
     const isMatch = await bcrypt.compare(password, user.Password);
 
     if (!isMatch)
-      return res.status(401).json({ message: "Email hoặc mật khẩu không chính xác" });
+      return res.status(401).json({ error: "Email hoặc mật khẩu không chính xác" });
 
     res.status(200).json({
       message: "Đăng nhập thành công",
@@ -101,26 +108,26 @@ const loginUser = async (req, res) => {
         fullname: user.Fullname,
         email: user.Email,
         role: user.Role,
+        Role: user.Role, // Để tương thích với code frontend
       },
     });
   } catch (err) {
     console.error("❌ Lỗi login:", err);
-    res.status(500).json({ message: "Lỗi server khi đăng nhập" });
+    res.status(500).json({ error: "Lỗi server khi đăng nhập" });
   }
 };
-
 // ================= CREATE ADMIN =================
 const createAdmin = async (req, res) => {
   try {
     let { email, password, fullname } = req.body;
 
     if (!email || !password)
-      return res.status(400).json({ message: "Thiếu email hoặc mật khẩu" });
+      return res.status(400).json({ error: "Thiếu email hoặc mật khẩu" });
 
     email = email.toLowerCase().trim();
 
     if (await checkExists("Role", "admin"))
-      return res.status(409).json({ message: "Admin đã tồn tại" });
+      return res.status(409).json({ error: "Admin đã tồn tại" });
 
     const hashed = await bcrypt.hash(password, 10);
 
@@ -146,7 +153,7 @@ const createAdmin = async (req, res) => {
     });
   } catch (err) {
     console.error("❌ Lỗi createAdmin:", err);
-    res.status(500).json({ message: "Lỗi server khi tạo admin" });
+    res.status(500).json({ error: "Lỗi server khi tạo admin" });
   }
 };
 

@@ -9,6 +9,7 @@ import Orders from "./pages/user/Orders/Orders.jsx";
 import OrderDetail from "./pages/user/OrderDetail/OrderDetail.jsx";
 import Checkout from "./pages/user/Checkout/Checkout.jsx";
 import Diseases from "./pages/user/Diseases/Diseases.jsx";
+import DiseaseDetail from "./pages/user/DiseaseDetail/DiseaseDetail.jsx";
 import ProtectedRoute from "./components/ProtectedRoute/ProtectedRoute.jsx";
 import UserLayout from "./components/UserLayout/UserLayout.jsx";
 
@@ -96,6 +97,16 @@ export default function App() {
           <ProtectedRoute>
             <UserLayout>
               <Diseases />
+            </UserLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/diseases/:slug"
+        element={
+          <ProtectedRoute>
+            <UserLayout>
+              <DiseaseDetail />
             </UserLayout>
           </ProtectedRoute>
         }
