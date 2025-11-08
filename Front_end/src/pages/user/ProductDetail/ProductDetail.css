@@ -271,7 +271,7 @@
 
 .btn-add-cart,
 .btn-buy-now {
-  flex: 1;
+  flex: 1; /* SỬA ĐỔI: Đảm bảo 2 nút rộng bằng nhau */
   min-width: 180px;
   padding: 14px 24px;
   border-radius: 8px;
@@ -291,7 +291,7 @@
 .btn-add-cart {
   background: #00a859;
   color: #fff;
-  flex: 0.85;
+  /* XÓA: flex: 0.85; */
 }
 
 .btn-add-cart:hover {
@@ -308,7 +308,7 @@
 .btn-buy-now {
   background: #facc15;
   color: #1f2937;
-  flex: 1.15;
+  /* XÓA: flex: 1.15; */
   font-weight: 700;
 }
 

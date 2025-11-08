@@ -117,6 +117,7 @@ export default function ProductDetail() {
       await addToCart(product.id, quantity);
       alert(`✓ Đã thêm ${quantity} ${product.name} vào giỏ hàng!`);
       setQuantity(1); // Reset
+      window.dispatchEvent(new Event('cart:updated')); // Cập nhật số lượng giỏ hàng
     } catch (err) {
       console.error("Error adding to cart:", err);
       alert("❌ Lỗi: " + (err.response?.data?.error || "Không thể thêm vào giỏ hàng"));
@@ -133,6 +134,7 @@ export default function ProductDetail() {
     try {
       // Thêm vào giỏ trước
       await addToCart(product.id, quantity);
+      window.dispatchEvent(new Event('cart:updated')); // Cập nhật số lượng giỏ hàng
       // Sau đó chuyển đến trang checkout luôn
       navigate("/checkout");
     } catch (err) {

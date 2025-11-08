@@ -157,7 +157,7 @@
   justify-content: center;
   width: 28px;
   height: 28px;
-  background: #0066ff;
+  background: #00a859;
   color: white;
   font-size: 20px;
   font-weight: 700;
@@ -181,7 +181,7 @@
 .view-more {
   font-size: 14px;
   font-weight: 600;
-  color: #0066ff;
+  color: #00a859;
   background: none;
   border: none;
   cursor: pointer;
@@ -194,8 +194,8 @@
 }
 
 .view-more:hover {
-  color: #0052cc;
-  background: rgba(0, 102, 255, 0.08);
+  color: #008744;
+  background: rgba(0, 168, 89, 0.08);
   gap: 10px;
 }
 
