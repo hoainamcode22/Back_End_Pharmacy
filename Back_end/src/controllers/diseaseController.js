@@ -7,18 +7,18 @@ const db = require('../../db_config');
 /**
  * @swagger
  * /api/diseases:
- * get:
- * summary: Tìm kiếm bệnh
- * tags: [Diseases]
- * parameters:
- * - in: query
- * name: q
- * schema:
- * type: string
- * description: Từ khóa tìm kiếm (tên bệnh, triệu chứng, tổng quan)
- * responses:
- * 200:
- * description: Danh sách bệnh
+ *   get:
+ *     summary: Tìm kiếm bệnh
+ *     tags: [Diseases]
+ *     parameters:
+ *       - in: query
+ *         name: q
+ *         schema:
+ *           type: string
+ *         description: Từ khóa tìm kiếm (tên bệnh, triệu chứng, tổng quan)
+ *     responses:
+ *       200:
+ *         description: Danh sách bệnh
  */
 const searchDiseases = async (req, res) => {
   try {
@@ -47,12 +47,12 @@ const searchDiseases = async (req, res) => {
       params = [searchTerm];
 
     } else {
-      // Không có từ khóa, trả về 20 bệnh mới nhất
+      // Không có từ khóa, trả về 40 bệnh mới nhất
       query = `
         SELECT "Id", "Name", "Slug", "Overview", "Symptoms", "Category", "CreatedAt"
         FROM public."Diseases"
         ORDER BY "CreatedAt" DESC
-        LIMIT 20
+        LIMIT 40
       `;
     }
     
@@ -76,21 +76,21 @@ const searchDiseases = async (req, res) => {
 /**
  * @swagger
  * /api/diseases/slug/{slug}:
- * get:
- * summary: Lấy chi tiết bệnh theo slug
- * tags: [Diseases]
- * parameters:
- * - in: path
- * name: slug
- * required: true
- * schema:
- * type: string
- * description: Slug của bệnh
- * responses:
- * 200:
- * description: Thông tin chi tiết bệnh
- * 404:
- * description: Không tìm thấy bệnh
+ *   get:
+ *     summary: Lấy chi tiết bệnh theo slug
+ *     tags: [Diseases]
+ *     parameters:
+ *       - in: path
+ *         name: slug
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Slug của bệnh
+ *     responses:
+ *       200:
+ *         description: Thông tin chi tiết bệnh
+ *       404:
+ *         description: Không tìm thấy bệnh
  */
 const getDiseaseBySlug = async (req, res) => {
   try {

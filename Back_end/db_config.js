@@ -11,7 +11,7 @@ const poolConfig = process.env.DATABASE_URL
       user: process.env.DB_USER || 'postgres',
       host: process.env.DB_HOST || 'localhost',
       database: process.env.DB_NAME || 'pharmacy_db',
-      password: process.env.DB_PASS || '2208',
+      password: process.env.DB_PASS || '123456',
       port: parseInt(process.env.DB_PORT, 10) || 5432,
       options: '-c search_path=public',
       client_encoding: 'UTF8' // <--- VÀ THÊM VÀO ĐÂY

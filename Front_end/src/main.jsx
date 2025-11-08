@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext/AuthContext.jsx";
+import { ChatProvider } from "./context/ChatContext/ChatContext.jsx";
 import App from "./App.jsx";
 import "./index.css";
 
@@ -16,7 +17,9 @@ try {
     <React.StrictMode>
       <BrowserRouter>
         <AuthProvider>
-          <App />
+          <ChatProvider>
+            <App />
+          </ChatProvider>
         </AuthProvider>
       </BrowserRouter>
     </React.StrictMode>

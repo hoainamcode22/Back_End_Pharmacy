@@ -35,24 +35,28 @@ export default function DiseaseDetail() {
     }
   }, [slug]);
 
-  // Helper function để chuyển text có \n thành danh sách bullet
+  // Helper function để chuyển text có \n thành danh sách bullet, loại bỏ kí tự thừa
   const renderContent = (text) => {
     if (!text) return <p className="no-data">Chưa có thông tin</p>;
     
-    const lines = text.split('\n').filter(line => line.trim());
+    // Loại bỏ kí tự thừa, khoảng trắng dư thừa
+    const lines = text
+      .split('\n')
+      .map(line => line.trim())
+      .filter(line => line.length > 0);
     
     if (lines.length === 0) {
       return <p className="no-data">Chưa có thông tin</p>;
     }
     
     if (lines.length === 1) {
-      return <p>{lines[0]}</p>;
+      return <p className="disease-text">{lines[0]}</p>;
     }
     
     return (
       <ul className="disease-list">
         {lines.map((line, index) => (
-          <li key={index}>{line.trim()}</li>
+          <li key={index}>{line}</li>
         ))}
       </ul>
     );

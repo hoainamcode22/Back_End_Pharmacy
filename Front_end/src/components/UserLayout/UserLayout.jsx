@@ -1,6 +1,6 @@
 import Footer from "../Footer/Footer.jsx";
 import Header from "../Header/Header.jsx";
-import FloatingChatButton from "../FloatingChatButton/FloatingChatButton.jsx";
+import SupportChat from "../../pages/user/SupportChat/SupportChat.jsx";
 
 export default function UserLayout({ children }) {
   return (
@@ -8,7 +8,7 @@ export default function UserLayout({ children }) {
       <Header />
       <main className="container page-section">{children}</main>
       <Footer />
-      <FloatingChatButton />
+      <SupportChat />
     </div>
   );
 }

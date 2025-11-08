@@ -1,4 +1,6 @@
 const express = require("express");
+const http = require("http");
+const { Server } = require("socket.io");
 const dotenv = require("dotenv");
 const swaggerJsdoc = require("swagger-jsdoc");
 const swaggerUi = require("swagger-ui-express");
@@ -7,11 +9,30 @@ const cors = require("cors");
 
 dotenv.config();
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: ["http://localhost:5173", "http://localhost:3000"], // Frontend URLs
+    methods: ["GET", "POST"],
+    credentials: true
+  }
+});
+
 const PORT = process.env.PORT || 5001;
 
 // Middleware
-app.use(cors());
-app.use(express.json());
+app.use(cors({
+  origin: ["http://localhost:5173", "http://localhost:3000"],
+  credentials: true
+}));
+
+// Tăng giới hạn body size để hỗ trợ upload avatar (base64)
+// 10MB cho JSON body (đủ cho ảnh base64)
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
+
+// Make io accessible to routes
+app.set('io', io);
 
 // Serve static images (so backend can serve product images if needed)
 // Place your images under Back_end/public/images/products/
@@ -26,6 +47,7 @@ const userRoutes = require("./src/routes/userRoutes");
 const announcementRoutes = require("./src/routes/announcementRoutes");
 const commentRoutes = require("./src/routes/commentRoutes");
 const diseaseRoutes = require("./src/routes/diseaseRoutes");
+const chatRoutes = require("./src/routes/chatRoutes");
 
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
@@ -35,6 +57,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/announcements", announcementRoutes);
 app.use("/api/comments", commentRoutes);
 app.use("/api/diseases", diseaseRoutes);
+app.use("/api/chat", chatRoutes);
 
 // Swagger setup
 const swaggerOptions = {
@@ -63,7 +86,12 @@ app.use((err, req, res, next) => {
   res.status(500).json({ message: "Internal server error" });
 });
 
-app.listen(PORT, () => {
+// Socket.IO Chat Implementation
+const chatService = require("./src/services/chatService");
+chatService.initializeSocketIO(io);
+
+server.listen(PORT, () => {
   console.log(`🚀 Server chạy tại http://localhost:${PORT}`);
   console.log(`📑 Swagger Docs: http://localhost:${PORT}/api-docs`);
+  console.log(`💬 Socket.IO Chat đã sẵn sàng`);
 });

@@ -12,6 +12,10 @@ import Diseases from "./pages/user/Diseases/Diseases.jsx";
 import DiseaseDetail from "./pages/user/DiseaseDetail/DiseaseDetail.jsx";
 import ProtectedRoute from "./components/ProtectedRoute/ProtectedRoute.jsx";
 import UserLayout from "./components/UserLayout/UserLayout.jsx";
+import AdminLayout from "./components/AdminLayout/AdminLayout.jsx";
+import AdminDashboard from "./pages/admin/AdminDashboard/AdminDashboard.jsx";
+import MedicineManagement from "./pages/admin/AdminDashboard/MedicineManagement.jsx";
+import AdminChatManagement from "./pages/admin/AdminChatManagement/AdminChatManagement.jsx";
 
 export default function App() {
   return (
@@ -19,6 +23,21 @@ export default function App() {
       {/* Auth - Không có layout */}
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+
+      {/* Admin Routes */}
+      <Route
+        path="/admin/*"
+        element={
+          <ProtectedRoute adminOnly>
+            <AdminLayout />
+          </ProtectedRoute>
+        }
+      >
+        <Route path="dashboard" element={<AdminDashboard />} />
+        <Route path="medicines" element={<MedicineManagement />} />
+        <Route path="chat" element={<AdminChatManagement />} />
+        <Route index element={<Navigate to="dashboard" replace />} />
+      </Route>
 
       {/* User Routes - Có Header & Footer */}
       <Route

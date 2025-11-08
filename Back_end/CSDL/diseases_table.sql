@@ -1,0 +1,75 @@
+-- Tạo bảng Diseases
+CREATE TABLE IF NOT EXISTS public."Diseases" (
+    "Id" BIGSERIAL PRIMARY KEY,
+    "Name" VARCHAR(255) NOT NULL,
+    "Slug" VARCHAR(255) UNIQUE,
+    "Overview" TEXT,
+    "Symptoms" TEXT,
+    "Causes" TEXT,
+    "Treatment" TEXT,
+    "Prevention" TEXT,
+    "Category" VARCHAR(100),
+    "CreatedAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    "UpdatedAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
+);
+
+-- Tạo index
+CREATE INDEX IF NOT EXISTS idx_diseases_slug ON public."Diseases" ("Slug");
+CREATE INDEX IF NOT EXISTS idx_diseases_category ON public."Diseases" ("Category");
+
+-- Insert 40 bệnh mẫu
+INSERT INTO public."Diseases" 
+("Name", "Slug", "Overview", "Symptoms", "Causes", "Treatment", "Prevention", "Category") 
+VALUES
+-- === BỆNH HÔ HẤP (5) ===
+('Viêm phế quản','viem-phe-quan','Viêm phế quản là tình trạng viêm lớp niêm mạc của các ống phế quản, đường dẫn khí đến phổi.','Ho có đờm, Khó thở, Thở khò khè, Mệt mỏi, Sốt nhẹ, Tức ngực','Chủ yếu do virus. Hút thuốc lá. Tiếp xúc với khói bụi, ô nhiễm.','Nghỉ ngơi, Uống nhiều nước, Thuốc long đờm giảm ho, Kháng sinh nếu do vi khuẩn.','Tránh hút thuốc lá, Rửa tay thường xuyên, Tiêm phòng cúm hàng năm.','Bệnh hô hấp'),
+('Hen suyễn (Hen phế quản)','hen-suyen','Hen suyễn là một bệnh mạn tính làm viêm và thu hẹp đường thở, gây khó thở.','Khó thở, Thở khò khè, Ho, Nặng ngực','Yếu tố di truyền, Dị ứng, Nhiễm trùng hô hấp, Không khí lạnh, Vận động mạnh.','Thuốc hít cắt cơn và dự phòng, Tránh yếu tố kích phát.','Kiểm soát dị ứng, Tránh khói thuốc, Theo dõi chức năng hô hấp.','Bệnh hô hấp'),
+('Viêm phổi','viem-phoi','Viêm phổi là tình trạng nhiễm trùng làm viêm các túi khí ở phổi.','Sốt cao, Ho có đờm, Khó thở, Đau ngực khi hít sâu.','Vi khuẩn, Virus, Nấm.','Kháng sinh, Thuốc kháng virus, Hạ sốt, Nghỉ ngơi, Bù nước.','Tiêm phòng phế cầu, Giữ vệ sinh, Không hút thuốc.','Bệnh hô hấp'),
+('Bệnh phổi tắc nghẽn mạn tính (COPD)','copd','COPD là bệnh phổi mạn tính gây cản trở luồng khí thở ra khỏi phổi.','Khó thở tăng dần, Ho mạn tính, Khạc đờm thường xuyên.','Hút thuốc lá, Tiếp xúc khói bụi, Di truyền.','Ngừng hút thuốc lá, Thuốc giãn phế quản dạng hít, Liệu pháp oxy.','Không hút thuốc, Tránh ô nhiễm không khí.','Bệnh hô hấp'),
+('Viêm xoang','viem-xoang','Viêm xoang là tình trạng viêm hoặc sưng lớp niêm mạc của các xoang cạnh mũi.','Đau nhức mặt, Nghẹt mũi, Chảy nước mũi, Giảm khứu giác, Ho.','Virus, Dị ứng, Lệch vách ngăn, Nhiễm khuẩn.','Rửa mũi, Thuốc xịt mũi, Thuốc giảm đau, Kháng sinh nếu cần.','Tránh tác nhân dị ứng, Giữ ẩm không khí.','Bệnh hô hấp'),
+-- === BỆNH TIÊU HÓA (5) ===
+('Trào ngược dạ dày thực quản (GERD)','trao-nguoc-da-day-thuc-quan-gerd','GERD là tình trạng acid từ dạ dày trào ngược lên thực quản.','Ợ nóng, Ợ chua, Đau ngực, Khó nuốt, Ho khan.','Cơ thắt thực quản dưới yếu, Thoát vị hoành, Béo phì, Ăn uống không khoa học.','Thay đổi lối sống, Thuốc kháng acid, PPI.','Tránh thức ăn cay nóng, Giữ cân nặng hợp lý.','Bệnh tiêu hóa'),
+('Hội chứng ruột kích thích (IBS)','hoi-chung-ruot-kich-thich-ibs','IBS là rối loạn phổ biến ảnh hưởng đến ruột già.','Đau bụng, Thay đổi thói quen đại tiện, Đầy hơi, Chướng bụng.','Nguyên nhân chưa rõ, Stress, Rối loạn thần kinh ruột.','Thay đổi chế độ ăn, Quản lý stress, Thuốc điều hòa tiêu hóa.','Tập thể dục, Ngủ đủ, Tránh thực phẩm kích thích.','Bệnh tiêu hóa'),
+('Bệnh Crohn','benh-crohn','Bệnh Crohn là bệnh viêm ruột mạn tính gây loét đường tiêu hóa.','Tiêu chảy kéo dài, Đau bụng, Sụt cân, Mệt mỏi.','Rối loạn miễn dịch, Di truyền.','Thuốc chống viêm, Ức chế miễn dịch, Phẫu thuật nếu nặng.','Không hút thuốc, Theo dõi dinh dưỡng.','Bệnh tiêu hóa'),
+('Sỏi mật','soi-mat','Sỏi mật là sỏi cứng hình thành trong túi mật.','Đau bụng trên bên phải, Buồn nôn, Đau lan vai phải.','Cholesterol cao, Túi mật không rỗng đúng cách.','Phẫu thuật cắt túi mật, Thuốc tan sỏi (ít hiệu quả).','Duy trì cân nặng, Ăn ít chất béo.','Bệnh tiêu hóa'),
+('Viêm tụy cấp','viem-tuy-cap','Viêm tụy cấp là tình trạng viêm đột ngột của tuyến tụy.','Đau bụng dữ dội, Buồn nôn, Nôn, Sốt.','Sỏi mật, Rượu, Mỡ máu cao.','Nhịn ăn, Truyền dịch, Giảm đau, Điều trị nguyên nhân.','Giảm rượu bia, Duy trì lối sống lành mạnh.','Bệnh tiêu hóa'),
+-- === BỆNH TIM MẠCH (5) ===
+('Tăng huyết áp (Cao huyết áp)','tang-huyet-ap','Tăng huyết áp là tình trạng áp lực máu lên thành động mạch cao.','Đau đầu, Chóng mặt, Khó thở, Ù tai.','Di truyền, Tuổi tác, Ăn mặn, Lười vận động.','Thay đổi lối sống, Thuốc hạ huyết áp.','Ăn nhạt, Tập thể dục, Giữ cân nặng.','Bệnh tim mạch'),
+('Bệnh mạch vành','benh-mach-vanh','Bệnh mạch vành do tích tụ mảng xơ vữa trong động mạch nuôi tim.','Đau thắt ngực, Khó thở, Mệt mỏi.','Xơ vữa động mạch, Tăng mỡ máu, Hút thuốc.','Thuốc statin, Aspirin, Nong mạch, Đặt stent.','Kiểm soát huyết áp, Mỡ máu, Không hút thuốc.','Bệnh tim mạch'),
+('Suy tim','suy-tim','Suy tim là tình trạng tim không bơm đủ máu cho cơ thể.','Khó thở, Mệt mỏi, Phù chân, Ho dai dẳng.','Bệnh mạch vành, Tăng huyết áp, Van tim.','Thuốc lợi tiểu, Ức chế men chuyển, Chẹn beta, Máy tạo nhịp.','Kiểm soát bệnh nền, Ăn nhạt, Tập nhẹ.','Bệnh tim mạch'),
+('Rối loạn nhịp tim','roi-loan-nhip-tim','Rối loạn nhịp tim là nhịp tim không đều quá nhanh quá chậm hoặc bất thường.','Hồi hộp, Choáng, Ngất, Đau ngực.','Tổn thương tim, Caffeine, Stress.','Thuốc chống loạn nhịp, Sốc điện, Máy tạo nhịp.','Giảm caffeine, Tránh stress, Điều trị bệnh nền.','Bệnh tim mạch'),
+('Đột quỵ (Tai biến mạch máu não)','dot-quy','Đột quỵ là khi máu lên não bị gián đoạn hoặc mạch máu não vỡ.','Méo miệng, Yếu tay chân, Nói ngọng, Ngất.','Tắc mạch máu, Xuất huyết não, Huyết áp cao.','Cấp cứu khẩn cấp, Thuốc tiêu sợi huyết, Phẫu thuật.','Kiểm soát huyết áp, Tiểu đường, Không hút thuốc.','Bệnh tim mạch'),
+-- === BỆNH DA LIỄU (5) ===
+('Bệnh vẩy nến','benh-vay-nen','Vẩy nến là bệnh da mạn tính tự miễn làm tế bào da tăng sinh nhanh.','Da đỏ, Có vảy trắng bạc, Ngứa, Nứt nẻ.','Rối loạn miễn dịch, Di truyền, Stress.','Kem bôi steroid, Vitamin D, Quang trị liệu, Thuốc sinh học.','Giữ ẩm da, Quản lý stress, Tránh tổn thương da.','Bệnh da liễu'),
+('Bệnh chàm (Eczema)','benh-cham-eczema','Eczema là tình trạng viêm da cơ địa gây ngứa và khô da.','Ngứa dữ dội, Da đỏ, Khô, Rỉ dịch.','Di truyền, Hàng rào da yếu, Dị nguyên.','Dưỡng ẩm, Kem steroid, Kháng histamin.','Dưỡng ẩm hàng ngày, Tắm nước ấm nhẹ.','Bệnh da liễu'),
+('Nấm da (Hắc lào, Lang ben)','nam-da','Nấm da là nhiễm trùng da do vi nấm phổ biến ở vùng ẩm ướt.','Da đỏ, Ngứa, Đốm đổi màu.','Vi nấm, Môi trường ẩm, Vệ sinh kém.','Thuốc kháng nấm bôi hoặc uống.','Giữ da khô sạch, Mặc đồ thoáng.','Bệnh da liễu'),
+('Mề đay (Mày đay)','me-day','Mề đay là phản ứng dị ứng gây nổi sẩn phù ngứa.','Sẩn ngứa, Đỏ, Sưng tạm thời.','Dị ứng, Nhiệt độ, Stress.','Thuốc kháng histamin, Tránh tác nhân dị ứng.','Tránh yếu tố kích ứng, Quản lý stress.','Bệnh da liễu'),
+('Bạch biến','bach-bien','Bạch biến là bệnh tự miễn làm mất tế bào sắc tố da.','Mảng da trắng, Lông tóc bạc tại vùng tổn thương.','Tự miễn, Di truyền, Stress, Cháy nắng.','Kem steroid, Quang trị liệu, Che phủ thẩm mỹ.','Dùng kem chống nắng, Bảo vệ da.','Bệnh da liễu'),
+-- === BỆNH TRUYỀN NHIỄM (5) ===
+('Cúm mùa','cum-mua','Cúm là bệnh nhiễm trùng hô hấp cấp do virus cúm.','Sốt cao, Đau đầu, Đau mỏi cơ, Ho, Mệt.','Virus cúm, Lây qua giọt bắn.','Nghỉ ngơi, Hạ sốt, Thuốc kháng virus.','Tiêm vắc-xin cúm, Rửa tay, Che miệng khi ho.','Bệnh truyền nhiễm'),
+('Thủy đậu (Trái rạ)','thuy-dau','Thủy đậu là bệnh truyền nhiễm cấp tính do virus Varicella-Zoster.','Sốt nhẹ, Mụn nước, Ngứa toàn thân.','Virus VZV, Lây qua đường hô hấp.','Hạ sốt, Kháng histamin, Kháng virus.','Tiêm vắc-xin, Cách ly người bệnh.','Bệnh truyền nhiễm'),
+('Bệnh Sởi','benh-soi','Sởi là bệnh truyền nhiễm cấp do virus sởi.','Sốt cao, Ho, Mắt đỏ, Phát ban lan toàn thân.','Virus sởi, Lây qua hô hấp.','Nghỉ ngơi, Bổ sung vitamin A, Hạ sốt.','Tiêm vắc-xin MMR.','Bệnh truyền nhiễm'),
+('Quai bị','quai-bi','Quai bị là bệnh do virus quai bị gây sưng tuyến mang tai.','Sưng hàm, Đau khi nuốt, Sốt, Mệt mỏi.','Virus Mumps, Lây qua hô hấp.','Nghỉ ngơi, Chườm ấm, Giảm đau.','Tiêm vắc-xin MMR.','Bệnh truyền nhiễm'),
+('Sốt rét (Malaria)','sot-ret','Sốt rét là bệnh do ký sinh trùng Plasmodium lây qua muỗi.','Sốt, Rét run, Vã mồ hôi, Thiếu máu.','Ký sinh trùng Plasmodium, Muỗi Anopheles.','Thuốc chống sốt rét, Bù nước.','Ngủ màn, Diệt muỗi, Uống thuốc dự phòng.','Bệnh truyền nhiễm'),
+-- === BỆNH NỘI TIẾT (5) ===
+('Tiểu đường tuýp 1','tieu-duong-tuyp-1','Tiểu đường tuýp 1 là bệnh tự miễn cơ thể không sản xuất insulin.','Ăn nhiều, Uống nhiều, Tiểu nhiều, Gầy nhiều, Mệt mỏi.','Tự miễn, Di truyền, Môi trường.','Tiêm insulin, Ăn kiêng, Tập luyện.','Không có cách phòng ngừa hiệu quả.','Bệnh nội tiết'),
+('Tiểu đường tuýp 2','tieu-duong-tuyp-2','Tiểu đường tuýp 2 là tình trạng kháng insulin.','Khát nước, Đi tiểu nhiều, Mệt mỏi, Vết thương lâu lành.','Béo phì, Lối sống ít vận động, Di truyền.','Giảm cân, Thuốc Metformin, Insulin.','Ăn uống lành mạnh, Tập thể dục.','Bệnh nội tiết'),
+('Bệnh Basedow (Cường giáp)','benh-basedow-cuong-giap','Bệnh Basedow là bệnh tự miễn gây cường giáp.','Tim đập nhanh, Run tay, Sụt cân, Lồi mắt.','Kháng thể kích thích tuyến giáp.','Thuốc kháng giáp, I-ốt phóng xạ, Phẫu thuật.','Quản lý stress, Không hút thuốc.','Bệnh nội tiết'),
+('Suy giáp','suy-giap','Suy giáp là tình trạng tuyến giáp sản xuất không đủ hormone.','Mệt mỏi, Tăng cân, Da khô, Tóc rụng.','Viêm tuyến giáp Hashimoto, Thiếu i-ốt.','Bổ sung hormone Levothyroxine.','Ăn muối i-ốt đủ.','Bệnh nội tiết'),
+('Hội chứng Cushing','hoi-chung-cushing','Cushing xảy ra khi cơ thể có quá nhiều cortisol.','Tăng cân, Mặt tròn, Rạn da, Huyết áp cao.','Dùng corticosteroid lâu dài, U tuyến yên.','Giảm hoặc ngưng thuốc, Phẫu thuật, Xạ trị.','Dùng thuốc steroid đúng chỉ định.','Bệnh nội tiết'),
+-- === BỆNH THẦN KINH (5) ===
+('Đau nửa đầu Migraine','dau-nua-dau-migraine','Migraine là chứng đau đầu mạn tính dữ dội.','Đau một bên đầu, Nhạy sáng, Buồn nôn.','Di truyền, Hoạt động não bất thường.','Thuốc giảm đau, Triptan, Dự phòng bằng thuốc.','Tránh stress, Ngủ đủ, Tập thể dục.','Bệnh thần kinh'),
+('Bệnh Alzheimer','benh-alzheimer','Alzheimer gây suy giảm trí nhớ nhận thức và hành vi.','Quên sự kiện, Lú lẫn, Thay đổi tính cách.','Tích tụ mảng amyloid, Tuổi cao.','Thuốc ức chế cholinesterase, Chăm sóc hỗ trợ.','Tập luyện trí não, Lối sống lành mạnh.','Bệnh thần kinh'),
+('Bệnh Parkinson','benh-parkinson','Parkinson là bệnh thoái hóa thần kinh gây run và cứng cơ.','Run tay, Cứng cơ, Cử động chậm, Mất thăng bằng.','Thiếu dopamine, Di truyền, Tuổi tác.','Thuốc Levodopa, Vật lý trị liệu, Kích thích não sâu.','Tập thể dục, Ăn uống khoa học.','Bệnh thần kinh'),
+('Động kinh (Co giật)','dong-kinh','Động kinh là rối loạn thần kinh đặc trưng bởi các cơn co giật tái phát.','Co giật, Mất ý thức, Rối loạn cảm giác.','Tổn thương não, Di truyền, Không rõ nguyên nhân.','Thuốc chống động kinh, Phẫu thuật nếu cần.','Tránh mất ngủ, Ánh sáng nhấp nháy.','Bệnh thần kinh'),
+('Đa xơ cứng (MS)','da-xo-cung','Đa xơ cứng là bệnh tự miễn phá hủy vỏ myelin của sợi thần kinh.','Yếu cơ, Tê bì, Mệt mỏi, Mất thăng bằng.','Tự miễn, Thiếu vitamin D, Di truyền.','Thuốc điều hòa miễn dịch, Corticoid, Vật lý trị liệu.','Không có cách phòng ngừa cụ thể.','Bệnh thần kinh'),
+-- === BỆNH CƠ XƯƠNG KHỚP (5) ===
+('Viêm khớp dạng thấp (RA)','viem-khop-dang-thap','RA là bệnh tự miễn gây viêm đối xứng nhiều khớp.','Đau, Sưng, Nóng đỏ khớp, Cứng khớp buổi sáng.','Tự miễn, Di truyền, Hút thuốc lá.','Thuốc DMARDs, Sinh học, Giảm đau.','Không hút thuốc, Tập vận động.','Bệnh cơ xương khớp'),
+('Thoái hóa khớp (OA)','thoai-hoa-khop','Thoái hóa khớp là tổn thương sụn khớp và xương dưới sụn.','Đau khớp, Cứng khớp, Lạo xạo khi cử động.','Tuổi tác, Béo phì, Chấn thương.','Thuốc giảm đau, Vật lý trị liệu, Giảm cân.','Tập thể dục đều, Giữ cân nặng.','Bệnh cơ xương khớp'),
+('Bệnh Gout (Gút)','benh-gout','Gout là viêm khớp do tích tụ acid uric.','Đau khớp dữ dội, Sưng, Nóng đỏ.','Acid uric cao, Ăn nhiều purine.','Thuốc giảm đau, Hạ acid uric máu.','Giảm rượu bia, Hạn chế thịt đỏ.','Bệnh cơ xương khớp'),
+('Loãng xương','loang-xuong','Loãng xương là xương giòn yếu dễ gãy.','Đau lưng, Giảm chiều cao, Gù lưng.','Thiếu canxi, Thiếu vitamin D, Tuổi tác.','Bổ sung canxi, Vitamin D, Tập thể dục.','Ăn uống đủ chất, Không hút thuốc.','Bệnh cơ xương khớp'),
+('Đau lưng dưới cấp tính','dau-lung-duoi-cap','Đau lưng cấp tính là đau đột ngột vùng thắt lưng.','Đau nhói, Co cơ, Đau khi cử động.','Căng cơ, Sai tư thế, Chấn thương.','Nghỉ ngơi ngắn, Chườm lạnh, Thuốc giảm đau.','Tập cơ lưng, Giữ tư thế đúng.','Bệnh cơ xương khớp');
+
+-- Trigger cho Diseases
+CREATE TRIGGER update_diseases_updated_at BEFORE UPDATE ON public."Diseases"
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
