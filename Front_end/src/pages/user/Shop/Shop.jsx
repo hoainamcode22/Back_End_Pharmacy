@@ -90,25 +90,18 @@ export default function Shop() {
 
   const handleAddToCart = async (product) => {
     try {
-      console.log('=== handleAddToCart START ===');
-      console.log('Product:', product);
-      console.log('Product ID:', product.id);
-      console.log('Calling addToCart API...');
-      
-      const result = await addToCart(product.id, 1);
-      
-      console.log('addToCart result:', result);
-      console.log('=== handleAddToCart SUCCESS ===');
-      
-      alert(`✓ Đã thêm "${product.name}" vào giỏ hàng!`);
+      await addToCart(product.id, 1);
+      // Cập nhật badge giỏ hàng ở Header
+      window.dispatchEvent(new Event('cart:updated'));
+      const btn = document.getElementById('cart-icon-button');
+      if (btn) {
+        btn.classList.remove('pulse-cart');
+        void btn.offsetHeight;
+        btn.classList.add('pulse-cart');
+        setTimeout(() => btn.classList.remove('pulse-cart'), 650);
+      }
     } catch (err) {
-      console.error('=== handleAddToCart ERROR ===');
-      console.error("Full error:", err);
-      console.error("Error response:", err.response);
-      console.error("Error response data:", err.response?.data);
-      console.error("Error message:", err.message);
-      
-      alert("❌ Lỗi: " + (err.response?.data?.error || err.message || "Không thể thêm vào giỏ hàng"));
+      console.error('addToCart failed:', err);
     }
   };
 

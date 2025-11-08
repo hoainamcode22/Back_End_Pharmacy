@@ -1,18 +1,22 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../../../context/AuthContext/AuthContext.jsx";
 import { getMe, updateMe, changePassword } from "../../../api";
 import "./Profile.css";
 
 export default function Profile() {
-  const { user } = useAuth();
+  const { user, login } = useAuth();
   const [activeTab, setActiveTab] = useState("info");
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [avatarPreview, setAvatarPreview] = useState(null);
+
+  const fileInputRef = useRef(null);
+  
   const [formData, setFormData] = useState({
-    fullname: user?.Fullname || "",
-    email: user?.Email || "",
-    phone: user?.Phone || "",
-    address: user?.Address || "",
+    fullname: user?.Fullname || user?.fullname || "",
+    email: user?.Email || user?.email || "",
+    phone: user?.Phone || user?.phone || "",
+    address: user?.Address || user?.address || "",
   });
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: "",
@@ -28,11 +32,21 @@ export default function Profile() {
         setLoading(true);
         const userData = await getMe();
         setFormData({
-          fullname: userData.Fullname || "",
-          email: userData.Email || "",
-          phone: userData.Phone || "",
-          address: userData.Address || ""
+          fullname: userData.Fullname || userData.fullname || "",
+          email: userData.Email || userData.email || "",
+          phone: userData.Phone || userData.phone || "",
+          address: userData.Address || userData.address || ""
         });
+        // Load avatar from server or localStorage
+        if (userData.Avatar) {
+          setAvatarPreview(userData.Avatar);
+        } else {
+          // Fallback to localStorage
+          const currentAuth = JSON.parse(localStorage.getItem("ph_auth") || "{}");
+          if (currentAuth.user?.Avatar) {
+            setAvatarPreview(currentAuth.user.Avatar);
+          }
+        }
       } catch (err) {
         console.error("Error loading user info:", err);
         setMessage("Không thể tải thông tin người dùng");
@@ -53,23 +67,85 @@ export default function Profile() {
     setPasswordForm(prev => ({ ...prev, [name]: value }));
   };
 
+  // Handle avatar upload
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleAvatarChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        setMessage("❌ Vui lòng chọn file ảnh");
+        return;
+      }
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setMessage("❌ Kích thước ảnh không được vượt quá 5MB");
+        return;
+      }
+      
+      setAvatarFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatarPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+      setMessage("✓ Đã chọn ảnh. Nhấn 'Lưu' để cập nhật!");
+      setIsEditing(true);
+    }
+  };
+
   const handleSave = async () => {
     if (!formData.fullname || !formData.phone) {
-      setMessage("Vui lòng điền đầy đủ thông tin");
+      setMessage("❌ Vui lòng điền đầy đủ thông tin");
       return;
     }
 
     try {
       setLoading(true);
-      await updateMe({
+      setMessage("⏳ Đang cập nhật...");
+      
+      // Prepare update data
+      const updateData = {
         fullname: formData.fullname,
         phone: formData.phone,
         address: formData.address
-      });
+      };
+      
+      // Add avatar if changed
+      if (avatarPreview && avatarPreview.startsWith('data:')) {
+        updateData.avatar = avatarPreview; // Send base64 to server
+      }
+      
+      const updatedUser = await updateMe(updateData);
+      
+      // Update auth context with new user data
+      const currentAuth = JSON.parse(localStorage.getItem("ph_auth") || "{}");
+      if (currentAuth.token && currentAuth.user) {
+        const newUserData = {
+          ...currentAuth.user,
+          fullname: formData.fullname,
+          Fullname: formData.fullname,
+          phone: formData.phone,
+          Phone: formData.phone,
+          address: formData.address,
+          Address: formData.address,
+          Avatar: avatarPreview // Save avatar to localStorage
+        };
+        login(currentAuth.token, newUserData);
+      }
+      
       setMessage("✓ Cập nhật thông tin thành công!");
       setIsEditing(false);
+      setAvatarFile(null);
+      
+      // Auto clear message after 3s
+      setTimeout(() => setMessage(""), 3000);
     } catch (err) {
-      setMessage("❌ " + (err.response?.data?.message || "Cập nhật thất bại"));
+      console.error("Update error:", err);
+      setMessage("❌ " + (err.response?.data?.error || err.response?.data?.message || "Cập nhật thất bại"));
     } finally {
       setLoading(false);
     }
@@ -107,22 +183,35 @@ export default function Profile() {
     <div className="profile-container">
       {/* Profile Header */}
       <div className="profile-header">
-        <div className="profile-avatar">
+        <div className="profile-avatar-wrapper">
           <div className="avatar-circle">
-            {user?.Fullname?.charAt(0).toUpperCase() || "U"}
+            {avatarPreview ? (
+              <img src={avatarPreview} alt="Avatar" className="avatar-image" />
+            ) : (
+              <span className="avatar-initial">
+                {formData.fullname?.charAt(0).toUpperCase() || user?.Fullname?.charAt(0).toUpperCase() || "U"}
+              </span>
+            )}
           </div>
-          <button className="change-avatar-btn">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <button className="change-avatar-btn" onClick={handleAvatarClick} title="Đổi ảnh đại diện">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
               <circle cx="12" cy="13" r="4" />
             </svg>
           </button>
+          <input 
+            ref={fileInputRef}
+            type="file" 
+            accept="image/*" 
+            onChange={handleAvatarChange}
+            style={{ display: 'none' }}
+          />
         </div>
         <div className="profile-info">
-          <h1 className="profile-name">{user?.Fullname}</h1>
-          <p className="profile-email">{user?.Email}</p>
+          <h1 className="profile-name">{formData.fullname || user?.Fullname || "Người dùng"}</h1>
+          <p className="profile-email">{formData.email || user?.Email}</p>
           <span className="profile-role-badge">
-            {user?.Role === "admin" ? "👑 Quản trị viên" : "👤 Khách hàng"}
+            {user?.Role === "admin" || user?.role === "admin" ? "👑 Quản trị viên" : "👤 Khách hàng"}
           </span>
         </div>
       </div>
