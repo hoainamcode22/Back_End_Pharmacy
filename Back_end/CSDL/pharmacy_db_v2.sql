@@ -13,6 +13,7 @@ DROP TABLE IF EXISTS public."Orders" CASCADE;
 DROP TABLE IF EXISTS public."CartItems" CASCADE;
 DROP TABLE IF EXISTS public."Products" CASCADE;
 DROP TABLE IF EXISTS public."Users" CASCADE;
+DROP TABLE IF EXISTS public."Announcements" CASCADE;
 
 -- =============================================
 -- 1. BẢNG USERS (Người dùng)
@@ -217,6 +218,27 @@ INSERT INTO public."Products" ("Name", "Slug", "ShortDesc", "Description", "Cate
 ('Nhiệt kế hồng ngoại Thermometer', 'thermometer-infrared', 'Đo nhiệt độ không tiếp xúc', 'Nhiệt kế hồng ngoại đo nhanh 1 giây, không cần tiếp xúc, màn hình LED.', 'thiet-bi', 'Beurer', 'thermometer.jpg', 180000, 60);
 
 -- =============================================
+-- 9b. BẢNG ANNOUNCEMENTS (Thông báo)
+-- =============================================
+CREATE TABLE public."Announcements" (
+    "Id" BIGSERIAL PRIMARY KEY,
+    "Title" VARCHAR(255) NOT NULL,
+    "Content" TEXT,
+    "Url" TEXT,
+    "IsActive" BOOLEAN DEFAULT TRUE NOT NULL,
+    "PublishedAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    "CreatedAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    "UpdatedAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
+);
+
+COMMENT ON TABLE public."Announcements" IS 'Thông báo hiển thị ở trang đăng nhập hoặc trang chủ';
+
+-- Seed 2 announcements khớp với FE (có URL để click)
+INSERT INTO public."Announcements" ("Title", "Content", "Url") VALUES
+('Chào mừng đến hiệu thuốc trực tuyến', 'Mua sắm an toàn - Giao nhanh toàn quốc.', 'http://localhost:5173/shop'),
+('Khuyến mại tuần này: Giảm 20% Vitamin C', 'Áp dụng đến Chủ nhật cho sản phẩm Vitamin C.', 'http://localhost:5173/product/2');
+
+-- =============================================
 -- 10. TRIGGER TỰ ĐỘNG CẬP NHẬT THỜI GIAN
 -- =============================================
 
@@ -243,6 +265,10 @@ CREATE TRIGGER update_orders_updated_at BEFORE UPDATE ON public."Orders"
 
 -- Trigger cho ChatThreads
 CREATE TRIGGER update_chatthreads_updated_at BEFORE UPDATE ON public."ChatThreads"
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Trigger cho Announcements
+CREATE TRIGGER update_announcements_updated_at BEFORE UPDATE ON public."Announcements"
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- =============================================

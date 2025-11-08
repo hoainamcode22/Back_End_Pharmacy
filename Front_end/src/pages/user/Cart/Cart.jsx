@@ -46,6 +46,7 @@ function Cart() {
     try {
       await updateCartItem(id, newQuantity);
       await loadCart(); // Reload cart
+      window.dispatchEvent(new Event('cart:updated')); // Cập nhật header
     } catch {
       alert("Không thể cập nhật số lượng. Vui lòng thử lại.");
     }
@@ -56,6 +57,7 @@ function Cart() {
       try {
         await removeFromCart(id);
         await loadCart(); // Reload cart
+        window.dispatchEvent(new Event('cart:updated')); // Cập nhật header
       } catch {
         alert("Không thể xóa sản phẩm. Vui lòng thử lại.");
       }
