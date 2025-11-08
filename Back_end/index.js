@@ -25,6 +25,7 @@ const orderRoutes = require("./src/routes/orderRoutes");
 const userRoutes = require("./src/routes/userRoutes");
 const announcementRoutes = require("./src/routes/announcementRoutes");
 const commentRoutes = require("./src/routes/commentRoutes");
+const diseaseRoutes = require("./src/routes/diseaseRoutes");
 
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
@@ -33,6 +34,7 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/announcements", announcementRoutes);
 app.use("/api/comments", commentRoutes);
+app.use("/api/diseases", diseaseRoutes);
 
 // Swagger setup
 const swaggerOptions = {

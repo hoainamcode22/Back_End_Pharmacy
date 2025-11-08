@@ -107,7 +107,9 @@ const checkout = async (req, res) => {
     ]);
     const order = orderResult.rows[0];
 
-    // ✅ Lưu thông tin người nhận (chỉ khi bảng OrderRecipients tồn tại)
+    // ✅ Lưu thông tin người nhận (tùy chọn): sử dụng SAVEPOINT để tránh làm hỏng transaction
+    // Nếu bảng OrderRecipients chưa tồn tại, ta rollback về savepoint và tiếp tục bình thường
+    await client.query('SAVEPOINT sp_recipients');
     try {
       await client.query(`
         INSERT INTO "OrderRecipients"
@@ -124,7 +126,11 @@ const checkout = async (req, res) => {
         ward
       ]);
     } catch (e) {
+      // Rollback về savepoint để không làm hỏng transaction chính
+      await client.query('ROLLBACK TO SAVEPOINT sp_recipients');
       console.warn('⚠️ Bỏ qua lưu OrderRecipients (bảng có thể chưa tồn tại)');
+    } finally {
+      await client.query('RELEASE SAVEPOINT sp_recipients');
     }
 
     // ✅ Thêm OrderItems
@@ -148,9 +154,9 @@ const checkout = async (req, res) => {
     await client.query('COMMIT');
 
     res.status(201).json({
-      message: 'Đặt hàng thành công!',
       order: {
         Id: order.Id,
+        Code: order.Code,
         Total: order.Total,
         Status: order.Status,
         Address: fullAddress,

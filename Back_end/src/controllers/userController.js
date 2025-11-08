@@ -20,7 +20,7 @@ const getProfile = async (req, res) => {
     const query = `
       SELECT 
         "Id", "Username", "Fullname", "Email", 
-        "Phone", "Address", "Role", "CreatedAt"
+        "Phone", "Address", "Role", "Avatar", "CreatedAt"
       FROM "Users"
       WHERE "Id" = $1
     `;
@@ -67,7 +67,7 @@ const getProfile = async (req, res) => {
 const updateProfile = async (req, res) => {
   try {
     const userId = req.user.Id;
-    const { fullname, phone, address } = req.body;
+    const { fullname, phone, address, avatar } = req.body;
 
     // Build query động
     const updates = [];
@@ -92,6 +92,13 @@ const updateProfile = async (req, res) => {
       paramIndex++;
     }
 
+    // Thêm avatar (base64)
+    if (avatar !== undefined) {
+      updates.push(`"Avatar" = $${paramIndex}`);
+      values.push(avatar);
+      paramIndex++;
+    }
+
     if (updates.length === 0) {
       return res.status(400).json({ error: 'Không có thông tin để cập nhật!' });
     }
@@ -102,7 +109,7 @@ const updateProfile = async (req, res) => {
       UPDATE "Users"
       SET ${updates.join(', ')}, "UpdatedAt" = NOW()
       WHERE "Id" = $${paramIndex}
-      RETURNING "Id", "Fullname", "Phone", "Address"
+      RETURNING "Id", "Fullname", "Phone", "Address", "Avatar"
     `;
 
     const result = await db.query(query, values);
