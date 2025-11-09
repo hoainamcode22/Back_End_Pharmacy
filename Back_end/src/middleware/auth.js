@@ -35,6 +35,21 @@ const authenticateToken = (req, res, next) => {
   }
 };
 
+// --- BỔ SUNG MIDDLEWARE KIỂM TRA ADMIN ---
+const isAdmin = (req, res, next) => {
+  // Middleware này phải chạy SAU authenticateToken
+  if (req.user && req.user.Role === 'admin') {
+    // Nếu đúng là admin, cho đi tiếp
+    next();
+  } else {
+    // Nếu không phải admin (hoặc req.user không tồn tại)
+    console.log('ADMIN CHECK FAILED: User is not admin', req.user);
+    return res.status(403).json({ error: 'Chỉ admin mới có quyền truy cập!' });
+  }
+};
+// --- HẾT PHẦN BỔ SUNG ---
+
 module.exports = {
-  authenticateToken
+  authenticateToken,
+  isAdmin // <-- Bổ sung export
 };

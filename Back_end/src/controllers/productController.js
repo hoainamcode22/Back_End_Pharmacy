@@ -239,7 +239,439 @@ const getProductById = async (req, res) => {
   }
 };
 
+/**
+ * ============== ADMIN FUNCTIONS ==============
+ */
+
+/**
+ * @swagger
+ * /api/products/admin:
+ *   post:
+ *     summary: Tạo sản phẩm mới (Admin only)
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               shortDesc:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               category:
+ *                 type: string
+ *               brand:
+ *                 type: string
+ *               image:
+ *                 type: string
+ *               price:
+ *                 type: number
+ *               stock:
+ *                 type: integer
+ *     responses:
+ *       201:
+ *         description: Tạo sản phẩm thành công
+ */
+const createProduct = async (req, res) => {
+  try {
+    // Check admin role
+    if (req.user.Role !== 'admin') {
+      return res.status(403).json({ error: 'Chỉ admin mới có quyền tạo sản phẩm!' });
+    }
+
+    const { 
+      name, 
+      shortDesc, 
+      description, 
+      category, 
+      brand, 
+      image, 
+      price, 
+      stock 
+    } = req.body;
+
+    // Validate
+    if (!name || !price || stock === undefined) {
+      return res.status(400).json({ error: 'Thiếu thông tin bắt buộc (name, price, stock)!' });
+    }
+
+    // Generate slug from name
+    const slug = name
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/đ/g, 'd')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+
+    const query = `
+      INSERT INTO "Products" 
+      ("Name", "Slug", "ShortDesc", "Description", "Category", "Brand", 
+       "Image", "Price", "Stock", "IsActive", "CreatedAt")
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, true, NOW())
+      RETURNING *
+    `;
+
+    const result = await db.query(query, [
+      name,
+      slug,
+      shortDesc || '',
+      description || '',
+      category || 'thuoc',
+      brand || '',
+      image || 'default.jpg',
+      price,
+      stock
+    ]);
+
+    res.status(201).json({
+      message: 'Tạo sản phẩm thành công!',
+      product: result.rows[0]
+    });
+
+  } catch (error) {
+    console.error('Lỗi createProduct:', error);
+    res.status(500).json({ error: 'Lỗi server khi tạo sản phẩm!' });
+  }
+};
+
+/**
+ * @swagger
+ * /api/products/admin/:id:
+ *   patch:
+ *     summary: Cập nhật sản phẩm (Admin only)
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Cập nhật thành công
+ */
+const updateProduct = async (req, res) => {
+  try {
+    // Check admin role
+    if (req.user.Role !== 'admin') {
+      return res.status(403).json({ error: 'Chỉ admin mới có quyền cập nhật sản phẩm!' });
+    }
+
+    const { id } = req.params;
+    const { 
+      name, 
+      shortDesc, 
+      description, 
+      category, 
+      brand, 
+      image, 
+      price, 
+      stock,
+      isActive
+    } = req.body;
+
+    // Build dynamic query
+    const updates = [];
+    const values = [];
+    let paramIndex = 1;
+
+    if (name !== undefined) {
+      updates.push(`"Name" = $${paramIndex}`);
+      values.push(name);
+      paramIndex++;
+
+      // Update slug if name changes
+      const slug = name
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/đ/g, 'd')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+      
+      updates.push(`"Slug" = $${paramIndex}`);
+      values.push(slug);
+      paramIndex++;
+    }
+
+    if (shortDesc !== undefined) {
+      updates.push(`"ShortDesc" = $${paramIndex}`);
+      values.push(shortDesc);
+      paramIndex++;
+    }
+
+    if (description !== undefined) {
+      updates.push(`"Description" = $${paramIndex}`);
+      values.push(description);
+      paramIndex++;
+    }
+
+    if (category !== undefined) {
+      updates.push(`"Category" = $${paramIndex}`);
+      values.push(category);
+      paramIndex++;
+    }
+
+    if (brand !== undefined) {
+      updates.push(`"Brand" = $${paramIndex}`);
+      values.push(brand);
+      paramIndex++;
+    }
+
+    if (image !== undefined) {
+      updates.push(`"Image" = $${paramIndex}`);
+      values.push(image);
+      paramIndex++;
+    }
+
+    if (price !== undefined) {
+      updates.push(`"Price" = $${paramIndex}`);
+      values.push(price);
+      paramIndex++;
+    }
+
+    if (stock !== undefined) {
+      updates.push(`"Stock" = $${paramIndex}`);
+      values.push(stock);
+      paramIndex++;
+    }
+
+    if (isActive !== undefined) {
+      updates.push(`"IsActive" = $${paramIndex}`);
+      values.push(isActive);
+      paramIndex++;
+    }
+
+    if (updates.length === 0) {
+      return res.status(400).json({ error: 'Không có thông tin để cập nhật!' });
+    }
+
+    values.push(id);
+
+    const query = `
+      UPDATE "Products"
+      SET ${updates.join(', ')}, "UpdatedAt" = NOW()
+      WHERE "Id" = $${paramIndex}
+      RETURNING *
+    `;
+
+    const result = await db.query(query, values);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Không tìm thấy sản phẩm!' });
+    }
+
+    res.json({
+      message: 'Cập nhật sản phẩm thành công!',
+      product: result.rows[0]
+    });
+
+  } catch (error) {
+    console.error('Lỗi updateProduct:', error);
+    res.status(500).json({ error: 'Lỗi server khi cập nhật sản phẩm!' });
+  }
+};
+
+/**
+ * @swagger
+ * /api/products/admin/:id:
+ *   delete:
+ *     summary: Xóa sản phẩm (Admin only)
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Xóa thành công
+ */
+const deleteProduct = async (req, res) => {
+  try {
+    // Check admin role
+    if (req.user.Role !== 'admin') {
+      return res.status(403).json({ error: 'Chỉ admin mới có quyền xóa sản phẩm!' });
+    }
+
+    const { id } = req.params;
+
+    // Soft delete: set IsActive = false
+    const query = `
+      UPDATE "Products"
+      SET "IsActive" = false, "UpdatedAt" = NOW()
+      WHERE "Id" = $1
+      RETURNING "Id", "Name"
+    `;
+
+    const result = await db.query(query, [id]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Không tìm thấy sản phẩm!' });
+    }
+
+    res.json({ 
+      message: 'Đã xóa sản phẩm thành công!',
+      product: result.rows[0]
+    });
+
+  } catch (error) {
+    console.error('Lỗi deleteProduct:', error);
+    res.status(500).json({ error: 'Lỗi server khi xóa sản phẩm!' });
+  }
+};
+
+/**
+ * @swagger
+ * /api/products/admin/:id/toggle:
+ *   patch:
+ *     summary: Bật/tắt trạng thái sản phẩm (Admin only)
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Cập nhật thành công
+ */
+const toggleProductStatus = async (req, res) => {
+  try {
+    // Check admin role
+    if (req.user.Role !== 'admin') {
+      return res.status(403).json({ error: 'Chỉ admin mới có quyền thay đổi trạng thái!' });
+    }
+
+    const { id } = req.params;
+
+    const query = `
+      UPDATE "Products"
+      SET "IsActive" = NOT "IsActive", "UpdatedAt" = NOW()
+      WHERE "Id" = $1
+      RETURNING "Id", "Name", "IsActive"
+    `;
+
+    const result = await db.query(query, [id]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Không tìm thấy sản phẩm!' });
+    }
+
+    res.json({ 
+      message: 'Đã cập nhật trạng thái sản phẩm!',
+      product: result.rows[0]
+    });
+
+  } catch (error) {
+    console.error('Lỗi toggleProductStatus:', error);
+    res.status(500).json({ error: 'Lỗi server khi thay đổi trạng thái!' });
+  }
+};
+
+/**
+ * @swagger
+ * /api/products/admin/all:
+ *   get:
+ *     summary: Lấy tất cả sản phẩm kể cả inactive (Admin only)
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Danh sách tất cả sản phẩm
+ */
+const getAllProductsAdmin = async (req, res) => {
+  try {
+    // Check admin role
+    if (req.user.Role !== 'admin') {
+      return res.status(403).json({ error: 'Chỉ admin mới có quyền truy cập!' });
+    }
+
+    const { category, search, page = 1, limit = 20 } = req.query;
+    const offset = (page - 1) * limit;
+
+    // Build query (không filter IsActive)
+    let whereConditions = [];
+    let queryParams = [];
+    let paramIndex = 1;
+
+    if (category) {
+      whereConditions.push(`LOWER("Category") = LOWER($${paramIndex})`);
+      queryParams.push(category);
+      paramIndex++;
+    }
+
+    if (search) {
+      whereConditions.push(`LOWER("Name") LIKE LOWER($${paramIndex})`);
+      queryParams.push(`%${search}%`);
+      paramIndex++;
+    }
+
+    const whereClause = whereConditions.length > 0
+      ? `WHERE ${whereConditions.join(' AND ')}`
+      : '';
+
+    // Count
+    const countQuery = `SELECT COUNT(*) as total FROM "Products" ${whereClause}`;
+    const countResult = await db.query(countQuery, queryParams);
+    const totalItems = parseInt(countResult.rows[0].total);
+
+    // Get products
+    queryParams.push(limit, offset);
+    const productsQuery = `
+      SELECT 
+        "Id", "Name", "Slug", "ShortDesc", "Description",
+        "Category", "Brand", "Image", "Price", 
+        "Stock", "IsActive", "CreatedAt", "UpdatedAt"
+      FROM "Products"
+      ${whereClause}
+      ORDER BY "CreatedAt" DESC
+      LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
+    `;
+
+    const result = await db.query(productsQuery, queryParams);
+
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    const mappedRows = result.rows.map(r => {
+      const image = r.Image || null;
+      let imageUrl = `${baseUrl}/images/default.jpg`;
+      if (image) {
+        if (image.startsWith('http')) {
+          imageUrl = image;
+        } else if (image.startsWith('/images/')) {
+          imageUrl = `${baseUrl}${image}`;
+        } else {
+          imageUrl = `${baseUrl}/images/${image}`;
+        }
+      }
+
+      return {
+        ...r,
+        ImageUrl: imageUrl
+      };
+    });
+
+    res.json({
+      products: mappedRows,
+      pagination: {
+        currentPage: parseInt(page),
+        totalPages: Math.ceil(totalItems / limit),
+        totalItems: totalItems,
+        itemsPerPage: parseInt(limit)
+      }
+    });
+
+  } catch (error) {
+    console.error('Lỗi getAllProductsAdmin:', error);
+    res.status(500).json({ error: 'Lỗi server khi lấy danh sách sản phẩm!' });
+  }
+};
+
 module.exports = {
   getProducts,
-  getProductById
+  getProductById,
+  // Admin functions
+  createProduct,
+  updateProduct,
+  deleteProduct,
+  toggleProductStatus,
+  getAllProductsAdmin
 };

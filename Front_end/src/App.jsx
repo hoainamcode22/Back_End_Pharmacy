@@ -16,6 +16,8 @@ import AdminLayout from "./components/AdminLayout/AdminLayout.jsx";
 import AdminDashboard from "./pages/admin/AdminDashboard/AdminDashboard.jsx";
 import MedicineManagement from "./pages/admin/AdminDashboard/MedicineManagement.jsx";
 import AdminChatManagement from "./pages/admin/AdminChatManagement/AdminChatManagement.jsx";
+import UserManagement from "./pages/admin/UserManagement/UserManagement.jsx";
+import OrderManagement from "./pages/admin/OrderManagement/OrderManagement.jsx";
 
 export default function App() {
   return (
@@ -34,6 +36,8 @@ export default function App() {
         }
       >
         <Route path="dashboard" element={<AdminDashboard />} />
+        <Route path="orders" element={<OrderManagement />} />
+        <Route path="users" element={<UserManagement />} />
         <Route path="medicines" element={<MedicineManagement />} />
         <Route path="chat" element={<AdminChatManagement />} />
         <Route index element={<Navigate to="dashboard" replace />} />

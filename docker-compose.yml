@@ -24,6 +24,7 @@ services:
   pgadmin:
     image: dpage/pgadmin4:latest
     container_name: pharmacy_pgadmin
+    restart: always
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@pharmacy.com
       PGADMIN_DEFAULT_PASSWORD: 123456
@@ -34,7 +35,7 @@ services:
     depends_on:
       - db
     volumes:
-      # ✅ Volume này giúp pgAdmin lưu lại cấu hình (server connections, query history, v.v.)
+    
       - pgadmin_data:/var/lib/pgadmin
 
   backend:
@@ -78,7 +79,7 @@ services:
 volumes:
   pharmacy_data:  
   frontend_node_modules:
-  # ✅ Volume mới để lưu cấu hình pgAdmin
+  
   pgadmin_data:
 
 networks:

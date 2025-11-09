@@ -16,16 +16,43 @@ export default function AdminLayout() {
   return (
     <div className="admin-layout">
       <aside className="sidebar">
-        <div className="sidebar-header">Pharmacy Admin</div>
+        <div className="sidebar-header">
+          <div className="logo">💊</div>
+          <div>Pharmacy Admin</div>
+        </div>
         <nav>
-          <Link to="/admin/dashboard">Tổng quan</Link>
-          <Link to="/admin/medicines">Quản lý thuốc</Link>
-          <Link to="/admin/chat">Hỗ trợ khách hàng</Link>
-          {/* Thêm các link khác ở đây sau */}
+          <Link to="/admin/dashboard" className="nav-link">
+            <span className="nav-icon">📊</span>
+            <span>Tổng quan</span>
+          </Link>
+          <Link to="/admin/orders" className="nav-link">
+            <span className="nav-icon">📦</span>
+            <span>Quản lý đơn hàng</span>
+          </Link>
+          <Link to="/admin/users" className="nav-link">
+            <span className="nav-icon">👥</span>
+            <span>Quản lý người dùng</span>
+          </Link>
+          <Link to="/admin/medicines" className="nav-link">
+            <span className="nav-icon">💊</span>
+            <span>Quản lý sản phẩm</span>
+          </Link>
+          <Link to="/admin/chat" className="nav-link">
+            <span className="nav-icon">💬</span>
+            <span>Hỗ trợ khách hàng</span>
+          </Link>
         </nav>
         <div className="sidebar-footer">
-          <div>{user?.email}</div>
-          <button onClick={handleLogout} className="logout-btn">Đăng xuất</button>
+          <div className="user-info">
+            <div className="user-avatar">{user?.email?.charAt(0).toUpperCase()}</div>
+            <div className="user-details">
+              <div className="user-email">{user?.email}</div>
+              <div className="user-role">Administrator</div>
+            </div>
+          </div>
+          <button onClick={handleLogout} className="logout-btn">
+            🚪 Đăng xuất
+          </button>
         </div>
       </aside>
       <main className="main-content">

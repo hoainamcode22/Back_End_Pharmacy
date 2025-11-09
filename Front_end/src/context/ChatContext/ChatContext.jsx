@@ -1,19 +1,11 @@
 // Chat Context - Quản lý Socket.IO và trạng thái chat
-import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
+import React, { createContext, useEffect, useState, useRef } from 'react';
 import { io } from 'socket.io-client';
 import { useAuth } from '../AuthContext/AuthContext';
 import { SOCKET_URL } from '../../config';
 import api from '../../api';
 
 const ChatContext = createContext();
-
-export const useChat = () => {
-  const context = useContext(ChatContext);
-  if (!context) {
-    throw new Error('useChat must be used within a ChatProvider');
-  }
-  return context;
-};
 
 export const ChatProvider = ({ children }) => {
   const { token, user } = useAuth();
@@ -22,7 +14,7 @@ export const ChatProvider = ({ children }) => {
   const [threads, setThreads] = useState([]);
   const [currentThread, setCurrentThread] = useState(null);
   const [messages, setMessages] = useState([]);
-  const [onlineUsers, setOnlineUsers] = useState(new Set());
+  const [onlineUsers] = useState(new Set());
   const [typingUsers, setTypingUsers] = useState(new Map());
   const [newMessageCount, setNewMessageCount] = useState(0);
   
@@ -39,18 +31,26 @@ export const ChatProvider = ({ children }) => {
       });
 
       newSocket.on('connect', () => {
+        console.log('🔌 Socket connected:', newSocket.id);
         setIsConnected(true);
         
         // Xác thực với server
+        console.log('🔐 Authenticating socket with token...');
         newSocket.emit('authenticate', token);
       });
 
       newSocket.on('authenticated', (data) => {
+        console.log('✅ Socket authenticated:', data);
         if (data.success) {
+          console.log(`👤 User role: ${user.role}, ID: ${user.id}`);
+          
           // Nếu là admin, join tất cả threads
           if (user.role === 'admin') {
+            console.log('👨‍💼 Admin detected - joining admin_room and all threads');
             newSocket.emit('admin_join_all_threads');
           }
+        } else {
+          console.error('❌ Socket authentication failed:', data.error);
         }
       });
 
@@ -65,7 +65,9 @@ export const ChatProvider = ({ children }) => {
       });
 
       newSocket.on('new_thread_notification', (notification) => {
+        console.log('🔔 New thread notification received:', notification);
         if (user.role === 'admin') {
+          console.log('📥 Admin reloading threads...');
           // Thông báo thread mới cho admin
           loadThreads(); // Reload threads
         }
@@ -124,12 +126,14 @@ export const ChatProvider = ({ children }) => {
         ));
       });
 
-      newSocket.on('admin_threads_joined', (threads) => {
+      newSocket.on('admin_threads_joined', () => {
         // Admin đã join tất cả threads
+        console.log('✅ Admin joined all thread rooms');
       });
 
-      newSocket.on('error', (error) => {
+      newSocket.on('error', (err) => {
         // Socket.IO Error
+        console.error('❌ Socket error:', err);
       });
 
       setSocket(newSocket);
@@ -140,6 +144,7 @@ export const ChatProvider = ({ children }) => {
         setIsConnected(false);
       };
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token, user]);
 
   // Load threads từ API
@@ -149,8 +154,8 @@ export const ChatProvider = ({ children }) => {
       if (response.data.success) {
         setThreads(response.data.threads);
       }
-    } catch (error) {
-      // Lỗi load threads
+    } catch (err) {
+      console.error('Error loading threads:', err);
     }
   };
 
@@ -172,7 +177,9 @@ export const ChatProvider = ({ children }) => {
         });
         return true;
       }
-    } catch (error) {
+      return false;
+    } catch (err) {
+      console.error('Error creating thread:', err);
       return false;
     }
   };
@@ -238,10 +245,11 @@ export const ChatProvider = ({ children }) => {
       if (response.data.success) {
         return true;
       }
-    } catch (error) {
-      // Lỗi đóng thread
+      return false;
+    } catch (err) {
+      console.error('Error closing thread:', err);
+      return false;
     }
-    return false;
   };
 
   // Get chat stats (admin only)
@@ -251,10 +259,11 @@ export const ChatProvider = ({ children }) => {
       if (response.data.success) {
         return response.data.stats;
       }
-    } catch (error) {
-      // Lỗi lấy stats
+      return null;
+    } catch (err) {
+      console.error('Error getting chat stats:', err);
+      return null;
     }
-    return null;
   };
 
   const contextValue = {

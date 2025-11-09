@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../../../context/AuthContext/AuthContext';
-import { useChat } from '../../../context/ChatContext/ChatContext';
+import { useChat } from '../../../context/ChatContext/useChatHook';
 import api from '../../../api';
 import './AdminChatManagement.css';
 
@@ -8,12 +8,7 @@ const AdminChatManagement = () => {
   const { user } = useContext(AuthContext);
   const { 
     socket, 
-    isConnected, 
-    threadUsers, 
-    activeUsers,
-    sendMessage, 
-    joinThread, 
-    leaveThread 
+    isConnected
   } = useChat();
   
   const [selectedThread, setSelectedThread] = useState(null);
@@ -24,39 +19,62 @@ const AdminChatManagement = () => {
   const [stats, setStats] = useState({
     total: 0,
     active: 0,
-    closed: 0
+    closed: 0,
+    onlineUsers: 0 // Moved to stats object
   });
 
-  // Load all threads
+  // Load all threads and join socket room
   useEffect(() => {
     if (user?.role === 'admin') {
       loadAllThreads();
+      
+      // Admin joins all thread rooms for real-time updates
+      if (socket && isConnected) {
+        console.log('👨‍💼 Admin joining all thread rooms...');
+        socket.emit('admin_join_all_threads');
+      }
     }
-  }, [user]);
+  }, [user, socket, isConnected]);
 
   // Socket event listeners
   useEffect(() => {
     if (!socket || user?.role !== 'admin') return;
 
+    console.log('🔌 Setting up admin socket listeners...');
+
     const handleNewMessage = (data) => {
-      if (selectedThread && data.threadId === selectedThread.id) {
-        setMessages(prev => [...prev, data]);
+      console.log('📩 New message received:', data);
+      
+      // Map backend fields to frontend
+      const mappedMessage = {
+        id: data.Id || data.id,
+        threadId: data.ThreadId || data.threadId,
+        senderId: data.SenderId || data.senderId,
+        senderRole: data.SenderRole || data.senderRole,
+        content: data.Content || data.content,
+        createdAt: data.CreatedAt || data.createdAt,
+        senderName: data.SenderName || data.senderName
+      };
+      
+      if (selectedThread && mappedMessage.threadId === selectedThread.id) {
+        setMessages(prev => [...prev, mappedMessage]);
       }
       
       // Update thread list
       setThreads(prev => prev.map(thread => 
-        thread.id === data.threadId 
-          ? { ...thread, lastMessage: data.content, lastMessageAt: data.createdAt }
+        thread.id === mappedMessage.threadId 
+          ? { ...thread, lastMessage: mappedMessage.content, lastMessageAt: mappedMessage.createdAt }
           : thread
       ));
     };
 
     const handleNewThread = (thread) => {
-      setThreads(prev => [thread, ...prev]);
-      setStats(prev => ({ ...prev, total: prev.total + 1, active: prev.active + 1 }));
+      console.log('🆕 New thread notification:', thread);
+      loadAllThreads(); // Reload all threads
     };
 
     const handleThreadClosed = ({ threadId }) => {
+      console.log('🔒 Thread closed:', threadId);
       setThreads(prev => prev.map(thread => 
         thread.id === threadId 
           ? { ...thread, status: 'closed' }
@@ -67,22 +85,51 @@ const AdminChatManagement = () => {
 
     socket.on('new_message', handleNewMessage);
     socket.on('new_thread', handleNewThread);
+    socket.on('new_thread_notification', handleNewThread);
     socket.on('thread_closed', handleThreadClosed);
 
     return () => {
+      console.log('🔌 Cleaning up admin socket listeners...');
       socket.off('new_message', handleNewMessage);
       socket.off('new_thread', handleNewThread);
+      socket.off('new_thread_notification', handleNewThread);
       socket.off('thread_closed', handleThreadClosed);
     };
   }, [socket, selectedThread, user]);
 
   const loadAllThreads = async () => {
     try {
-      const response = await api.get('/api/chat/admin/threads');
-      setThreads(response.data.threads || []);
-      setStats(response.data.stats || { total: 0, active: 0, closed: 0 });
+      const response = await api.get('/chat/admin/threads');
+      
+      if (!response.data || !response.data.threads) {
+        console.warn('No threads data received');
+        setThreads([]);
+        return;
+      }
+      
+      // Map backend fields to frontend format
+      const mappedThreads = (response.data.threads || []).map(thread => ({
+        id: thread.id,
+        userId: thread.user_id,
+        userName: thread.user_name || 'Unknown User',
+        email: thread.user_email || '',
+        username: thread.username || '',
+        title: thread.title || 'Untitled',
+        subject: thread.subject || thread.title || 'General Support',
+        status: thread.status || 'active',
+        createdAt: thread.created_at,
+        updatedAt: thread.updated_at,
+        messageCount: thread.message_count || 0,
+        lastMessage: thread.last_message || '',
+        lastMessageAt: thread.last_message_at || thread.created_at
+      }));
+      
+      setThreads(mappedThreads);
+      setStats(response.data.stats || { total: 0, active: 0, closed: 0, onlineUsers: 0 });
     } catch (error) {
-      // Error loading threads
+      console.error('❌ Error loading threads:', error.response?.data || error.message);
+      setThreads([]);
+      setStats({ total: 0, active: 0, closed: 0, onlineUsers: 0 });
     } finally {
       setLoading(false);
     }
@@ -90,16 +137,39 @@ const AdminChatManagement = () => {
 
   const loadThreadMessages = async (thread) => {
     try {
-      const response = await api.get(`/api/chat/threads/${thread.id}/messages`);
-      setMessages(response.data.messages || []);
+      const response = await api.get(`/chat/threads/${thread.id}/messages`);
+      
+      if (!response.data || !response.data.messages) {
+        console.warn('No messages data received');
+        setMessages([]);
+        setSelectedThread(thread);
+        return;
+      }
+      
+      // Map backend message fields to frontend format (lowercase)
+      const mappedMessages = (response.data.messages || []).map(msg => ({
+        id: msg.Id,
+        threadId: msg.ThreadId,
+        senderId: msg.SenderId,
+        senderRole: msg.SenderRole || 'user',
+        content: msg.Content || '',
+        createdAt: msg.CreatedAt,
+        senderName: msg.SenderName || 'Unknown',
+        senderUsername: msg.SenderUsername || ''
+      }));
+      
+      setMessages(mappedMessages);
       setSelectedThread(thread);
       
-      // Join thread for real-time updates
-      if (socket) {
-        joinThread(thread.id);
+      // Join thread room via socket for real-time updates
+      if (socket && isConnected) {
+        console.log(`🚪 Joining thread room: thread_${thread.id}`);
+        socket.emit('join_thread', thread.id);
       }
     } catch (error) {
-      // Error loading messages
+      console.error('❌ Error loading messages:', error.response?.data || error.message);
+      setMessages([]);
+      setSelectedThread(thread);
     }
   };
 
@@ -108,29 +178,57 @@ const AdminChatManagement = () => {
     if (!messageText.trim() || !selectedThread) return;
 
     try {
-      await sendMessage(selectedThread.id, messageText);
+      console.log('📤 Sending message via API...');
+      
+      // Send via API (which will trigger socket event on backend)
+      const response = await api.post(`/chat/threads/${selectedThread.id}/messages`, {
+        content: messageText.trim()
+      });
+      
+      console.log('✅ Message sent successfully:', response.data);
       setMessageText('');
+      
+      // Optionally also send via socket for instant feedback
+      if (socket && isConnected) {
+        socket.emit('send_message', {
+          threadId: selectedThread.id,
+          content: messageText.trim()
+        });
+      }
     } catch (error) {
-      // Error sending message
+      console.error('❌ Error sending message:', error);
+      alert('Không thể gửi tin nhắn. Vui lòng thử lại.');
     }
   };
 
   const handleCloseThread = async (threadId) => {
     try {
-      await api.patch(`/api/chat/threads/${threadId}/close`);
+      const response = await api.patch(`/chat/threads/${threadId}/close`);
       
-      // Update local state
-      setThreads(prev => prev.map(thread => 
-        thread.id === threadId 
-          ? { ...thread, status: 'closed' }
-          : thread
-      ));
+      if (response.data.success) {
+        console.log('✅ Thread closed successfully');
+        
+        // Update local state
+        setThreads(prev => prev.map(thread => 
+          thread.id === threadId 
+            ? { ...thread, status: 'closed' }
+            : thread
+        ));
 
-      if (selectedThread?.id === threadId) {
-        setSelectedThread({ ...selectedThread, status: 'closed' });
+        if (selectedThread?.id === threadId) {
+          setSelectedThread({ ...selectedThread, status: 'closed' });
+        }
+        
+        // Update stats
+        setStats(prev => ({ 
+          ...prev, 
+          active: Math.max(0, prev.active - 1), 
+          closed: prev.closed + 1 
+        }));
       }
     } catch (error) {
-      // Error closing thread
+      console.error('❌ Error closing thread:', error.response?.data || error.message);
+      alert('Không thể đóng hội thoại. Vui lòng thử lại.');
     }
   };
 
@@ -194,7 +292,7 @@ const AdminChatManagement = () => {
             <span className="stat-label">Đã đóng</span>
           </div>
           <div className="stat-item">
-            <span className="stat-number">{activeUsers.length}</span>
+            <span className="stat-number">{stats.onlineUsers}</span>
             <span className="stat-label">Người dùng online</span>
           </div>
         </div>
@@ -282,19 +380,12 @@ const AdminChatManagement = () => {
                   </div>
                   <div className="user-details">
                     <h3>{selectedThread.userName || 'Người dùng'}</h3>
-                    <p className="user-email">{selectedThread.userEmail}</p>
+                    <p className="user-email">{selectedThread.email}</p>
                     <p className="thread-subject">{selectedThread.subject}</p>
                   </div>
                 </div>
                 
                 <div className="chat-actions">
-                  {threadUsers[selectedThread.id] && (
-                    <div className="online-indicator">
-                      <span className="status-dot connected"></span>
-                      Đang online
-                    </div>
-                  )}
-                  
                   {selectedThread.status === 'active' && (
                     <button
                       className="close-thread-btn"

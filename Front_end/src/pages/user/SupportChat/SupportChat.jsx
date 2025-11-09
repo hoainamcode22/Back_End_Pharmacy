@@ -1,6 +1,6 @@
 // Support Chat Component - Chat interface cho user
 import React, { useState, useRef, useEffect } from 'react';
-import { useChat } from '../../../context/ChatContext/ChatContext';
+import { useChat } from '../../../context/ChatContext/useChatHook';
 import { useAuth } from '../../../context/AuthContext/AuthContext';
 import './SupportChat.css';
 
@@ -17,8 +17,8 @@ const SupportChat = () => {
     joinThread,
     sendMessage,
     startTyping,
-    stopTyping,
-    loadThreads
+    stopTyping
+    // loadThreads - not used in this component
   } = useChat();
 
   const [isOpen, setIsOpen] = useState(false);

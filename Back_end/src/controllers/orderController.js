@@ -290,4 +290,341 @@ const cancelOrder = async (req, res) => {
   }
 };
 
-module.exports = { checkout, getOrders, getOrderById, cancelOrder };
+/**
+ * ============== ADMIN FUNCTIONS ==============
+ */
+
+/**
+ * @swagger
+ * /api/orders/admin/all:
+ *   get:
+ *     summary: Lấy tất cả đơn hàng (Admin only)
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *         description: Lọc theo trạng thái (pending, confirmed, shipping, delivered, cancelled)
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *     responses:
+ *       200:
+ *         description: Danh sách đơn hàng
+ */
+const getAllOrders = async (req, res) => {
+  try {
+    // Check admin role
+    if (req.user.Role !== 'admin') {
+      return res.status(403).json({ error: 'Chỉ admin mới có quyền truy cập!' });
+    }
+
+    const { status, search, page = 1, limit = 20 } = req.query;
+    const offset = (page - 1) * limit;
+
+    // Build query
+    let whereConditions = [];
+    let queryParams = [];
+    let paramIndex = 1;
+
+    if (status) {
+      whereConditions.push(`o."Status" = $${paramIndex}`);
+      queryParams.push(status);
+      paramIndex++;
+    }
+
+    if (search) {
+      whereConditions.push(`(
+        LOWER(u."Fullname") LIKE LOWER($${paramIndex}) OR 
+        LOWER(u."Email") LIKE LOWER($${paramIndex}) OR 
+        o."Code" LIKE $${paramIndex}
+      )`);
+      queryParams.push(`%${search}%`);
+      paramIndex++;
+    }
+
+    const whereClause = whereConditions.length > 0
+      ? `WHERE ${whereConditions.join(' AND ')}`
+      : '';
+
+    // Count total
+    const countQuery = `
+      SELECT COUNT(*) as total 
+      FROM "Orders" o
+      LEFT JOIN "Users" u ON o."UserId" = u."Id"
+      ${whereClause}
+    `;
+    const countResult = await db.query(countQuery, queryParams);
+    const totalItems = parseInt(countResult.rows[0].total);
+
+    // Get orders
+    queryParams.push(limit, offset);
+    const ordersQuery = `
+      SELECT 
+        o."Id", o."Code", o."UserId", o."Total", o."Status", 
+        o."Address", o."Phone", o."PaymentMethod", o."CreatedAt", o."UpdatedAt",
+        u."Fullname" as "CustomerName",
+        u."Email" as "CustomerEmail",
+        COUNT(oi."Id") as "ItemsCount"
+      FROM "Orders" o
+      LEFT JOIN "Users" u ON o."UserId" = u."Id"
+      LEFT JOIN "OrderItems" oi ON o."Id" = oi."OrderId"
+      ${whereClause}
+      GROUP BY o."Id", u."Id"
+      ORDER BY o."CreatedAt" DESC
+      LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
+    `;
+
+    const result = await db.query(ordersQuery, queryParams);
+
+    res.json({
+      orders: result.rows,
+      pagination: {
+        currentPage: parseInt(page),
+        totalPages: Math.ceil(totalItems / limit),
+        totalItems: totalItems,
+        itemsPerPage: parseInt(limit)
+      }
+    });
+
+  } catch (error) {
+    console.error('Lỗi getAllOrders:', error);
+    res.status(500).json({ error: 'Lỗi server khi lấy danh sách đơn hàng!' });
+  }
+};
+
+/**
+ * @swagger
+ * /api/orders/admin/:id:
+ *   get:
+ *     summary: Lấy chi tiết đơn hàng (Admin only)
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Chi tiết đơn hàng
+ */
+const getOrderByIdAdmin = async (req, res) => {
+  try {
+    // Check admin role
+    if (req.user.Role !== 'admin') {
+      return res.status(403).json({ error: 'Chỉ admin mới có quyền truy cập!' });
+    }
+
+    const { id } = req.params;
+
+    const orderQuery = `
+      SELECT 
+        o.*,
+        u."Id" as "CustomerId",
+        u."Fullname" as "CustomerName",
+        u."Email" as "CustomerEmail",
+        u."Phone" as "CustomerPhone"
+      FROM "Orders" o
+      LEFT JOIN "Users" u ON o."UserId" = u."Id"
+      WHERE o."Id" = $1
+    `;
+    const orderResult = await db.query(orderQuery, [id]);
+
+    if (orderResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Không tìm thấy đơn hàng!' });
+    }
+
+    const order = orderResult.rows[0];
+
+    const itemsQuery = `
+      SELECT 
+        "ProductId", "ProductName", "ProductImage", 
+        "Qty", "Price", ("Qty" * "Price") as "Subtotal"
+      FROM "OrderItems"
+      WHERE "OrderId" = $1
+    `;
+    const itemsResult = await db.query(itemsQuery, [id]);
+
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    const itemsWithAbsoluteUrls = itemsResult.rows.map(item => {
+      const imageUrl = item.ProductImage?.startsWith('http')
+        ? item.ProductImage
+        : `${baseUrl}/images/${item.ProductImage?.replace(/^\/+/, '') || 'default.jpg'}`;
+      return { ...item, ProductImage: imageUrl };
+    });
+
+    res.json({ 
+      ...order, 
+      items: itemsWithAbsoluteUrls 
+    });
+
+  } catch (error) {
+    console.error('Lỗi getOrderByIdAdmin:', error);
+    res.status(500).json({ error: 'Lỗi server khi lấy chi tiết đơn hàng!' });
+  }
+};
+
+/**
+ * @swagger
+ * /api/orders/admin/:id/status:
+ *   patch:
+ *     summary: Cập nhật trạng thái đơn hàng (Admin only)
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 enum: [pending, confirmed, shipping, delivered, cancelled]
+ *     responses:
+ *       200:
+ *         description: Cập nhật thành công
+ */
+const updateOrderStatus = async (req, res) => {
+  try {
+    // Check admin role
+    if (req.user.Role !== 'admin') {
+      return res.status(403).json({ error: 'Chỉ admin mới có quyền cập nhật!' });
+    }
+
+    const { id } = req.params;
+    const { status } = req.body;
+
+    const validStatuses = ['pending', 'confirmed', 'shipping', 'delivered', 'cancelled'];
+    if (!status || !validStatuses.includes(status)) {
+      return res.status(400).json({ 
+        error: 'Trạng thái không hợp lệ! Các trạng thái hợp lệ: ' + validStatuses.join(', ')
+      });
+    }
+
+    const query = `
+      UPDATE "Orders"
+      SET "Status" = $1, "UpdatedAt" = NOW()
+      WHERE "Id" = $2
+      RETURNING "Id", "Code", "Status"
+    `;
+
+    const result = await db.query(query, [status, id]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Không tìm thấy đơn hàng!' });
+    }
+
+    res.json({ 
+      message: 'Đã cập nhật trạng thái đơn hàng!',
+      order: result.rows[0]
+    });
+
+  } catch (error) {
+    console.error('Lỗi updateOrderStatus:', error);
+    res.status(500).json({ error: 'Lỗi server khi cập nhật trạng thái!' });
+  }
+};
+
+/**
+ * @swagger
+ * /api/orders/admin/statistics:
+ *   get:
+ *     summary: Thống kê đơn hàng (Admin only)
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Thống kê đơn hàng
+ */
+const getOrderStatistics = async (req, res) => {
+  try {
+    // Check admin role
+    if (req.user.Role !== 'admin') {
+      return res.status(403).json({ error: 'Chỉ admin mới có quyền truy cập!' });
+    }
+
+    // Get statistics
+    const stats = await Promise.all([
+      // Total orders
+      db.query('SELECT COUNT(*) as total FROM "Orders"'),
+      
+      // Orders by status
+      db.query(`
+        SELECT "Status", COUNT(*) as count
+        FROM "Orders"
+        GROUP BY "Status"
+      `),
+      
+      // Total revenue (delivered orders only)
+      db.query(`
+        SELECT SUM("Total") as revenue
+        FROM "Orders"
+        WHERE "Status" = 'delivered'
+      `),
+      
+      // Orders today
+      db.query(`
+        SELECT COUNT(*) as today
+        FROM "Orders"
+        WHERE DATE("CreatedAt") = CURRENT_DATE
+      `),
+      
+      // Orders this month
+      db.query(`
+        SELECT COUNT(*) as this_month
+        FROM "Orders"
+        WHERE EXTRACT(MONTH FROM "CreatedAt") = EXTRACT(MONTH FROM CURRENT_DATE)
+        AND EXTRACT(YEAR FROM "CreatedAt") = EXTRACT(YEAR FROM CURRENT_DATE)
+      `),
+      
+      // Revenue this month
+      db.query(`
+        SELECT SUM("Total") as revenue_month
+        FROM "Orders"
+        WHERE "Status" = 'delivered'
+        AND EXTRACT(MONTH FROM "CreatedAt") = EXTRACT(MONTH FROM CURRENT_DATE)
+        AND EXTRACT(YEAR FROM "CreatedAt") = EXTRACT(YEAR FROM CURRENT_DATE)
+      `)
+    ]);
+
+    const statusCounts = {};
+    stats[1].rows.forEach(row => {
+      statusCounts[row.Status] = parseInt(row.count);
+    });
+
+    res.json({
+      totalOrders: parseInt(stats[0].rows[0].total),
+      byStatus: statusCounts,
+      totalRevenue: parseFloat(stats[2].rows[0].revenue || 0),
+      ordersToday: parseInt(stats[3].rows[0].today),
+      ordersThisMonth: parseInt(stats[4].rows[0].this_month),
+      revenueThisMonth: parseFloat(stats[5].rows[0].revenue_month || 0)
+    });
+
+  } catch (error) {
+    console.error('Lỗi getOrderStatistics:', error);
+    res.status(500).json({ error: 'Lỗi server khi lấy thống kê!' });
+  }
+};
+
+module.exports = { 
+  checkout, 
+  getOrders, 
+  getOrderById, 
+  cancelOrder,
+  // Admin functions
+  getAllOrders,
+  getOrderByIdAdmin,
+  updateOrderStatus,
+  getOrderStatistics
+};

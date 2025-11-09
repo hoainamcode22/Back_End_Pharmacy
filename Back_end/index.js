@@ -48,6 +48,7 @@ const announcementRoutes = require("./src/routes/announcementRoutes");
 const commentRoutes = require("./src/routes/commentRoutes");
 const diseaseRoutes = require("./src/routes/diseaseRoutes");
 const chatRoutes = require("./src/routes/chatRoutes");
+const dashboardRoutes = require("./src/routes/dashboardRoutes");
 
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
@@ -58,6 +59,7 @@ app.use("/api/announcements", announcementRoutes);
 app.use("/api/comments", commentRoutes);
 app.use("/api/diseases", diseaseRoutes);
 app.use("/api/chat", chatRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 
 // Swagger setup
 const swaggerOptions = {

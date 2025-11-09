@@ -18,7 +18,11 @@ class ChatService {
       // Xác thực user khi kết nối
       socket.on('authenticate', async (token) => {
         try {
-          const decoded = jwt.verify(token, process.env.JWT_SECRET);
+          // --- (PHẦN SỬA) ---
+          // Thêm fallback 'secretkey' để đồng bộ với file auth.js
+          const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secretkey');
+          // --- (HẾT PHẦN SỬA) ---
+          
           const user = await this.getUserById(decoded.id);
           
           if (user) {
@@ -32,6 +36,7 @@ class ChatService {
             if (user.Role === 'admin') {
               this.adminSockets.add(socket.id);
               socket.join('admin_room');
+              console.log(`👨‍💼 Admin ${user.Username} joined admin_room`);
             }
 
             socket.emit('authenticated', {
@@ -43,7 +48,7 @@ class ChatService {
               }
             });
 
-            console.log(`✅ User ${user.Username} (${user.Role}) đã xác thực`);
+            console.log(`✅ User ${user.Username} (${user.Role}) đã xác thực, Socket ID: ${socket.id}`);
           }
         } catch (error) {
           socket.emit('authenticated', { success: false, error: 'Token không hợp lệ' });
@@ -66,6 +71,9 @@ class ChatService {
           socket.emit('thread_created', thread);
 
           // Thông báo cho admin có thread mới
+          console.log(`📢 Broadcasting new_thread_notification to admin_room. Thread ID: ${thread.Id}`);
+          console.log(`👥 Admin sockets count: ${this.adminSockets.size}`);
+          
           socket.broadcast.to('admin_room').emit('new_thread_notification', {
             threadId: thread.Id,
             userName: socket.userName,
@@ -74,6 +82,7 @@ class ChatService {
           });
 
         } catch (error) {
+          console.error('❌ Error creating chat thread:', error);
           socket.emit('error', { message: 'Không thể tạo cuộc hội thoại' });
         }
       });

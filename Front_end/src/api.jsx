@@ -161,4 +161,68 @@ export const getDiseaseBySlug = (slug) =>
 export const getAnnouncements = () =>
   api.get("/announcements").then((r) => r.data);
 
+// ========== ADMIN - DASHBOARD ==========
+/** [ADMIN] Lấy thống kê tổng quan dashboard */
+export const getDashboardStats = () =>
+  api.get("/dashboard/statistics").then((r) => r.data);
+
+/** [ADMIN] Lấy dữ liệu biểu đồ doanh thu */
+export const getRevenueChart = (days = 7) =>
+  api.get("/dashboard/revenue-chart", { params: { days } }).then((r) => r.data);
+
+// ========== ADMIN - USER MANAGEMENT ==========
+/** [ADMIN] Lấy danh sách tất cả users */
+export const getAllUsers = (params = {}) =>
+  api.get("/users/admin/all", { params }).then((r) => r.data);
+
+/** [ADMIN] Lấy chi tiết 1 user */
+export const getUserById = (id) =>
+  api.get(`/users/admin/${id}`).then((r) => r.data);
+
+/** [ADMIN] Cập nhật user */
+export const updateUser = (id, data) =>
+  api.patch(`/users/admin/${id}`, data).then((r) => r.data);
+
+/** [ADMIN] Xóa user */
+export const deleteUser = (id) =>
+  api.delete(`/users/admin/${id}`).then((r) => r.data);
+
+// ========== ADMIN - PRODUCT MANAGEMENT ==========
+/** [ADMIN] Lấy tất cả sản phẩm (kể cả inactive) */
+export const getAllProductsAdmin = (params = {}) =>
+  api.get("/products/admin/all", { params }).then((r) => r.data);
+
+/** [ADMIN] Tạo sản phẩm mới */
+export const createProduct = (data) =>
+  api.post("/products/admin", data).then((r) => r.data);
+
+/** [ADMIN] Cập nhật sản phẩm */
+export const updateProduct = (id, data) =>
+  api.patch(`/products/admin/${id}`, data).then((r) => r.data);
+
+/** [ADMIN] Xóa sản phẩm (soft delete) */
+export const deleteProduct = (id) =>
+  api.delete(`/products/admin/${id}`).then((r) => r.data);
+
+/** [ADMIN] Bật/tắt trạng thái sản phẩm */
+export const toggleProductStatus = (id) =>
+  api.patch(`/products/admin/${id}/toggle`).then((r) => r.data);
+
+// ========== ADMIN - ORDER MANAGEMENT ==========
+/** [ADMIN] Lấy tất cả đơn hàng */
+export const getAllOrders = (params = {}) =>
+  api.get("/orders/admin/all", { params }).then((r) => r.data);
+
+/** [ADMIN] Lấy chi tiết đơn hàng */
+export const getOrderByIdAdmin = (id) =>
+  api.get(`/orders/admin/${id}`).then((r) => r.data);
+
+/** [ADMIN] Cập nhật trạng thái đơn hàng */
+export const updateOrderStatus = (id, status) =>
+  api.patch(`/orders/admin/${id}/status`, { status }).then((r) => r.data);
+
+/** [ADMIN] Thống kê đơn hàng */
+export const getOrderStats = () =>
+  api.get("/orders/admin/statistics").then((r) => r.data);
+
 export default api;
