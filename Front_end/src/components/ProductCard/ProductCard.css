@@ -120,23 +120,23 @@
 
 /* ====== ADD TO CART BUTTON (Style An Khang) ====== */
 .btn-add-cart {
-    width: 100%;
-    padding: 10px 12px;
-    background: #008744; /* Màu xanh lá An Khang */
+    align-self: center;
+    padding: 10px 24px; 
+    background: #008744; 
     color: #ffffff;
     border: none;
     border-radius: 6px;
-    font-size: 14px;
+    font-size: 10px;
     font-weight: 600;
     cursor: pointer;
     transition: background-color 0.2s ease;
-    margin-top: 8px; /* Khoảng cách với giá */
+    margin-top: 8px; 
     text-transform: none;
     line-height: 1.2;
 }
 
 .btn-add-cart:hover {
-    background: #006934; /* Xanh đậm hơn khi hover */
+    background: #006934; 
     box-shadow: none;
     transform: none;
 }
@@ -148,7 +148,6 @@
     box-shadow: none;
     transform: none;
 }
-
 /* ====== RESPONSIVE (Giữ nguyên) ====== */
 @media (max-width: 768px) {
     .product-name { min-height: 38px; }

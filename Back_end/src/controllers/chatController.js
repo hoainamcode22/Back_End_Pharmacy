@@ -242,18 +242,34 @@ const chatController = {
         SELECT 
           cm.*,
           u."Fullname" as "SenderName",
-          u."Username" as "SenderUsername"
+          u."Username" as "SenderUsername",
+          p."Id" as "ProductId",
+          p."ProductName" as "ProductName",
+          p."Price" as "ProductPrice",
+          p."ImageURL" as "ProductImage"
         FROM "ChatMessages" cm
         JOIN "Users" u ON cm."SenderId" = u."Id"
+        LEFT JOIN "Products" p ON cm."AttachedProductId" = p."Id"
         WHERE cm."ThreadId" = $1
         ORDER BY cm."CreatedAt" ASC
       `;
 
       const result = await db.query(query, [threadId]);
+      
+      // Format lại messages để có object product
+      const messages = result.rows.map(row => ({
+        ...row,
+        product: row.ProductId ? {
+          id: row.ProductId,
+          name: row.ProductName,
+          price: row.ProductPrice,
+          image: row.ProductImage
+        } : null
+      }));
 
       res.json({
         success: true,
-        messages: result.rows,
+        messages: messages,
       });
     } catch (error) {
       console.error('Lỗi lấy tin nhắn:', error);

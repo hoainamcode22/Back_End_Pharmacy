@@ -71,6 +71,10 @@ export const initAdmin = (adminData) =>
 export const fetchProducts = (params = {}) =>
   api.get("/products", { params }).then((r) => r.data);
 
+/** [USER] Lấy 1 sản phẩm nổi bật ngẫu nhiên */
+export const getFeaturedProduct = () =>
+  api.get("/products/featured").then((r) => r.data);
+
 /** [USER] Lấy chi tiết 1 sản phẩm theo id */
 export const getProductDetail = (id) =>
   api.get(`/products/${id}`).then((r) => r.data);

@@ -665,9 +665,68 @@ const getAllProductsAdmin = async (req, res) => {
   }
 };
 
+/**
+ * @swagger
+ * /api/products/featured:
+ *   get:
+ *     summary: Lấy 1 sản phẩm ngẫu nhiên từ 30 sản phẩm đầu
+ *     tags: [Products]
+ *     responses:
+ *       200:
+ *         description: Sản phẩm nổi bật ngẫu nhiên
+ */
+const getFeaturedProduct = async (req, res) => {
+  try {
+    // Lấy 30 sản phẩm đầu tiên (hoạt động)
+    const query = `
+      SELECT 
+        "Id", 
+        "ProductName", 
+        "Category", 
+        "Price", 
+        "Stock", 
+        "ImageURL", 
+        "ShortDesc",
+        "IsActive"
+      FROM "Products"
+      WHERE "IsActive" = true
+      ORDER BY "CreatedAt" DESC
+      LIMIT 30
+    `;
+    
+    const result = await db.query(query);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Không có sản phẩm nào!' });
+    }
+    
+    // Random 1 sản phẩm từ 30 sản phẩm
+    const randomIndex = Math.floor(Math.random() * result.rows.length);
+    const product = result.rows[randomIndex];
+    
+    // Map sang format frontend
+    const mappedProduct = {
+      id: product.Id,
+      name: product.ProductName,
+      category: product.Category,
+      price: parseFloat(product.Price),
+      stock: product.Stock,
+      imageUrl: product.ImageURL ? `${req.protocol}://${req.get('host')}/images/products/${product.ImageURL}` : null,
+      shortDesc: product.ShortDesc,
+      isActive: product.IsActive
+    };
+    
+    res.json({ product: mappedProduct });
+  } catch (error) {
+    console.error('Lỗi getFeaturedProduct:', error);
+    res.status(500).json({ error: 'Lỗi server khi lấy sản phẩm nổi bật!' });
+  }
+};
+
 module.exports = {
   getProducts,
   getProductById,
+  getFeaturedProduct,
   // Admin functions
   createProduct,
   updateProduct,

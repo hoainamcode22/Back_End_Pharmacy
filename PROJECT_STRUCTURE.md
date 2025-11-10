@@ -5,9 +5,10 @@
 ```
 Back_End_Pharmacy/
 │
-├── 📂 Back_end/                          # BACKEND - Node.js + Express + PostgreSQL
+├── 📂 Back_end/                          # BACKEND - Node.js + Express + PostgreSQL + Socket.IO
 │   ├── 📂 CSDL/
-│   │   └── pharmacy_db_v2.sql           # Script tạo database & sample data
+│   │   ├── pharmacy_db_v2.sql           # Script tạo database & sample data
+│   │   └── migration_add_product_to_chat.sql # Migration thêm sản phẩm vào chat
 │   │
 │   ├── 📂 public/
 │   │   └── 📂 images/                    # Thư mục chứa ảnh sản phẩm (30 files)
@@ -24,17 +25,28 @@ Back_End_Pharmacy/
 │   │   │   ├── cartController.js        # Giỏ hàng (CRUD)
 │   │   │   ├── orderController.js       # Đặt hàng, Lịch sử đơn
 │   │   │   ├── userController.js        # Profile, Đổi mật khẩu
+│   │   │   ├── chatController.js        # 💬 Chat - Tạo thread, gửi tin nhắn
+│   │   │   ├── commentController.js     # Đánh giá sản phẩm
+│   │   │   ├── diseaseController.js     # Tra cứu bệnh
+│   │   │   ├── dashboardController.js   # Dashboard admin
 │   │   │   └── announcementController.js # Thông báo
 │   │   │
 │   │   ├── 📂 middleware/
 │   │   │   └── auth.js                  # Xác thực JWT token
 │   │   │
-│   │   └── 📂 routes/                   # API Routes
+│   │   ├── 📂 services/                 # Business Logic Layer
+│   │   │   └── chatService.js           # � Chat service logic
+│   │   │
+│   │   └── �📂 routes/                   # API Routes
 │   │       ├── authRoutes.js            # POST /api/auth/register, /login
 │   │       ├── productRoutes.js         # GET /api/products, /products/:id
 │   │       ├── cartRoutes.js            # GET/POST/PATCH/DELETE /api/cart
 │   │       ├── orderRoutes.js           # POST /api/orders/checkout, GET /orders
 │   │       ├── userRoutes.js            # GET/PATCH /api/users/me
+│   │       ├── chatRoutes.js            # 💬 GET/POST /api/chat/*
+│   │       ├── commentRoutes.js         # Comment routes
+│   │       ├── diseaseRoutes.js         # Disease routes
+│   │       ├── dashboardRoutes.js       # Dashboard routes
 │   │       └── announcementRoutes.js    # GET /api/announcements
 │   │
 │   ├── db_config.js                     # Cấu hình kết nối PostgreSQL
@@ -72,21 +84,31 @@ Back_End_Pharmacy/
 │   │   │   │   └── ProtectedRoute.jsx  # Route yêu cầu đăng nhập
 │   │   │   │
 │   │   │   ├── 📂 UserLayout/
-│   │   │   │   └── UserLayout.jsx      # Layout cho user (Header + Content)
+│   │   │   │   └── UserLayout.jsx      # Layout cho user (Header + Content + FloatingChat)
 │   │   │   │
 │   │   │   ├── 📂 AdminLayout/
-│   │   │   │   └── AdminLayout.jsx     # Layout cho admin
+│   │   │   │   ├── AdminLayout.jsx     # Layout cho admin
+│   │   │   │   └── AdminLayout.css
 │   │   │   │
-│   │   │   └── 📂 FloatingChatButton/
-│   │   │       ├── FloatingChatButton.jsx  # Nút chat nổi
-│   │   │       └── FloatingChatButton.css
+│   │   │   ├── 📂 FloatingChatButton/
+│   │   │   │   ├── FloatingChatButton.jsx  # 💬 Nút chat nổi
+│   │   │   │   └── FloatingChatButton.css
+│   │   │   │
+│   │   │   ├── 📂 ChatProductCard/
+│   │   │   │   ├── ChatProductCard.jsx     # 🛍️ Card sản phẩm trong chat
+│   │   │   │   └── ChatProductCard.css
+│   │   │   │
+│   │   │   └── 📂 ProductPickerModal/
+│   │   │       ├── ProductPickerModal.jsx  # 📦 Modal chọn sản phẩm
+│   │   │       └── ProductPickerModal.css
 │   │   │
 │   │   ├── 📂 context/                  # React Context (State Management)
 │   │   │   ├── 📂 AuthContext/
 │   │   │   │   └── AuthContext.jsx     # Quản lý auth state
 │   │   │   │
-│   │   │   └── 📂 ChatContext/
-│   │   │       └── ChatContext.jsx     # Quản lý chat state
+│   │   │   └── 📂 ChatContext/         # 💬 CHAT CONTEXT
+│   │   │       ├── ChatContext.jsx     # Socket.IO + Chat state management
+│   │   │       └── useChatHook.js      # Custom hook để sử dụng ChatContext
 │   │   │
 │   │   ├── 📂 pages/                    # Pages/Screens
 │   │   │   │
@@ -124,24 +146,40 @@ Back_End_Pharmacy/
 │   │   │   │   │   ├── Profile.jsx     # Thông tin cá nhân
 │   │   │   │   │   └── Profile.css
 │   │   │   │   │
-│   │   │   │   ├── 📂 SupportChat/     💬 HỖ TRỢ
-│   │   │   │   │   ├── SupportChat.jsx # Chat với admin
+│   │   │   │   ├── 📂 SupportChat/     💬 HỖ TRỢ (REALTIME CHAT)
+│   │   │   │   │   ├── SupportChat.jsx # Chat user-admin (Socket.IO)
 │   │   │   │   │   └── SupportChat.css
 │   │   │   │   │
-│   │   │   │   └── 📂 Diseases/        🏥 TRA CỨU BỆNH
-│   │   │   │       ├── Diseases.jsx
-│   │   │   │       └── Diseases.css
+│   │   │   │   ├── 📂 Diseases/        🏥 TRA CỨU BỆNH
+│   │   │   │   │   ├── Diseases.jsx
+│   │   │   │   │   └── Diseases.css
+│   │   │   │   │
+│   │   │   │   └── 📂 DiseaseDetail/
+│   │   │   │       ├── DiseaseDetail.jsx
+│   │   │   │       └── DiseaseDetail.css
 │   │   │   │
 │   │   │   └── 📂 admin/                # Admin Pages
-│   │   │       └── 📂 AdminDashboard/
-│   │   │           ├── AdminDashboard.jsx    # Trang tổng quan
-│   │   │           └── MedicineManagement.jsx # Quản lý thuốc
+│   │   │       ├── 📂 AdminDashboard/
+│   │   │       │   ├── AdminDashboard.jsx    # Trang tổng quan
+│   │   │       │   ├── AdminDashboard.css
+│   │   │       │   ├── MedicineManagement.jsx # Quản lý thuốc
+│   │   │       │   └── MedicineManagement.css
+│   │   │       │
+│   │   │       ├── 📂 AdminChatManagement/   # 💬 QUẢN LÝ CHAT (ADMIN)
+│   │   │       │   ├── AdminChatManagement.jsx # Chat admin với users
+│   │   │       │   └── AdminChatManagement.css
+│   │   │       │
+│   │   │       ├── 📂 UserManagement/
+│   │   │       │   └── UserManagement.jsx    # Quản lý người dùng
+│   │   │       │
+│   │   │       └── 📂 OrderManagement/
+│   │   │           └── OrderManagement.jsx   # Quản lý đơn hàng
 │   │   │
 │   │   ├── api.jsx                      # Axios instance & API calls
-│   │   ├── config.js                    # API base URL config
+│   │   ├── config.js                    # 🔧 API base URL + SOCKET_URL
 │   │   ├── App.jsx                      # Root component (Router)
 │   │   ├── App.css                      # Global styles
-│   │   ├── main.jsx                     # Entry point (render App)
+│   │   ├── main.jsx                     # Entry point (AuthProvider + ChatProvider + App)
 │   │   └── index.css                    # Global CSS reset
 │   │
 │   ├── index.html                       # HTML template
@@ -307,21 +345,65 @@ Backend validate → Update DB → Trả về thành công
 
 ---
 
-### 💬 **6. SUPPORT CHAT (Hỗ trợ)**
+### 💬 **6. SUPPORT CHAT (Hỗ trợ realtime với Socket.IO)**
 
 **Frontend:**
-- `SupportChat.jsx` - Chat với admin
-- `FloatingChatButton.jsx` - Nút chat nổi
-- `ChatContext.jsx` - Quản lý trạng thái chat
+- `SupportChat.jsx` - Giao diện chat user với admin
+- `AdminChatManagement.jsx` - Giao diện admin quản lý chat
+- `ChatProductCard.jsx` - Hiển thị sản phẩm trong chat
+- `ProductPickerModal.jsx` - Modal chọn sản phẩm đính kèm
+- `FloatingChatButton.jsx` - Nút chat nổi (chỉ user)
+- `ChatContext.jsx` - Quản lý Socket.IO connection, trạng thái chat
+- `useChatHook.js` - Custom hook để sử dụng ChatContext
 
 **Backend:**
-- `chatController.js` (nếu có)
-  - Tạo thread chat
-  - Gửi/Nhận tin nhắn
+- `chatController.js` - REST API endpoints
+  - `GET /api/chat/threads` - Lấy danh sách threads
+  - `GET /api/chat/threads/:id/messages` - Lấy tin nhắn
+  - `PATCH /api/chat/threads/:id/close` - Đóng thread
+  - `GET /api/chat/stats` - Thống kê chat (admin)
+- `chatService.js` - Socket.IO event handlers
+  - `authenticate` - Xác thực socket connection
+  - `create_chat_thread` - Tạo thread mới
+  - `join_thread` - Join vào thread
+  - `send_message` - Gửi tin nhắn
+  - `typing` / `stop_typing` - Hiệu ứng đang nhập
+  - `admin_join_all_threads` - Admin join tất cả threads
 
 **Database:**
-- Bảng `ChatThreads`: Cuộc hội thoại
-- Bảng `ChatMessages`: Tin nhắn
+- Bảng `ChatThreads`: Cuộc hội thoại (Title, UserId, AttachmentType, Status)
+- Bảng `ChatMessages`: Tin nhắn (Content, SenderId, SenderRole, AttachedProductId)
+
+**Flow:**
+```
+1. USER TẠO THREAD MỚI
+   Frontend: Click "Bắt đầu hội thoại" → Socket emit 'create_chat_thread'
+   Backend: INSERT ChatThreads → Emit 'thread_created' + 'new_thread_notification'
+   Admin: Nhận notification thread mới
+
+2. GỬI TIN NHẮN
+   Frontend: User nhập tin → Socket emit 'send_message'
+   Backend: 
+     - INSERT ChatMessages
+     - Nếu có AttachedProductId → Lưu ProductId
+     - Emit 'new_message' đến tất cả users trong thread
+   Frontend: Nhận realtime, hiển thị tin nhắn mới
+
+3. ĐÍNH KÈM SẢN PHẨM
+   Frontend: Click 📎 → Mở ProductPickerModal → Chọn sản phẩm
+   Backend: Khi gửi message → Query Products để lấy thông tin đầy đủ
+   Frontend: Hiển thị ChatProductCard với ảnh + tên + giá
+
+4. TYPING INDICATOR
+   Frontend: User đang nhập → Socket emit 'typing'
+   Backend: Broadcast 'user_typing' đến các users khác
+   Frontend: Hiển thị "Bác sĩ đang nhập..."
+
+5. ADMIN QUẢN LÝ
+   Admin: Vào /admin/chat → Xem tất cả threads
+   Socket: Auto join tất cả threads khi authenticated
+   Admin: Click thread → Xem messages → Trả lời realtime
+```
 
 ---
 
@@ -608,6 +690,7 @@ ChatMessages (Tin nhắn)
 ├── SenderId (FK → Users)
 ├── SenderRole (admin/customer)
 ├── Content
+├── AttachedProductId (FK → Products, nullable)  # 🆕 Sản phẩm đính kèm
 └── CreatedAt
 
 Comments (Đánh giá)
@@ -626,7 +709,8 @@ Comments (Đánh giá)
 ### **Backend:**
 - **Runtime:** Node.js v22
 - **Framework:** Express.js
-- **Database:** PostgreSQL
+- **Database:** PostgreSQL (pg)
+- **Realtime:** Socket.IO v4 (WebSocket)
 - **Authentication:** JWT (jsonwebtoken)
 - **Password:** bcrypt
 - **Documentation:** Swagger (swagger-jsdoc, swagger-ui-express)
@@ -638,7 +722,8 @@ Comments (Đánh giá)
 - **Build Tool:** Vite
 - **Router:** React Router DOM v6
 - **HTTP Client:** Axios
-- **State Management:** React Context API
+- **Realtime:** Socket.IO Client v4
+- **State Management:** React Context API (AuthContext + ChatContext)
 - **Styling:** CSS Modules / Plain CSS
 
 ---
@@ -674,6 +759,25 @@ USERS
 
 ANNOUNCEMENTS
 └── GET    /api/announcements           Thông báo
+
+CHAT (REST API)
+├── GET    /api/chat/threads            Lấy danh sách threads
+├── GET    /api/chat/threads/:id/messages  Lấy tin nhắn
+├── PATCH  /api/chat/threads/:id/close  Đóng thread
+└── GET    /api/chat/stats              Thống kê (admin)
+
+SOCKET.IO EVENTS
+├── authenticate                         Xác thực socket connection
+├── create_chat_thread                   Tạo thread mới
+├── join_thread                          Join vào thread
+├── send_message                         Gửi tin nhắn
+├── typing / stop_typing                 Hiệu ứng đang nhập
+├── admin_join_all_threads               Admin join tất cả threads
+├── thread_created                       [Emit] Thread mới được tạo
+├── new_message                          [Emit] Tin nhắn mới
+├── user_typing                          [Emit] User đang nhập
+├── thread_closed                        [Emit] Thread bị đóng
+└── new_thread_notification              [Emit] Thông báo thread mới cho admin
 ```
 
 ---
@@ -690,6 +794,7 @@ ANNOUNCEMENTS
     "jsonwebtoken": "^9.x",
     "dotenv": "^16.x",
     "cors": "^2.x",
+    "socket.io": "^4.x",
     "swagger-jsdoc": "^6.x",
     "swagger-ui-express": "^5.x"
   }
@@ -703,17 +808,111 @@ ANNOUNCEMENTS
     "react": "^18.x",
     "react-dom": "^18.x",
     "react-router-dom": "^6.x",
-    "axios": "^1.x"
+    "axios": "^1.x",
+    "socket.io-client": "^4.x"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.x",
-    "vite": "^5.x"
+    "vite": "^5.x",
+    "eslint": "^9.x",
+    "eslint-plugin-react": "^7.x"
   }
 }
 ```
 
 ---
 
+---
+
+## 🎯 ĐIỂM NỔI BẬT CỦA PROJECT
+
+### 1. **Realtime Chat với Socket.IO**
+- ✅ Chat realtime giữa user và admin
+- ✅ Typing indicator (hiển thị đang nhập)
+- ✅ Đính kèm sản phẩm trong tin nhắn
+- ✅ Admin tự động join tất cả threads
+- ✅ Notification thread mới cho admin
+- ✅ Quản lý trạng thái thread (active/closed)
+
+### 2. **E-commerce Core**
+- ✅ Giỏ hàng realtime với badge counter
+- ✅ Transaction atomic khi checkout
+- ✅ Snapshot sản phẩm trong order (giá, ảnh, tên)
+- ✅ Quản lý tồn kho tự động
+- ✅ Hủy đơn và hoàn tồn kho
+
+### 3. **Image Handling**
+- ✅ Backend build absolute URL
+- ✅ Frontend hiển thị ảnh từ backend
+- ✅ Snapshot ảnh sản phẩm trong order và chat
+- ✅ Default image fallback
+
+### 4. **Security**
+- ✅ JWT authentication
+- ✅ Bcrypt password hashing
+- ✅ Protected routes (frontend + backend)
+- ✅ Socket.IO authentication middleware
+- ✅ Role-based access control
+
+### 5. **State Management**
+- ✅ AuthContext (auth state)
+- ✅ ChatContext (socket + chat state)
+- ✅ Cart badge update event
+- ✅ Auto-rehydrate từ localStorage
+
+---
+
+## 📝 NOTES
+
+### Database Migration
+- File `migration_add_product_to_chat.sql` để thêm cột `AttachedProductId` vào `ChatMessages`
+- Chạy sau khi setup database ban đầu
+
+### Environment Variables
+**Backend (.env):**
+```
+PORT=5001
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=postgres
+DB_PASSWORD=your_password
+DB_NAME=pharmacy_db
+JWT_SECRET=your_jwt_secret
+```
+
+**Frontend (.env):**
+```
+VITE_API_BASE_URL=http://localhost:5001/api
+VITE_SOCKET_URL=http://localhost:5001
+```
+
+### Running the Project
+**Backend:**
+```bash
+cd Back_end
+npm install
+npm start
+```
+
+**Frontend:**
+```bash
+cd Front_end
+npm install
+npm run dev
+```
+
+**Database:**
+```bash
+psql -U postgres
+CREATE DATABASE pharmacy_db;
+\c pharmacy_db
+\i Back_end/CSDL/pharmacy_db_v2.sql
+\i Back_end/CSDL/migration_add_product_to_chat.sql
+```
+
+---
+
 **Ngày tạo:** 06/11/2025  
-**Version:** 1.0  
-**Status:** 📚 DOCUMENTATION COMPLETE
+**Cập nhật cuối:** 10/11/2025  
+**Version:** 2.0 (Thêm Chat Feature)  
+**Status:** 📚 DOCUMENTATION COMPLETE ✅

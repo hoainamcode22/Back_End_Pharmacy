@@ -3,6 +3,7 @@ const router = express.Router();
 const { 
   getProducts, 
   getProductById,
+  getFeaturedProduct,
   createProduct,
   updateProduct,
   deleteProduct,
@@ -12,6 +13,9 @@ const {
 const { authenticateToken } = require('../middleware/auth');
 
 // ========== PUBLIC ROUTES ==========
+// GET /api/products/featured - Sản phẩm nổi bật ngẫu nhiên
+router.get('/featured', getFeaturedProduct);
+
 // GET /api/products - Danh sách sản phẩm (chỉ active)
 router.get('/', getProducts);
 

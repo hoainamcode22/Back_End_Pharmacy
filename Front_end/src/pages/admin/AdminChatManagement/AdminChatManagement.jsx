@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../../../context/AuthContext/AuthContext';
 import { useChat } from '../../../context/ChatContext/useChatHook';
+import ProductPickerModal from '../../../components/ProductPickerModal/ProductPickerModal';
+import ChatProductCard from '../../../components/ChatProductCard/ChatProductCard';
 import api from '../../../api';
 import './AdminChatManagement.css';
 
@@ -22,6 +24,8 @@ const AdminChatManagement = () => {
     closed: 0,
     onlineUsers: 0 // Moved to stats object
   });
+  const [showProductPicker, setShowProductPicker] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
 
   // Load all threads and join socket room
   useEffect(() => {
@@ -53,7 +57,8 @@ const AdminChatManagement = () => {
         senderRole: data.SenderRole || data.senderRole,
         content: data.Content || data.content,
         createdAt: data.CreatedAt || data.createdAt,
-        senderName: data.SenderName || data.senderName
+        senderName: data.SenderName || data.senderName,
+        product: data.product || null // Thông tin sản phẩm đính kèm
       };
       
       if (selectedThread && mappedMessage.threadId === selectedThread.id) {
@@ -155,7 +160,8 @@ const AdminChatManagement = () => {
         content: msg.Content || '',
         createdAt: msg.CreatedAt,
         senderName: msg.SenderName || 'Unknown',
-        senderUsername: msg.SenderUsername || ''
+        senderUsername: msg.SenderUsername || '',
+        product: msg.product || null // Thông tin sản phẩm đính kèm
       }));
       
       setMessages(mappedMessages);
@@ -182,23 +188,35 @@ const AdminChatManagement = () => {
       
       // Send via API (which will trigger socket event on backend)
       const response = await api.post(`/chat/threads/${selectedThread.id}/messages`, {
-        content: messageText.trim()
+        content: messageText.trim(),
+        attachedProductId: selectedProduct?.id || null
       });
       
       console.log('✅ Message sent successfully:', response.data);
       setMessageText('');
+      setSelectedProduct(null);
       
       // Optionally also send via socket for instant feedback
       if (socket && isConnected) {
         socket.emit('send_message', {
           threadId: selectedThread.id,
-          content: messageText.trim()
+          content: messageText.trim(),
+          attachedProductId: selectedProduct?.id || null
         });
       }
     } catch (error) {
       console.error('❌ Error sending message:', error);
       alert('Không thể gửi tin nhắn. Vui lòng thử lại.');
     }
+  };
+
+  const handleSelectProduct = (product) => {
+    setSelectedProduct(product);
+    setShowProductPicker(false);
+  };
+
+  const handleRemoveProduct = () => {
+    setSelectedProduct(null);
   };
 
   const handleCloseThread = async (threadId) => {
@@ -423,6 +441,10 @@ const AdminChatManagement = () => {
                           </div>
                           <div className="message-bubble">
                             <p>{message.content}</p>
+                            {/* Hiển thị sản phẩm đính kèm */}
+                            {message.product && (
+                              <ChatProductCard product={message.product} />
+                            )}
                           </div>
                         </div>
                       </div>
@@ -440,7 +462,39 @@ const AdminChatManagement = () => {
               {/* Message Input */}
               {selectedThread.status === 'active' && (
                 <div className="message-input-container">
+                  {/* Hiển thị sản phẩm đã chọn */}
+                  {selectedProduct && (
+                    <div className="selected-product-preview">
+                      <div className="preview-content">
+                        <img 
+                          src={`http://localhost:5001/images/products/${selectedProduct.image}`} 
+                          alt={selectedProduct.name}
+                          onError={(e) => e.target.src = 'https://via.placeholder.com/50?text=No+Image'}
+                        />
+                        <div className="preview-info">
+                          <p className="preview-name">{selectedProduct.name}</p>
+                          <p className="preview-price">{selectedProduct.price?.toLocaleString('vi-VN')}đ</p>
+                        </div>
+                        <button 
+                          type="button"
+                          className="remove-product-btn"
+                          onClick={handleRemoveProduct}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  
                   <form onSubmit={handleSendMessage} className="message-form">
+                    <button
+                      type="button"
+                      className="attach-btn"
+                      onClick={() => setShowProductPicker(true)}
+                      title="Đính kèm sản phẩm"
+                    >
+                      📎
+                    </button>
                     <input
                       type="text"
                       value={messageText}
@@ -473,6 +527,13 @@ const AdminChatManagement = () => {
           )}
         </div>
       </div>
+
+      {/* Product Picker Modal */}
+      <ProductPickerModal
+        isOpen={showProductPicker}
+        onClose={() => setShowProductPicker(false)}
+        onSelectProduct={handleSelectProduct}
+      />
     </div>
   );
 };

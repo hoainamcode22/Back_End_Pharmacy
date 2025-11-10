@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import ProductCard from "../../../components/ProductCard/ProductCard.jsx";
 import SearchBar from "../../../components/SearchBar/SearchBar.jsx";
-import { fetchProducts, addToCart } from "../../../api";
+import { fetchProducts, addToCart, getFeaturedProduct } from "../../../api";
 import "./Shop.css";
 
 // CATEGORIES - Danh mục sản phẩm (khớp với database)
@@ -16,8 +16,22 @@ export default function Shop() {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [products, setProducts] = useState([]);
+  const [featuredProduct, setFeaturedProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Fetch featured product (chỉ load 1 lần khi mount)
+  useEffect(() => {
+    const loadFeaturedProduct = async () => {
+      try {
+        const data = await getFeaturedProduct();
+        setFeaturedProduct(data.product);
+      } catch (err) {
+        console.error("Error loading featured product:", err);
+      }
+    };
+    loadFeaturedProduct();
+  }, []);
 
   // Fetch products từ API
   useEffect(() => {
@@ -145,6 +159,24 @@ export default function Shop() {
           ))}
         </div>
       </div>
+
+      {/* Featured Product Section */}
+      {featuredProduct && (
+        <div className="featured-section">
+          <div className="featured-header">
+            <h2 className="featured-title">
+              <span className="featured-icon">⭐</span>
+              Sản phẩm nổi bật
+            </h2>
+          </div>
+          <div className="featured-product-wrapper">
+            <ProductCard
+              product={featuredProduct}
+              onAddToCart={handleAddToCart}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Products Section */}
       <div className="products-section">

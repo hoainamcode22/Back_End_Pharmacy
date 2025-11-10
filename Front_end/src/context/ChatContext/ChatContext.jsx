@@ -5,12 +5,15 @@ import { useAuth } from '../AuthContext/AuthContext';
 import { SOCKET_URL } from '../../config';
 import api from '../../api';
 
-const ChatContext = createContext();
+// Create context
+const ChatContext = createContext(null);
 
+// ChatProvider component
 export const ChatProvider = ({ children }) => {
   const { token, user } = useAuth();
   const [socket, setSocket] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [threads, setThreads] = useState([]);
   const [currentThread, setCurrentThread] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -43,6 +46,7 @@ export const ChatProvider = ({ children }) => {
         console.log('✅ Socket authenticated:', data);
         if (data.success) {
           console.log(`👤 User role: ${user.role}, ID: ${user.id}`);
+          setIsAuthenticated(true);
           
           // Nếu là admin, join tất cả threads
           if (user.role === 'admin') {
@@ -51,11 +55,13 @@ export const ChatProvider = ({ children }) => {
           }
         } else {
           console.error('❌ Socket authentication failed:', data.error);
+          setIsAuthenticated(false);
         }
       });
 
       newSocket.on('disconnect', () => {
         setIsConnected(false);
+        setIsAuthenticated(false);
       });
 
       // Chat events
@@ -75,12 +81,23 @@ export const ChatProvider = ({ children }) => {
 
       newSocket.on('thread_messages', (data) => {
         if (data.threadId === currentThread?.Id) {
-          setMessages(data.messages);
+          // Map messages và đảm bảo product được include
+          const mappedMessages = (data.messages || []).map(msg => ({
+            ...msg,
+            product: msg.product || null
+          }));
+          setMessages(mappedMessages);
         }
       });
 
       newSocket.on('new_message', (message) => {
-        setMessages(prev => [...prev, message]);
+        // Map message fields và bao gồm product nếu có
+        const mappedMessage = {
+          ...message,
+          product: message.product || null // Đảm bảo product được map
+        };
+        
+        setMessages(prev => [...prev, mappedMessage]);
         
         // Cập nhật thread list
         setThreads(prev => prev.map(thread => 
@@ -186,22 +203,33 @@ export const ChatProvider = ({ children }) => {
 
   // Join thread
   const joinThread = (thread) => {
-    if (socket && thread) {
+    if (thread === null) {
+      // Trở về danh sách thread
+      setCurrentThread(null);
+      setMessages([]);
+      return;
+    }
+    
+    if (socket && thread && isAuthenticated) {
+      console.log(`✅ Joining thread ${thread.Id} - authenticated: ${isAuthenticated}`);
       setCurrentThread(thread);
       setMessages([]);
       socket.emit('join_thread', thread.Id);
       
       // Reset message count cho thread này
       setNewMessageCount(0);
+    } else {
+      console.warn(`❌ Cannot join thread - socket: ${!!socket}, thread: ${!!thread}, authenticated: ${isAuthenticated}`);
     }
   };
 
   // Gửi tin nhắn
-  const sendMessage = (content) => {
+  const sendMessage = (content, attachedProductId = null) => {
     if (socket && currentThread && content.trim()) {
       socket.emit('send_message', {
         threadId: currentThread.Id,
-        content: content.trim()
+        content: content.trim(),
+        attachedProductId: attachedProductId
       });
       return true;
     }
@@ -270,6 +298,7 @@ export const ChatProvider = ({ children }) => {
     // Connection state
     socket,
     isConnected,
+    isAuthenticated,
     
     // Chat data
     threads,
@@ -301,4 +330,5 @@ export const ChatProvider = ({ children }) => {
   );
 };
 
+// Export context separately - not as default to maintain Fast Refresh compatibility
 export default ChatContext;

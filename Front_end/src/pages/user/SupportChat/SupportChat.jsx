@@ -2,12 +2,15 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useChat } from '../../../context/ChatContext/useChatHook';
 import { useAuth } from '../../../context/AuthContext/AuthContext';
+import ProductPickerModal from '../../../components/ProductPickerModal/ProductPickerModal';
+import ChatProductCard from '../../../components/ChatProductCard/ChatProductCard';
 import './SupportChat.css';
 
 const SupportChat = () => {
   const { user } = useAuth();
   const {
     isConnected,
+    isAuthenticated,
     threads,
     currentThread,
     messages,
@@ -25,6 +28,8 @@ const SupportChat = () => {
   const [inputMessage, setInputMessage] = useState('');
   const [isCreatingThread, setIsCreatingThread] = useState(false);
   const [threadTitle, setThreadTitle] = useState('');
+  const [showProductPicker, setShowProductPicker] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
   
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
@@ -42,12 +47,24 @@ const SupportChat = () => {
   const handleSendMessage = (e) => {
     e.preventDefault();
     if (inputMessage.trim() && currentThread) {
-      const success = sendMessage(inputMessage);
+      const success = sendMessage(inputMessage, selectedProduct?.id);
       if (success) {
         setInputMessage('');
+        setSelectedProduct(null);
         stopTyping();
       }
     }
+  };
+
+  // Handle product selection
+  const handleSelectProduct = (product) => {
+    setSelectedProduct(product);
+    setShowProductPicker(false);
+  };
+
+  // Remove selected product
+  const handleRemoveProduct = () => {
+    setSelectedProduct(null);
   };
 
   // Handle input change with typing indicator
@@ -63,7 +80,15 @@ const SupportChat = () => {
   // Create new thread
   const handleCreateThread = async (e) => {
     e.preventDefault();
+    
+    if (!isAuthenticated) {
+      console.warn('⚠️ Cannot create thread - not authenticated yet');
+      alert('Đang kết nối... Vui lòng thử lại sau giây lát.');
+      return;
+    }
+    
     if (threadTitle.trim()) {
+      console.log('✅ Creating thread - authenticated:', isAuthenticated);
       const success = await createThread(threadTitle.trim());
       if (success) {
         setThreadTitle('');
@@ -99,6 +124,13 @@ const SupportChat = () => {
 
   if (!user) return null;
 
+  // Debug logs
+  console.log('SupportChat render - currentThread:', currentThread);
+  console.log('SupportChat render - threads:', threads);
+  console.log('SupportChat render - isCreatingThread:', isCreatingThread);
+  console.log('SupportChat render - isAuthenticated:', isAuthenticated);
+  console.log('SupportChat render - isOpen:', isOpen);
+
   return (
     <div className="support-chat">
       {/* Floating Chat Button */}
@@ -108,17 +140,13 @@ const SupportChat = () => {
       >
         {!isOpen ? (
           <div className="chat-icon-wrapper">
-            <svg viewBox="0 0 24 24" fill="currentColor" className="chat-icon">
-              <path d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h4l4 4 4-4h4c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/>
-            </svg>
+            💬
             {newMessageCount > 0 && (
               <span className="message-badge">{newMessageCount}</span>
             )}
           </div>
         ) : (
-          <svg viewBox="0 0 24 24" fill="currentColor" className="close-icon">
-            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-          </svg>
+          <div className="close-icon">✕</div>
         )}
       </button>
 
@@ -130,17 +158,15 @@ const SupportChat = () => {
             <div className="header-info">
               <h3>💬 Hỗ trợ y tế</h3>
               <p className="status">
-                <span className={`status-dot ${isConnected ? 'online' : 'offline'}`}></span>
-                {isConnected ? 'Đang kết nối' : 'Mất kết nối'}
+                <span className={`status-dot ${isConnected && isAuthenticated ? 'online' : 'offline'}`}></span>
+                {isConnected && isAuthenticated ? 'Đã kết nối' : isConnected ? 'Đang xác thực...' : 'Mất kết nối'}
               </p>
             </div>
             <button 
               className="minimize-btn"
               onClick={() => setIsOpen(false)}
             >
-              <svg viewBox="0 0 24 24" fill="currentColor">
-                <path d="M19 13H5v-2h14v2z"/>
-              </svg>
+              ➖
             </button>
           </div>
 
@@ -162,8 +188,8 @@ const SupportChat = () => {
                         autoFocus
                       />
                       <div className="form-actions">
-                        <button type="submit" disabled={!threadTitle.trim()}>
-                          Bắt đầu chat
+                        <button type="submit" disabled={!threadTitle.trim() || !isAuthenticated}>
+                          {!isAuthenticated ? 'Đang kết nối...' : 'Bắt đầu chat'}
                         </button>
                         <button 
                           type="button" 
@@ -175,57 +201,65 @@ const SupportChat = () => {
                     </form>
                   </div>
                 ) : (
-                  // Thread list or welcome
-                  <div className="welcome-screen">
-                    {threads.length > 0 ? (
-                      <div className="thread-list">
-                        <h4>Các cuộc hội thoại của bạn:</h4>
-                        {threads.map(thread => (
-                          <div 
-                            key={thread.Id}
-                            className={`thread-item ${thread.Status === 'closed' ? 'closed' : ''}`}
-                            onClick={() => joinThread(thread)}
-                          >
-                            <div className="thread-header">
-                              <h5>{thread.Title}</h5>
-                              <span className="thread-date">
-                                {formatDate(thread.UpdatedAt)}
-                              </span>
-                            </div>
-                            {thread.LastMessage && (
-                              <p className="last-message">{thread.LastMessage}</p>
-                            )}
-                            <div className="thread-meta">
-                              <span className={`status-badge ${thread.Status}`}>
-                                {thread.Status === 'active' ? 'Đang hoạt động' : 'Đã đóng'}
-                              </span>
-                              {thread.MessageCount && (
-                                <span className="message-count">
-                                  {thread.MessageCount} tin nhắn
+                  // === FIX: Bọc bằng Fragment để trả về 2 phần tử ===
+                  <>
+                    {/* Thread list or welcome */}
+                    <div className="welcome-screen">
+                      {threads.length > 0 ? (
+                        <div className="thread-list">
+                          <h4>Các cuộc hội thoại của bạn:</h4>
+                          {threads.map(thread => (
+                            <div 
+                              key={thread.Id}
+                              className={`thread-item ${thread.Status === 'closed' ? 'closed' : ''}`}
+                              onClick={() => joinThread(thread)}
+                            >
+                              <div className="thread-header">
+                                <h5>{thread.Title}</h5>
+                                <span className="thread-date">
+                                  {formatDate(thread.UpdatedAt)}
                                 </span>
+                              </div>
+                              {thread.LastMessage && (
+                                <p className="last-message">{thread.LastMessage}</p>
                               )}
+                              <div className="thread-meta">
+                                <span className={`status-badge ${thread.Status}`}>
+                                  {thread.Status === 'active' ? 'Đang hoạt động' : 'Đã đóng'}
+                                </span>
+                                {thread.MessageCount && (
+                                  <span className="message-count">
+                                    {thread.MessageCount} tin nhắn
+                                  </span>
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="welcome-message">
-                        <div className="welcome-icon">🩺</div>
-                        <h4>Chào mừng đến dịch vụ tư vấn y tế!</h4>
-                        <p>Bác sĩ của chúng tôi sẵn sàng hỗ trợ bạn 24/7</p>
-                      </div>
-                    )}
-                    
-                    <button 
-                      className="new-chat-btn"
-                      onClick={() => setIsCreatingThread(true)}
-                    >
-                      <svg viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-                      </svg>
-                      Bắt đầu hội thoại mới
-                    </button>
-                  </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="welcome-message">
+                          <div className="welcome-icon">🩺</div>
+                          <h4>Chào mừng đến dịch vụ tư vấn y tế!</h4>
+                          <p>Bác sĩ của chúng tôi sẵn sàng hỗ trợ bạn 24/7</p>
+                        </div>
+                      )}
+                      
+                      {/* === FIX: Nút này đã bị dời ra ngoài === */}
+                    </div>
+
+                    {/* === FIX: Nút tạo hội thoại mới đã được dời xuống đây === */}
+                    <div className="new-chat-section">
+                      <button 
+                        className="new-chat-btn"
+                        onClick={() => setIsCreatingThread(true)}
+                        disabled={!isAuthenticated}
+                        title={!isAuthenticated ? 'Đang kết nối...' : 'Bắt đầu hội thoại mới'}
+                      >
+                        <span style={{ fontSize: '18px', marginRight: '8px' }}>➕</span>
+                        {!isAuthenticated ? 'Đang kết nối...' : 'Bắt đầu hội thoại mới'}
+                      </button>
+                    </div>
+                  </>
                 )}
               </div>
             ) : (
@@ -236,6 +270,7 @@ const SupportChat = () => {
                   <button 
                     className="back-btn"
                     onClick={() => joinThread(null)}
+                    title="Quay lại danh sách hội thoại"
                   >
                     ←
                   </button>
@@ -279,6 +314,10 @@ const SupportChat = () => {
                               )}
                               <div className="message-bubble">
                                 <p>{message.Content}</p>
+                                {/* Hiển thị sản phẩm đính kèm */}
+                                {message.product && (
+                                  <ChatProductCard product={message.product} />
+                                )}
                               </div>
                               <div className="message-time">
                                 {formatTime(message.CreatedAt)}
@@ -314,7 +353,38 @@ const SupportChat = () => {
                 {/* Message input */}
                 {currentThread.Status === 'active' && (
                   <div className="message-input-container">
+                    {/* Hiển thị sản phẩm đã chọn */}
+                    {selectedProduct && (
+                      <div className="selected-product-preview">
+                        <div className="preview-content">
+                          <img 
+                            src={`http://localhost:5001/images/products/${selectedProduct.Image}`} 
+                            alt={selectedProduct.Name}
+                          />
+                          <div className="preview-info">
+                            <p className="preview-name">{selectedProduct.Name}</p>
+                            <p className="preview-price">{selectedProduct.Price?.toLocaleString('vi-VN')}đ</p>
+                          </div>
+                          <button 
+                            type="button"
+                            className="remove-product-btn"
+                            onClick={handleRemoveProduct}
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                    
                     <form onSubmit={handleSendMessage} className="message-form">
+                      <button
+                        type="button"
+                        className="attach-btn"
+                        onClick={() => setShowProductPicker(true)}
+                        title="Đính kèm sản phẩm"
+                      >
+                        📎
+                      </button>
                       <input
                         ref={inputRef}
                         type="text"
@@ -328,11 +398,15 @@ const SupportChat = () => {
                         disabled={!inputMessage.trim() || !isConnected}
                         className="send-btn"
                       >
-                        <svg viewBox="0 0 24 24" fill="currentColor">
-                          <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
-                        </svg>
+                        ➤
                       </button>
                     </form>
+                  </div>
+                )}
+                
+                {currentThread.Status === 'closed' && (
+                  <div className="thread-closed-notice">
+                    <p>⚠️ Cuộc trò chuyện này đã được đóng. Vui lòng tạo cuộc trò chuyện mới.</p>
                   </div>
                 )}
               </div>
@@ -340,6 +414,13 @@ const SupportChat = () => {
           </div>
         </div>
       )}
+      
+      {/* Product Picker Modal */}
+      <ProductPickerModal
+        isOpen={showProductPicker}
+        onClose={() => setShowProductPicker(false)}
+        onSelectProduct={handleSelectProduct}
+      />
     </div>
   );
 };

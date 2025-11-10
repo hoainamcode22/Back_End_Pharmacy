@@ -13,17 +13,11 @@ class ChatService {
     this.io = io;
 
     io.on('connection', async (socket) => {
-      console.log(`👤 User kết nối: ${socket.id}`);
-
       // Xác thực user khi kết nối
       socket.on('authenticate', async (token) => {
         try {
-          // --- (PHẦN SỬA) ---
-          // Thêm fallback 'secretkey' để đồng bộ với file auth.js
           const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secretkey');
-          // --- (HẾT PHẦN SỬA) ---
-          
-          const user = await this.getUserById(decoded.id);
+          const user = await this.getUserById(decoded.Id || decoded.id);
           
           if (user) {
             socket.userId = user.Id;
@@ -47,8 +41,8 @@ class ChatService {
                 role: user.Role
               }
             });
-
-            console.log(`✅ User ${user.Username} (${user.Role}) đã xác thực, Socket ID: ${socket.id}`);
+          } else {
+            socket.emit('authenticated', { success: false, error: 'Người dùng không tồn tại' });
           }
         } catch (error) {
           socket.emit('authenticated', { success: false, error: 'Token không hợp lệ' });
@@ -71,15 +65,15 @@ class ChatService {
           socket.emit('thread_created', thread);
 
           // Thông báo cho admin có thread mới
-          console.log(`📢 Broadcasting new_thread_notification to admin_room. Thread ID: ${thread.Id}`);
-          console.log(`👥 Admin sockets count: ${this.adminSockets.size}`);
-          
           socket.broadcast.to('admin_room').emit('new_thread_notification', {
             threadId: thread.Id,
+            userId: socket.userId,
             userName: socket.userName,
             title: thread.Title,
             createdAt: thread.CreatedAt
           });
+
+          console.log(`✅ New thread notification sent to admins`);
 
         } catch (error) {
           console.error('❌ Error creating chat thread:', error);
@@ -119,18 +113,54 @@ class ChatService {
             threadId: data.threadId,
             senderId: socket.userId,
             senderRole: socket.userRole,
-            content: data.content
+            content: data.content,
+            attachedProductId: data.attachedProductId || null
           });
+
+          // Nếu có sản phẩm đính kèm, lấy thông tin sản phẩm
+          let productData = null;
+          if (data.attachedProductId) {
+            const productQuery = await db.query(
+              'SELECT "Id", "ProductName", "ImageURL", "Price" FROM public."Products" WHERE "Id" = $1',
+              [data.attachedProductId]
+            );
+            if (productQuery.rows[0]) {
+              productData = {
+                id: productQuery.rows[0].Id,
+                name: productQuery.rows[0].ProductName,
+                image: productQuery.rows[0].ImageURL,
+                price: productQuery.rows[0].Price
+              };
+            }
+          }
 
           // Gửi tin nhắn cho tất cả thành viên trong thread
           io.to(`thread_${data.threadId}`).emit('new_message', {
             ...message,
-            senderName: socket.userName
+            senderName: socket.userName,
+            product: productData
           });
 
-          console.log(`💬 Tin nhắn mới từ ${socket.userName} trong thread ${data.threadId}`);
+          // Nếu user gửi (không phải admin), thông báo cho admin
+          if (socket.userRole !== 'admin') {
+            socket.broadcast.to('admin_room').emit('new_user_message', {
+              threadId: data.threadId,
+              message: message,
+              senderName: socket.userName,
+              userId: socket.userId,
+              product: productData
+            });
+            
+            // Emit new_message riêng cho admin để cập nhật UI
+            socket.broadcast.to('admin_room').emit('new_message', {
+              ...message,
+              senderName: socket.userName,
+              product: productData
+            });
+          }
 
         } catch (error) {
+          console.error('❌ Error sending message:', error);
           socket.emit('error', { message: 'Không thể gửi tin nhắn' });
         }
       });
@@ -141,12 +171,17 @@ class ChatService {
           if (socket.userRole !== 'admin') return;
 
           const activeThreads = await this.getActiveThreads();
+          
           activeThreads.forEach(thread => {
             socket.join(`thread_${thread.Id}`);
           });
 
+          // Đảm bảo admin ở trong admin_room
+          socket.join('admin_room');
+
           socket.emit('admin_threads_joined', activeThreads);
         } catch (error) {
+          console.error('❌ Error joining threads:', error);
           socket.emit('error', { message: 'Không thể tham gia các cuộc hội thoại' });
         }
       });
@@ -169,8 +204,6 @@ class ChatService {
 
       // Disconnect
       socket.on('disconnect', () => {
-        console.log(`👋 User ngắt kết nối: ${socket.id}`);
-        
         if (socket.userId) {
           this.connectedUsers.delete(socket.userId);
         }
@@ -200,11 +233,17 @@ class ChatService {
 
   async createMessage(data) {
     const query = `
-      INSERT INTO public."ChatMessages" ("ThreadId", "SenderId", "SenderRole", "Content")
-      VALUES ($1, $2, $3, $4)
+      INSERT INTO public."ChatMessages" ("ThreadId", "SenderId", "SenderRole", "Content", "AttachedProductId")
+      VALUES ($1, $2, $3, $4, $5)
       RETURNING *
     `;
-    const result = await db.query(query, [data.threadId, data.senderId, data.senderRole, data.content]);
+    const result = await db.query(query, [
+      data.threadId, 
+      data.senderId, 
+      data.senderRole, 
+      data.content,
+      data.attachedProductId || null
+    ]);
     return result.rows[0];
   }
 
@@ -213,14 +252,29 @@ class ChatService {
       SELECT 
         cm.*,
         u."Fullname" as "SenderName",
-        u."Username" as "SenderUsername"
+        u."Username" as "SenderUsername",
+        p."Id" as "ProductId",
+        p."ProductName" as "ProductName",
+        p."ImageURL" as "ProductImage",
+        p."Price" as "ProductPrice"
       FROM public."ChatMessages" cm
       JOIN public."Users" u ON cm."SenderId" = u."Id"
+      LEFT JOIN public."Products" p ON cm."AttachedProductId" = p."Id"
       WHERE cm."ThreadId" = $1
       ORDER BY cm."CreatedAt" ASC
     `;
     const result = await db.query(query, [threadId]);
-    return result.rows;
+    
+    // Format lại messages với object product
+    return result.rows.map(row => ({
+      ...row,
+      product: row.ProductId ? {
+        id: row.ProductId,
+        name: row.ProductName,
+        image: row.ProductImage,
+        price: row.ProductPrice
+      } : null
+    }));
   }
 
   async checkThreadAccess(threadId, userId, userRole) {
