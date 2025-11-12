@@ -92,7 +92,12 @@ const getProducts = async (req, res) => {
 
       // ✅ Ưu tiên ImageURL (Cloudinary) nếu có
       if (r.ImageURL && r.ImageURL.trim() !== '') {
-        imageUrl = r.ImageURL;
+        let cloudUrl = r.ImageURL.trim();
+        // Nếu không bắt đầu bằng http, build full Cloudinary URL
+        if (!cloudUrl.startsWith('http://') && !cloudUrl.startsWith('https://')) {
+          cloudUrl = `https://res.cloudinary.com/dd1onmi19/image/upload/${cloudUrl}`;
+        }
+        imageUrl = cloudUrl;
         console.log('✅ Using Cloudinary URL:', imageUrl);
       } else if (r.Image) {
         // Fallback về Image field (local hoặc URL cũ)
@@ -105,7 +110,12 @@ const getProducts = async (req, res) => {
           imageUrl = `${baseUrl}/images/${image}`;
         }
         console.log('⚠️ Using fallback image:', imageUrl);
+      } else {
+        console.log('❌ No image data for product ID:', r.Id, '- using default');
       }
+
+      // Log để debug
+      console.log(`Product ${r.Id} (${r.Name}): imageUrl = ${imageUrl}`);
 
       return {
         // camelCase (preferred)
@@ -195,7 +205,12 @@ const getProductById = async (req, res) => {
 
     // ✅ Ưu tiên ImageURL (Cloudinary) nếu có
     if (r.ImageURL && r.ImageURL.trim() !== '') {
-      imageUrl = r.ImageURL;
+      let cloudUrl = r.ImageURL.trim();
+      // Nếu không bắt đầu bằng http, build full Cloudinary URL
+      if (!cloudUrl.startsWith('http://') && !cloudUrl.startsWith('https://')) {
+        cloudUrl = `https://res.cloudinary.com/dd1onmi19/image/upload/${cloudUrl}`;
+      }
+      imageUrl = cloudUrl;
       console.log('✅ Product detail - Using Cloudinary URL:', imageUrl);
     } else if (r.Image) {
       // Fallback về Image local
@@ -208,6 +223,8 @@ const getProductById = async (req, res) => {
         imageUrl = `${baseUrl}/images/${image}`;
       }
       console.log('⚠️ Product detail - Using fallback image:', imageUrl);
+    } else {
+      console.log('❌ Product detail - No image data for product ID:', r.Id, '- using default');
     }
 
     const product = {
@@ -275,6 +292,9 @@ const getProductById = async (req, res) => {
  *                 type: string
  *               image:
  *                 type: string
+ *               imageUrl:
+ *                 type: string
+ *                 description: Full Cloudinary URL (optional)
  *               price:
  *                 type: number
  *               stock:
@@ -297,6 +317,7 @@ const createProduct = async (req, res) => {
       category, 
       brand, 
       image, 
+      imageUrl, // Thêm imageUrl từ Cloudinary
       price, 
       stock 
     } = req.body;
@@ -318,8 +339,8 @@ const createProduct = async (req, res) => {
     const query = `
       INSERT INTO "Products" 
       ("Name", "Slug", "ShortDesc", "Description", "Category", "Brand", 
-       "Image", "Price", "Stock", "IsActive", "CreatedAt")
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, true, NOW())
+       "Image", "ImageURL", "Price", "Stock", "IsActive", "CreatedAt")
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, true, NOW())
       RETURNING *
     `;
 
@@ -331,6 +352,7 @@ const createProduct = async (req, res) => {
       category || 'thuoc',
       brand || '',
       image || 'default.jpg',
+      imageUrl || null, // Lưu imageUrl vào ImageURL
       price,
       stock
     ]);
@@ -373,6 +395,7 @@ const updateProduct = async (req, res) => {
       category, 
       brand, 
       image, 
+      imageUrl, // Thêm imageUrl
       price, 
       stock,
       isActive
@@ -429,6 +452,12 @@ const updateProduct = async (req, res) => {
     if (image !== undefined) {
       updates.push(`"Image" = $${paramIndex}`);
       values.push(image);
+      paramIndex++;
+    }
+
+    if (imageUrl !== undefined) {
+      updates.push(`"ImageURL" = $${paramIndex}`);
+      values.push(imageUrl);
       paramIndex++;
     }
 
@@ -639,7 +668,12 @@ const mappedRows = result.rows.map(r => {
   
   // ✅ Ưu tiên ImageURL (Cloudinary)
   if (r.ImageURL && r.ImageURL.trim() !== '') {
-    imageUrl = r.ImageURL;
+    let cloudUrl = r.ImageURL.trim();
+    // Nếu không bắt đầu bằng http, build full Cloudinary URL
+    if (!cloudUrl.startsWith('http://') && !cloudUrl.startsWith('https://')) {
+      cloudUrl = `https://res.cloudinary.com/dd1onmi19/image/upload/${cloudUrl}`;
+    }
+    imageUrl = cloudUrl;
     console.log('✅ Admin - Using Cloudinary URL:', imageUrl);
   } else if (r.Image) {
     const image = r.Image;
@@ -651,6 +685,8 @@ const mappedRows = result.rows.map(r => {
       imageUrl = `${baseUrl}/images/${image}`;
     }
     console.log('⚠️ Admin - Using fallback image:', imageUrl);
+  } else {
+    console.log('❌ Admin - No image data for product ID:', r.Id, '- using default');
   }
 
   return {

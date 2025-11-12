@@ -180,16 +180,19 @@ router.delete(
  */
 router.get('/test', authenticateToken, isAdmin, async (req, res) => {
   try {
-    const cloudinary = require('../config/cloudinary.config');
-    const config = cloudinary.config();
+    const { testCloudinaryConnection } = require('../config/cloudinaryConfig');
+    const isConnected = await testCloudinaryConnection();
+
+    if (!isConnected) {
+      return res.status(500).json({
+        error: 'Cloudinary connection failed!',
+        details: 'Check credentials or network.',
+      });
+    }
 
     res.json({
       success: true,
       message: 'Cloudinary connection OK!',
-      config: {
-        cloud_name: config.cloud_name,
-        api_key_last4: config.api_key ? '***' + config.api_key.slice(-4) : 'Not set',
-      },
     });
   } catch (error) {
     res.status(500).json({
