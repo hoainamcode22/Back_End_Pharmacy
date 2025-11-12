@@ -916,3 +916,44 @@ CREATE DATABASE pharmacy_db;
 **Cập nhật cuối:** 10/11/2025  
 **Version:** 2.0 (Thêm Chat Feature)  
 **Status:** 📚 DOCUMENTATION COMPLETE ✅
+
+
+1️⃣ Quy trình quản lý sản phẩm (Admin)
+A. Thêm sản phẩm mới
+Admin vào trang "Quản lý sản phẩm" (MedicineManagement.jsx)
+Nhấn "➕ Thêm sản phẩm mới"
+Nhập thông tin: tên, mô tả, giá, tồn kho, chọn ảnh sản phẩm
+Nếu chọn ảnh, ảnh sẽ được upload lên Cloudinary (CDN lưu trữ ảnh)
+Sau khi upload, frontend gửi thông tin sản phẩm + link ảnh Cloudinary lên backend
+Backend lưu thông tin vào bảng Products trong database
+B. Sửa sản phẩm
+Nhấn nút "✏️" để sửa sản phẩm
+Có thể đổi thông tin và đổi ảnh mới
+Nếu đổi ảnh, ảnh mới sẽ được upload lên Cloudinary, backend cập nhật lại đường dẫn ảnh
+C. Xóa sản phẩm
+Nhấn nút "🗑️" để xóa (thực chất là chuyển trạng thái IsActive=false, không xóa vật lý)
+2️⃣ Cách lưu trữ và hiển thị hình ảnh
+A. Lưu trữ
+Ảnh sản phẩm được upload lên Cloudinary (https://res.cloudinary.com/...)
+Khi upload xong, Cloudinary trả về:
+imageUrl: Đường dẫn đầy đủ ảnh trên Cloudinary (dùng cho frontend)
+fileName: Tên file gốc (dùng cho trường Image trong DB)
+Backend lưu:
+Image: tên file gốc (vd: paracetamol.jpg)
+ImageURL: đường dẫn Cloudinary sau /upload/ (vd: v1762926289/abcxyz.jpg)
+B. Hiển thị
+Khi lấy danh sách sản phẩm, backend sẽ build lại link ảnh:
+Nếu có ImageURL: build thành https://res.cloudinary.com/dd1onmi19/image/upload/ + ImageURL
+Nếu không có ImageURL: dùng ảnh local /images/tenfile.jpg (chỉ cho sản phẩm mẫu cũ)
+Frontend nhận được link ảnh đầy đủ, hiển thị trực tiếp trong bảng sản phẩm
+3️⃣ Tóm tắt luồng dữ liệu
+Admin chọn ảnh → Ảnh upload lên Cloudinary
+Cloudinary trả về link → Frontend gửi link + info lên backend
+Backend lưu vào DB (Products)
+Khi load sản phẩm, backend build link ảnh trả về frontend
+Frontend hiển thị ảnh đúng cho từng sản phẩm
+4️⃣ Ưu điểm
+Ảnh luôn được lưu trữ an toàn, tốc độ cao trên Cloudinary
+Không cần lưu ảnh trên server backend
+Dữ liệu ảnh và sản phẩm đồng bộ, dễ quản lý
+Có thể đổi ảnh bất cứ lúc nào, không ảnh hưởng sản phẩm cũ

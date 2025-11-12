@@ -75,7 +75,7 @@ const getProducts = async (req, res) => {
     const productsQuery = `
       SELECT 
         "Id", "Name", "Slug", "ShortDesc", 
-        "Category", "Brand", "Image", "Price", 
+        "Category", "Brand", "Image", "ImageURL", "Price", 
         "Stock", "IsActive", "CreatedAt"
       FROM "Products"
       ${whereClause}
@@ -85,24 +85,36 @@ const getProducts = async (req, res) => {
 
     const result = await db.query(productsQuery, queryParams);
 
-    // Map image field to a public URL (Image stored as filename in DB)
-    // Build absolute image URL for frontend
+    // Map image field - Ưu tiên ImageURL từ Cloudinary, fallback về Image local
+    const baseUrl = `${req.protocol}://${req.get('host')}`;
+    // ✅ CLOUDINARY CDN URL base (không có folder cụ thể vì mỗi ảnh có path riêng)
+    const CLOUDINARY_BASE = 'https://res.cloudinary.com/dd1onmi19/image/upload';
+    
     const mappedRows = result.rows.map(r => {
-      const image = r.Image || null;
-      const baseUrl = `${req.protocol}://${req.get('host')}`;
-
       let imageUrl = `${baseUrl}/images/default.jpg`;
-      if (image) {
-        if (typeof image === 'string' && (image.startsWith('http://') || image.startsWith('https://'))) {
-          // Already absolute URL
+
+      // ✅ Ưu tiên ImageURL (Cloudinary) nếu có
+      if (r.ImageURL && r.ImageURL.trim() !== '') {
+        // Nếu là URL đầy đủ - dùng luôn
+        if (r.ImageURL.startsWith('http')) {
+          imageUrl = r.ImageURL;
+        } else {
+          // Nếu chỉ là tên file - build URL Cloudinary đầy đủ
+          // ImageURL trong DB có dạng: "v1762926289/vitamin-c_dih52c.jpg" hoặc "vitamin-c_dih52c.jpg"
+          imageUrl = `${CLOUDINARY_BASE}/${r.ImageURL}`;
+        }
+        // console.log('✅ Product:', r.Name, '| ImageURL DB:', r.ImageURL, '| Final URL:', imageUrl);
+      } else if (r.Image) {
+        // Fallback về Image field (local hoặc URL cũ)
+        const image = r.Image;
+        if (image.startsWith('http://') || image.startsWith('https://')) {
           imageUrl = image;
-        } else if (typeof image === 'string' && image.startsWith('/images/')) {
-          // Old format: /images/filename.jpg
+        } else if (image.startsWith('/images/')) {
           imageUrl = `${baseUrl}${image}`;
         } else {
-          // New format: just filename (e.g., "paracetamol.jpg")
           imageUrl = `${baseUrl}/images/${image}`;
         }
+        // console.log('⚠️ Using fallback image:', imageUrl);
       }
 
       return {
@@ -173,7 +185,7 @@ const getProductById = async (req, res) => {
     const query = `
       SELECT 
         "Id", "Name", "Slug", "ShortDesc", "Description",
-        "Category", "Brand", "Image", "Price", "Stock",
+        "Category", "Brand", "Image", "ImageURL", "Price", "Stock",
         "IsActive", "CreatedAt", "UpdatedAt"
       FROM "Products"
       WHERE "Id" = $1 AND "IsActive" = true
@@ -187,22 +199,32 @@ const getProductById = async (req, res) => {
 
     const r = result.rows[0];
 
-    // build base url from request
+    // Build image URL - Ưu tiên ImageURL từ Cloudinary
     const baseUrl = `${req.protocol}://${req.get('host')}`;
-
-    const image = r.Image || null;
+    const CLOUDINARY_BASE = 'https://res.cloudinary.com/dd1onmi19/image/upload';
     let imageUrl = `${baseUrl}/images/default.jpg`;
-    if (image) {
-      if (typeof image === 'string' && (image.startsWith('http://') || image.startsWith('https://'))) {
-        // Already absolute URL
+
+    // ✅ Ưu tiên ImageURL (Cloudinary) nếu có
+    if (r.ImageURL && r.ImageURL.trim() !== '') {
+      // Nếu là URL đầy đủ - dùng luôn
+      if (r.ImageURL.startsWith('http')) {
+        imageUrl = r.ImageURL;
+      } else {
+        // Nếu chỉ là tên file - build URL Cloudinary đầy đủ
+        imageUrl = `${CLOUDINARY_BASE}/${r.ImageURL}`;
+      }
+      // console.log('✅ Product detail - Using Cloudinary URL:', imageUrl);
+    } else if (r.Image) {
+      // Fallback về Image local
+      const image = r.Image;
+      if (image.startsWith('http://') || image.startsWith('https://')) {
         imageUrl = image;
-      } else if (typeof image === 'string' && image.startsWith('/images/')) {
-        // Old format: /images/filename.jpg
+      } else if (image.startsWith('/images/')) {
         imageUrl = `${baseUrl}${image}`;
       } else {
-        // New format: just filename (e.g., "paracetamol.jpg")
         imageUrl = `${baseUrl}/images/${image}`;
       }
+      // console.log('⚠️ Product detail - Using fallback image:', imageUrl);
     }
 
     const product = {
@@ -291,7 +313,8 @@ const createProduct = async (req, res) => {
       description, 
       category, 
       brand, 
-      image, 
+      image,      // Tên file local (vd: paracetamol.jpg)
+      imageUrl,   // URL Cloudinary hoặc tên file Cloudinary
       price, 
       stock 
     } = req.body;
@@ -310,22 +333,44 @@ const createProduct = async (req, res) => {
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '');
 
+    // ✅ Xử lý ImageURL nếu có
+    let imageUrlValue = null;
+    if (imageUrl) {
+      if (imageUrl.startsWith('http')) {
+        // Extract path sau /upload/ từ URL Cloudinary
+        // URL: https://res.cloudinary.com/dd1onmi19/image/upload/v1762926289/vitamin-c_dih52c.jpg
+        // Cần lấy: v1762926289/vitamin-c_dih52c.jpg
+        const uploadIndex = imageUrl.indexOf('/upload/');
+        if (uploadIndex !== -1) {
+          imageUrlValue = imageUrl.substring(uploadIndex + 8); // +8 để bỏ qua "/upload/"
+        } else {
+          // Fallback: lấy tên file cuối cùng
+          const urlParts = imageUrl.split('/');
+          imageUrlValue = urlParts[urlParts.length - 1];
+        }
+      } else {
+        imageUrlValue = imageUrl; // Đã là path rồi
+      }
+    }
+
     const query = `
       INSERT INTO "Products" 
-      ("Name", "Slug", "ShortDesc", "Description", "Category", "Brand", 
-       "Image", "Price", "Stock", "IsActive", "CreatedAt")
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, true, NOW())
+      ("ProductName", "Name", "Slug", "ShortDesc", "Description", "Category", "Brand", 
+       "Image", "ImageURL", "Price", "Stock", "IsActive", "CreatedAt")
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, true, NOW())
       RETURNING *
     `;
 
     const result = await db.query(query, [
-      name,
+      name,                         // ProductName
+      name,                         // Name (đồng bộ)
       slug,
       shortDesc || '',
       description || '',
       category || 'thuoc',
       brand || '',
-      image || 'default.jpg',
+      image || 'default.jpg',       // Image (local)
+      imageUrlValue || 'default.jpg', // ImageURL (Cloudinary)
       price,
       stock
     ]);
@@ -367,7 +412,8 @@ const updateProduct = async (req, res) => {
       description, 
       category, 
       brand, 
-      image, 
+      image,        // Tên file local (vd: paracetamol.jpg)
+      imageUrl,     // URL Cloudinary (vd: https://res.cloudinary.com/.../image.jpg)
       price, 
       stock,
       isActive
@@ -380,6 +426,11 @@ const updateProduct = async (req, res) => {
 
     if (name !== undefined) {
       updates.push(`"Name" = $${paramIndex}`);
+      values.push(name);
+      paramIndex++;
+      
+      // Update ProductName (để đồng bộ 2 trường)
+      updates.push(`"ProductName" = $${paramIndex}`);
       values.push(name);
       paramIndex++;
 
@@ -421,9 +472,33 @@ const updateProduct = async (req, res) => {
       paramIndex++;
     }
 
+    // ✅ Xử lý Image (tên file local hoặc URL local)
     if (image !== undefined) {
       updates.push(`"Image" = $${paramIndex}`);
       values.push(image);
+      paramIndex++;
+    }
+
+    // ✅ Xử lý ImageURL (tên file Cloudinary hoặc URL đầy đủ)
+    if (imageUrl !== undefined) {
+      // Nếu là URL đầy đủ Cloudinary, extract path sau /upload/
+      let imageFilePath = imageUrl;
+      if (imageUrl.startsWith('http')) {
+        // Extract path sau /upload/ từ URL Cloudinary
+        // URL: https://res.cloudinary.com/dd1onmi19/image/upload/v1762926289/vitamin-c_dih52c.jpg
+        // Cần lấy: v1762926289/vitamin-c_dih52c.jpg
+        const uploadIndex = imageUrl.indexOf('/upload/');
+        if (uploadIndex !== -1) {
+          imageFilePath = imageUrl.substring(uploadIndex + 8); // +8 để bỏ qua "/upload/"
+        } else {
+          // Fallback: lấy tên file cuối cùng
+          const urlParts = imageUrl.split('/');
+          imageFilePath = urlParts[urlParts.length - 1];
+        }
+      }
+      
+      updates.push(`"ImageURL" = $${paramIndex}`);
+      values.push(imageFilePath);
       paramIndex++;
     }
 
@@ -613,13 +688,12 @@ const getAllProductsAdmin = async (req, res) => {
     const countQuery = `SELECT COUNT(*) as total FROM "Products" ${whereClause}`;
     const countResult = await db.query(countQuery, queryParams);
     const totalItems = parseInt(countResult.rows[0].total);
-
     // Get products
     queryParams.push(limit, offset);
     const productsQuery = `
       SELECT 
         "Id", "Name", "Slug", "ShortDesc", "Description",
-        "Category", "Brand", "Image", "Price", 
+        "Category", "Brand", "Image", "ImageURL", "Price", 
         "Stock", "IsActive", "CreatedAt", "UpdatedAt"
       FROM "Products"
       ${whereClause}
@@ -627,43 +701,58 @@ const getAllProductsAdmin = async (req, res) => {
       LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
     `;
 
-    const result = await db.query(productsQuery, queryParams);
+ const result = await db.query(productsQuery, queryParams);
 
-    const baseUrl = `${req.protocol}://${req.get('host')}`;
-    const mappedRows = result.rows.map(r => {
-      const image = r.Image || null;
-      let imageUrl = `${baseUrl}/images/default.jpg`;
-      if (image) {
-        if (image.startsWith('http')) {
-          imageUrl = image;
-        } else if (image.startsWith('/images/')) {
-          imageUrl = `${baseUrl}${image}`;
-        } else {
-          imageUrl = `${baseUrl}/images/${image}`;
-        }
-      }
+const baseUrl = `${req.protocol}://${req.get('host')}`;
+const CLOUDINARY_BASE = 'https://res.cloudinary.com/dd1onmi19/image/upload';
 
-      return {
-        ...r,
-        ImageUrl: imageUrl
-      };
-    });
-
-    res.json({
-      products: mappedRows,
-      pagination: {
-        currentPage: parseInt(page),
-        totalPages: Math.ceil(totalItems / limit),
-        totalItems: totalItems,
-        itemsPerPage: parseInt(limit)
-      }
-    });
-
-  } catch (error) {
-    console.error('Lỗi getAllProductsAdmin:', error);
-    res.status(500).json({ error: 'Lỗi server khi lấy danh sách sản phẩm!' });
+const mappedRows = result.rows.map(r => {
+  let imageUrl = `${baseUrl}/images/default.jpg`;
+  
+  // ✅ Ưu tiên ImageURL (Cloudinary)
+  if (r.ImageURL && r.ImageURL.trim() !== '') {
+    // Nếu là URL đầy đủ - dùng luôn
+    if (r.ImageURL.startsWith('http')) {
+      imageUrl = r.ImageURL;
+    } else {
+      // Nếu chỉ là tên file - build URL Cloudinary đầy đủ
+      imageUrl = `${CLOUDINARY_BASE}/${r.ImageURL}`;
+    }
+    // console.log('✅ Admin - Using Cloudinary URL:', imageUrl);
+  } else if (r.Image) {
+    const image = r.Image;
+    if (image.startsWith('http')) {
+      imageUrl = image;
+    } else if (image.startsWith('/images/')) {
+      imageUrl = `${baseUrl}${image}`;
+    } else {
+      imageUrl = `${baseUrl}/images/${image}`;
+    }
+    // console.log('⚠️ Admin - Using fallback image:', imageUrl);
   }
+
+  return {
+    ...r,
+    ImageURL: imageUrl, 
+  };
+});
+
+res.json({
+  products: mappedRows,
+  pagination: {
+    currentPage: parseInt(page),
+    totalPages: Math.ceil(totalItems / limit),
+    totalItems: totalItems,
+    itemsPerPage: parseInt(limit)
+  }
+});
+
+} catch (error) {
+  console.error('Lỗi getAllProductsAdmin:', error);
+  res.status(500).json({ error: 'Lỗi server khi lấy danh sách sản phẩm!' });
+}
 };
+
 
 /**
  * @swagger

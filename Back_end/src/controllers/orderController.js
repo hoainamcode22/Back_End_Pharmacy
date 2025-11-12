@@ -50,6 +50,7 @@ const checkout = async (req, res) => {
         ci."Qty",
         p."Name" as "ProductName",
         p."Image" as "ProductImage",
+        p."ImageURL" as "ProductImageURL",
         p."Price",
         p."Stock"
       FROM "CartItems" ci
@@ -75,10 +76,12 @@ const checkout = async (req, res) => {
         });
       }
 
-      // ✅ build URL ảnh đúng tuyệt đối, không đổi logic
+      // Build URL ảnh - Ưu tiên ImageURL (Cloudinary)
       let imageUrl = `${baseUrl}/images/default.jpg`;
-      const img = item.ProductImage;
-      if (img) {
+      if (item.ProductImageURL) {
+        imageUrl = item.ProductImageURL;
+      } else if (item.ProductImage) {
+        const img = item.ProductImage;
         if (img.startsWith('http')) imageUrl = img;
         else imageUrl = `${baseUrl}/images/${img.replace(/^\/+/, '')}`;
       }

@@ -212,6 +212,52 @@ export const deleteProduct = (id) =>
 export const toggleProductStatus = (id) =>
   api.patch(`/products/admin/${id}/toggle`).then((r) => r.data);
 
+// ========== CLOUDINARY UPLOAD ==========
+/** [ADMIN] Upload ảnh sản phẩm lên Cloudinary */
+export const uploadProductImage = (file, productId) => {
+  const formData = new FormData();
+  formData.append('image', file);
+  if (productId) formData.append('productId', productId);
+  
+  return api.post('/upload/product', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }).then((r) => r.data);
+};
+
+/** [USER] Upload avatar lên Cloudinary */
+export const uploadAvatar = (file) => {
+  const formData = new FormData();
+  formData.append('avatar', file);
+  
+  return api.post('/upload/avatar', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }).then((r) => r.data);
+};
+
+/** [ADMIN] Upload nhiều ảnh cùng lúc */
+export const uploadMultipleImages = (files, folder = 'pharmacy/misc') => {
+  const formData = new FormData();
+  files.forEach(file => {
+    formData.append('images', file);
+  });
+  formData.append('folder', folder);
+  
+  return api.post('/upload/multiple', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }).then((r) => r.data);
+};
+
+/** [ADMIN] Xóa ảnh từ Cloudinary */
+export const deleteCloudinaryImage = (imageUrl, publicId = null) => {
+  return api.delete('/upload/delete', {
+    data: { imageUrl, publicId }
+  }).then((r) => r.data);
+};
+
+/** [ADMIN] Test Cloudinary connection */
+export const testCloudinaryConnection = () =>
+  api.get('/upload/test').then((r) => r.data);
+
 // ========== ADMIN - ORDER MANAGEMENT ==========
 /** [ADMIN] Lấy tất cả đơn hàng */
 export const getAllOrders = (params = {}) =>

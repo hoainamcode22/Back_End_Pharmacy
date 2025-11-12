@@ -4,7 +4,8 @@ import {
   createProduct, 
   updateProduct, 
   deleteProduct, 
-  toggleProductStatus 
+  toggleProductStatus,
+  uploadProductImage 
 } from "../../../api";
 import "./MedicineManagement.css";
 
@@ -27,11 +28,25 @@ export default function MedicineManagement() {
     price: "",
     stock: ""
   });
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState("");
+  const [uploading, setUploading] = useState(false);
 
+  // ✅ Debounce search để tránh giật
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      loadProducts();
+    }, 500); // Đợi 500ms sau khi user ngừng gõ
+
+    return () => clearTimeout(timeoutId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search, categoryFilter]);
+
+  // ✅ Load ngay khi đổi trang
   useEffect(() => {
     loadProducts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, search, categoryFilter]);
+  }, [currentPage]);
 
   const loadProducts = async () => {
     try {
@@ -41,6 +56,16 @@ export default function MedicineManagement() {
       if (categoryFilter) params.category = categoryFilter;
 
       const data = await getAllProductsAdmin(params);
+      
+      // 🔍 Debug: Check image field từ backend
+      if (data.products && data.products.length > 0) {
+        console.log('🖼️ Sample product image data:', {
+          Image: data.products[0].Image,
+          ImageURL: data.products[0].ImageURL,
+          ImageUrl: data.products[0].ImageUrl
+        });
+      }
+      
       setProducts(data.products || []);
       setPagination(data.pagination || {});
     } catch (err) {
@@ -63,6 +88,8 @@ export default function MedicineManagement() {
       price: "",
       stock: ""
     });
+    setSelectedFile(null);
+    setImagePreview("");
     setShowModal(true);
   };
 
@@ -78,24 +105,81 @@ export default function MedicineManagement() {
       price: product.Price || "",
       stock: product.Stock || ""
     });
+    setSelectedFile(null);
+    setImagePreview(product.ImageURL || product.ImageUrl || "");
     setShowModal(true);
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('⚠️ Vui lòng chọn file ảnh!');
+      return;
+    }
+
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('⚠️ Kích thước ảnh không được vượt quá 5MB!');
+      return;
+    }
+
+    setSelectedFile(file);
+
+    // Preview image
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result);
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      setUploading(true);
+      
+      let cloudinaryImageUrl = null;
+      let localImageName = formData.image;
+
+      // Nếu có chọn file mới, upload lên Cloudinary trước
+      if (selectedFile) {
+        const uploadResult = await uploadProductImage(selectedFile, editingProduct?.Id);
+        cloudinaryImageUrl = uploadResult.imageUrl; // URL đầy đủ từ Cloudinary
+        localImageName = uploadResult.fileName || selectedFile.name; // Tên file gốc
+        // console.log('✅ Upload ảnh thành công:', cloudinaryImageUrl);
+      }
+
+      // ✅ Chuẩn bị dữ liệu đúng format:
+      // - image: tên file local (để tương thích code cũ)
+      // - imageUrl: URL Cloudinary đầy đủ
+      const dataToSave = {
+        ...formData,
+        image: localImageName,           // Tên file local (vd: paracetamol.jpg)
+        imageUrl: cloudinaryImageUrl || formData.image  // URL Cloudinary hoặc URL cũ
+      };
+
+      // console.log('📤 Dữ liệu gửi lên server:', dataToSave);
+
       if (editingProduct) {
-        await updateProduct(editingProduct.Id, formData);
+        await updateProduct(editingProduct.Id, dataToSave);
         alert("✅ Cập nhật sản phẩm thành công!");
       } else {
-        await createProduct(formData);
+        await createProduct(dataToSave);
         alert("✅ Tạo sản phẩm mới thành công!");
       }
+      
       setShowModal(false);
+      setSelectedFile(null);
+      setImagePreview("");
       loadProducts();
     } catch (err) {
       console.error("Error saving product:", err);
       alert(err.response?.data?.error || "Lỗi khi lưu sản phẩm");
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -195,7 +279,7 @@ export default function MedicineManagement() {
                     <tr key={product.Id}>
                       <td>
                         <img 
-                          src={product.ImageUrl || '/images/default.jpg'} 
+                          src={product.ImageURL || product.ImageUrl || '/images/default.jpg'} 
                           alt={product.Name}
                           className="product-image"
                           onError={(e) => {
@@ -375,15 +459,53 @@ export default function MedicineManagement() {
               </div>
 
               <div className="form-group">
-                <label>URL Hình ảnh</label>
-                <input
-                  type="text"
-                  value={formData.image}
-                  onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                  placeholder="VD: paracetamol.jpg hoặc URL đầy đủ"
-                />
+                <label>📸 Hình ảnh sản phẩm</label>
+                
+                {/* Preview ảnh hiện tại hoặc ảnh đã chọn */}
+                {imagePreview && (
+                  <div className="image-preview-box">
+                    <img 
+                      src={imagePreview} 
+                      alt="Preview" 
+                      className="image-preview"
+                      onError={(e) => {
+                        e.target.src = '/images/default.jpg';
+                      }}
+                    />
+                  </div>
+                )}
+
+                {/* Input file upload */}
+                <div className="file-upload-wrapper">
+                  <label htmlFor="image-upload" className="file-upload-label">
+                    {selectedFile ? '✅ Đã chọn: ' + selectedFile.name : '📤 Chọn ảnh từ máy tính'}
+                  </label>
+                  <input
+                    id="image-upload"
+                    type="file"
+                    accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+                    onChange={handleFileChange}
+                    className="file-upload-input"
+                  />
+                </div>
+
+                {/* Hoặc nhập URL trực tiếp */}
+                <div className="url-input-group">
+                  <span className="url-divider">HOẶC nhập URL:</span>
+                  <input
+                    type="text"
+                    value={formData.image}
+                    onChange={(e) => {
+                      setFormData({ ...formData, image: e.target.value });
+                      setImagePreview(e.target.value);
+                    }}
+                    placeholder="https://example.com/image.jpg"
+                  />
+                </div>
+
                 <small className="form-hint">
-                  Nhập tên file (VD: paracetamol.jpg) hoặc URL đầy đủ
+                  ✨ <strong>Cloudinary Upload:</strong> Chọn ảnh từ máy tính (max 5MB)<br/>
+                  🔗 Hoặc nhập URL trực tiếp nếu ảnh đã có sẵn online
                 </small>
               </div>
 
@@ -391,8 +513,8 @@ export default function MedicineManagement() {
                 <button type="button" onClick={() => setShowModal(false)} className="btn-cancel">
                   Hủy
                 </button>
-                <button type="submit" className="btn-submit">
-                  {editingProduct ? 'Cập nhật' : 'Tạo mới'}
+                <button type="submit" className="btn-submit" disabled={uploading}>
+                  {uploading ? '⏳ Đang upload...' : (editingProduct ? 'Cập nhật' : 'Tạo mới')}
                 </button>
               </div>
             </form>

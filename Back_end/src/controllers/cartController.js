@@ -23,6 +23,7 @@ const getCart = async (req, res) => {
         ci."Qty",
         p."Name" as "ProductName",
         p."Image" as "ProductImage",
+        p."ImageURL" as "ProductImageURL",
         p."Price",
         (ci."Qty" * p."Price") as "Subtotal"
       FROM "CartItems" ci
@@ -33,19 +34,21 @@ const getCart = async (req, res) => {
 
     const result = await db.query(query, [userId]);
 
-    // Build absolute URL for images
+    // Build absolute URL for images - Ưu tiên ImageURL (Cloudinary)
     const baseUrl = `${req.protocol}://${req.get('host')}`;
     const cartItemsWithAbsoluteUrls = result.rows.map(item => {
       let imageUrl = `${baseUrl}/images/default.jpg`;
-      const img = item.ProductImage;
       
-      if (img) {
-        if (typeof img === 'string' && (img.startsWith('http://') || img.startsWith('https://'))) {
+      // Ưu tiên ImageURL từ Cloudinary
+      if (item.ProductImageURL) {
+        imageUrl = item.ProductImageURL;
+      } else if (item.ProductImage) {
+        const img = item.ProductImage;
+        if (img.startsWith('http://') || img.startsWith('https://')) {
           imageUrl = img;
-        } else if (typeof img === 'string' && img.startsWith('/images/')) {
+        } else if (img.startsWith('/images/')) {
           imageUrl = `${baseUrl}${img}`;
         } else {
-          // Filename only (e.g., "paracetamol.jpg")
           imageUrl = `${baseUrl}/images/${img}`;
         }
       }

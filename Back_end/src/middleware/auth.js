@@ -11,14 +11,22 @@ const authenticateToken = (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secretkey');
     
-    // Normalize: token có thể là { id, role } (lowercase) -> chuyển thành { Id, Role } để controllers dùng
+    console.log('🔐 Token decoded:', decoded);
+    
+    // Normalize: token có thể là { id, role } (lowercase) hoặc { Id, Role } (PascalCase)
+    // Ưu tiên PascalCase (chuẩn mới), fallback sang lowercase (chuẩn cũ)
     req.user = {
-      Id: decoded.id || decoded.Id,
-      Role: decoded.role || decoded.Role
+      Id: decoded.Id || decoded.id,
+      Role: decoded.Role || decoded.role,
+      // Thêm các field khác nếu có
+      Username: decoded.Username || decoded.username,
+      Email: decoded.Email || decoded.email
     };
     
+    console.log('✅ User authenticated:', req.user);
     next();
   } catch (error) {
+    console.error('❌ Token verification failed:', error.message);
     return res.status(403).json({ error: 'Token không hợp lệ hoặc đã hết hạn!' });
   }
 };
@@ -39,5 +47,5 @@ const isAdmin = (req, res, next) => {
 
 module.exports = {
   authenticateToken,
-  isAdmin // <-- Bổ sung export
+  isAdmin 
 };

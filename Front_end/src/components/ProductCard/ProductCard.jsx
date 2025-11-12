@@ -5,14 +5,30 @@ import "./ProductCard.css"; // CSS sẽ được cập nhật ở dưới
 export default function ProductCard({ product, onAddToCart }) {
   const nav = useNavigate();
 
-  // GIỮ NGUYÊN LOGIC: Xử lý đường dẫn ảnh
+  // Xử lý đường dẫn ảnh - Ưu tiên Cloudinary URL
   const getImagePath = (product) => {
     const raw = product.imageUrl || product.ImageUrl || product.image || product.Image || "/images/default.jpg";
+    
+    // Nếu là URL tuyệt đối (Cloudinary) - dùng luôn
+    if (typeof raw === 'string' && (raw.startsWith('http://') || raw.startsWith('https://'))) {
+      return raw;
+    }
+    
+    // Nếu bắt đầu bằng / - build absolute URL
     if (typeof raw === 'string' && raw.startsWith('/')) {
       const backendOrigin = API_BASE.replace(/\/api\/?$/i, '');
       return `${backendOrigin}${raw}`;
     }
-    return raw;
+    
+    // Nếu chỉ là filename (e.g., "azithromycin.jpg") - build URL với /images/
+    if (typeof raw === 'string' && raw.length > 0) {
+      const backendOrigin = API_BASE.replace(/\/api\/?$/i, '');
+      return `${backendOrigin}/images/${raw}`;
+    }
+    
+    // Fallback default
+    const backendOrigin = API_BASE.replace(/\/api\/?$/i, '');
+    return `${backendOrigin}/images/default.jpg`;
   };
 
   // GIỮ NGUYÊN LOGIC: Xử lý sự kiện click

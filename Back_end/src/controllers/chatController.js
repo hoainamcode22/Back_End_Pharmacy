@@ -245,8 +245,10 @@ const chatController = {
           u."Username" as "SenderUsername",
           p."Id" as "ProductId",
           p."ProductName" as "ProductName",
+          p."Name" as "ProductNameAlt",
           p."Price" as "ProductPrice",
-          p."ImageURL" as "ProductImage"
+          p."ImageURL" as "ProductImage",
+          p."Image" as "ProductImageAlt"
         FROM "ChatMessages" cm
         JOIN "Users" u ON cm."SenderId" = u."Id"
         LEFT JOIN "Products" p ON cm."AttachedProductId" = p."Id"
@@ -256,16 +258,54 @@ const chatController = {
 
       const result = await db.query(query, [threadId]);
       
-      // Format lại messages để có object product
-      const messages = result.rows.map(row => ({
-        ...row,
-        product: row.ProductId ? {
+      console.log('📦 Raw query result for thread', threadId, ':', result.rows.length, 'messages');
+      
+      // Format lại messages để có object product với đầy đủ thông tin
+      const CLOUDINARY_BASE = 'https://res.cloudinary.com/dd1onmi19/image/upload/products';
+      
+      const messages = result.rows.map(row => {
+        const productData = row.ProductId ? {
           id: row.ProductId,
-          name: row.ProductName,
-          price: row.ProductPrice,
-          image: row.ProductImage
-        } : null
-      }));
+          Id: row.ProductId, // Backward compatibility
+          name: row.ProductName || row.ProductNameAlt,
+          ProductName: row.ProductName || row.ProductNameAlt, // Backward compatibility
+          price: parseFloat(row.ProductPrice || 0),
+          ProductPrice: parseFloat(row.ProductPrice || 0), // Backward compatibility
+          image: (() => {
+            const rawImage = row.ProductImage || row.ProductImageAlt;
+            // Nếu là URL đầy đủ - dùng luôn
+            if (rawImage && rawImage.startsWith('http')) {
+              return rawImage;
+            }
+            // Nếu chỉ là tên file - build URL với folder /products/
+            if (rawImage) {
+              return `${CLOUDINARY_BASE}/${rawImage}`;
+            }
+            return null;
+          })(),
+          ProductImage: (() => {
+            const rawImage = row.ProductImage || row.ProductImageAlt;
+            // Nếu là URL đầy đủ - dùng luôn
+            if (rawImage && rawImage.startsWith('http')) {
+              return rawImage;
+            }
+            // Nếu chỉ là tên file - build URL với folder /products/
+            if (rawImage) {
+              return `${CLOUDINARY_BASE}/${rawImage}`;
+            }
+            return null;
+          })(), // Backward compatibility
+        } : null;
+        
+        if (productData) {
+          console.log('✅ Product attached to message:', row.Id, '->', productData);
+        }
+        
+        return {
+          ...row,
+          product: productData
+        };
+      });
 
       res.json({
         success: true,

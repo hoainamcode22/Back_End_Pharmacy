@@ -436,6 +436,87 @@
   background: #218838;
 }
 
+.btn-submit:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Image Upload Styles */
+.image-preview-box {
+  margin-bottom: 12px;
+  border: 2px dashed #dee2e6;
+  border-radius: 8px;
+  padding: 12px;
+  text-align: center;
+  background: #f8f9fa;
+}
+
+.image-preview {
+  max-width: 100%;
+  max-height: 250px;
+  border-radius: 6px;
+  object-fit: contain;
+}
+
+.file-upload-wrapper {
+  margin-bottom: 12px;
+}
+
+.file-upload-label {
+  display: block;
+  width: 100%;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  text-align: center;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s;
+}
+
+.file-upload-label:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.file-upload-input {
+  display: none;
+}
+
+.url-input-group {
+  margin-top: 12px;
+}
+
+.url-divider {
+  display: block;
+  text-align: center;
+  margin: 12px 0;
+  font-size: 12px;
+  color: #6c757d;
+  font-weight: 600;
+  position: relative;
+}
+
+.url-divider::before,
+.url-divider::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 35%;
+  height: 1px;
+  background: #dee2e6;
+}
+
+.url-divider::before {
+  left: 0;
+}
+
+.url-divider::after {
+  right: 0;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .medicine-management {

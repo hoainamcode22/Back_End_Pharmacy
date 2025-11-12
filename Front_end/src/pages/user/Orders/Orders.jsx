@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getOrders, cancelOrder } from '../../../api';
+import { getOrders, cancelOrder, getOrderDetail } from '../../../api';
+import ReviewModal from '../../../components/ReviewModal/ReviewModal';
 import './Orders.css';
 
 function Orders() {
@@ -9,6 +10,9 @@ function Orders() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [loadingProducts, setLoadingProducts] = useState(false);
 
   const STATUS_CONFIG = {
     pending: { label: 'Chờ xác nhận', color: '#ffc107', icon: '⏳' },
@@ -61,6 +65,38 @@ function Orders() {
         alert(err.response?.data?.message || 'Không thể hủy đơn hàng.');
       }
     }
+  };
+
+  // Handle review button - load order products and show modal
+  const handleReviewOrder = async (orderId) => {
+    try {
+      setLoadingProducts(true);
+      const orderDetail = await getOrderDetail(orderId);
+      
+      console.log('📦 Order detail loaded:', orderDetail);
+      
+      if (orderDetail && orderDetail.items && orderDetail.items.length > 0) {
+        // Show first product for review (can be enhanced to show all products)
+        const firstProduct = orderDetail.items[0];
+        console.log('🎯 First product for review:', firstProduct);
+        console.log('🖼️ Product image field:', firstProduct.ProductImage);
+        
+        setSelectedProduct(firstProduct);
+        setShowReviewModal(true);
+      } else {
+        alert('Không tìm thấy sản phẩm trong đơn hàng này');
+      }
+    } catch (error) {
+      console.error('Error loading order products:', error);
+      alert('Không thể tải thông tin sản phẩm');
+    } finally {
+      setLoadingProducts(false);
+    }
+  };
+
+  const handleReviewSuccess = () => {
+    // Optionally reload orders or show success message
+    console.log('Review submitted successfully');
   };
 
   const filteredOrders = orders;
@@ -160,24 +196,30 @@ function Orders() {
               <div className="order-footer">
                 <div className="order-actions">
                   {order.status === 'delivered' && (
-                    <button className="btn-review">Đánh giá</button>
+                    <button 
+                      className="btn-review"
+                      onClick={() => handleReviewOrder(order.orderId)}
+                      disabled={loadingProducts}
+                    >
+                      {loadingProducts ? 'Đang tải...' : '⭐ Đánh giá'}
+                    </button>
                   )}
                   {order.status === 'shipping' && (
-                    <button className="btn-track">Theo dõi</button>
+                    <button className="btn-track">📍 Theo dõi</button>
                   )}
                   {order.status === 'pending' && (
                     <button 
                       className="btn-cancel"
                       onClick={() => handleCancelOrder(order.orderId)}
                     >
-                      Hủy đơn
+                      ✕ Hủy đơn
                     </button>
                   )}
                   <button 
                     className="btn-detail"
                     onClick={() => navigate(`/orders/${order.orderId}`)}
                   >
-                    Chi tiết
+                    📄 Chi tiết
                   </button>
                 </div>
               </div>
@@ -185,6 +227,17 @@ function Orders() {
           ))}
         </div>
       )}
+
+      {/* Review Modal */}
+      <ReviewModal
+        isOpen={showReviewModal}
+        onClose={() => {
+          setShowReviewModal(false);
+          setSelectedProduct(null);
+        }}
+        product={selectedProduct}
+        onReviewSuccess={handleReviewSuccess}
+      />
     </div>
   );
 }

@@ -49,6 +49,7 @@ const commentRoutes = require("./src/routes/commentRoutes");
 const diseaseRoutes = require("./src/routes/diseaseRoutes");
 const chatRoutes = require("./src/routes/chatRoutes");
 const dashboardRoutes = require("./src/routes/dashboardRoutes");
+const uploadRoutes = require("./src/routes/uploadRoutes");
 
 app.use("/api/auth", authRoutes);
 app.use("/api/products", productRoutes);
@@ -60,6 +61,7 @@ app.use("/api/comments", commentRoutes);
 app.use("/api/diseases", diseaseRoutes);
 app.use("/api/chat", chatRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/upload", uploadRoutes); // 📸 Cloudinary upload routes
 
 // Swagger setup
 const swaggerOptions = {

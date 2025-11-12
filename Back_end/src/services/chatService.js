@@ -121,16 +121,24 @@ class ChatService {
           let productData = null;
           if (data.attachedProductId) {
             const productQuery = await db.query(
-              'SELECT "Id", "ProductName", "ImageURL", "Price" FROM public."Products" WHERE "Id" = $1',
+              'SELECT "Id", "ProductName", "Name", "ImageURL", "Image", "Price" FROM public."Products" WHERE "Id" = $1',
               [data.attachedProductId]
             );
             if (productQuery.rows[0]) {
+              const p = productQuery.rows[0];
               productData = {
-                id: productQuery.rows[0].Id,
-                name: productQuery.rows[0].ProductName,
-                image: productQuery.rows[0].ImageURL,
-                price: productQuery.rows[0].Price
+                id: p.Id,
+                Id: p.Id,
+                name: p.ProductName || p.Name,
+                ProductName: p.ProductName || p.Name,
+                image: p.ImageURL || p.Image,
+                ProductImage: p.ImageURL || p.Image,
+                price: parseFloat(p.Price || 0),
+                ProductPrice: parseFloat(p.Price || 0)
               };
+              console.log('✅ Product data loaded for socket message:', productData);
+            } else {
+              console.warn('⚠️ Product not found:', data.attachedProductId);
             }
           }
 
@@ -255,7 +263,9 @@ class ChatService {
         u."Username" as "SenderUsername",
         p."Id" as "ProductId",
         p."ProductName" as "ProductName",
+        p."Name" as "ProductNameAlt",
         p."ImageURL" as "ProductImage",
+        p."Image" as "ProductImageAlt",
         p."Price" as "ProductPrice"
       FROM public."ChatMessages" cm
       JOIN public."Users" u ON cm."SenderId" = u."Id"
@@ -265,16 +275,30 @@ class ChatService {
     `;
     const result = await db.query(query, [threadId]);
     
-    // Format lại messages với object product
-    return result.rows.map(row => ({
-      ...row,
-      product: row.ProductId ? {
+    console.log('📦 getThreadMessages - Raw result:', result.rows.length, 'messages');
+    
+    // Format lại messages với object product đầy đủ
+    return result.rows.map(row => {
+      const productData = row.ProductId ? {
         id: row.ProductId,
-        name: row.ProductName,
-        image: row.ProductImage,
-        price: row.ProductPrice
-      } : null
-    }));
+        Id: row.ProductId,
+        name: row.ProductName || row.ProductNameAlt,
+        ProductName: row.ProductName || row.ProductNameAlt,
+        image: row.ProductImage || row.ProductImageAlt,
+        ProductImage: row.ProductImage || row.ProductImageAlt,
+        price: parseFloat(row.ProductPrice || 0),
+        ProductPrice: parseFloat(row.ProductPrice || 0)
+      } : null;
+      
+      if (productData) {
+        console.log('✅ Socket message with product:', row.Id, '->', productData);
+      }
+      
+      return {
+        ...row,
+        product: productData
+      };
+    });
   }
 
   async checkThreadAccess(threadId, userId, userRole) {

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getOrderDetail, cancelOrder } from '../../../api';
-import axios from 'axios';
+import ReviewModal from '../../../components/ReviewModal/ReviewModal';
 import './OrderDetail.css';
 
 const BACKEND_URL = import.meta.env.VITE_API_BASE?.replace('/api', '') || 'http://localhost:5001';
@@ -15,7 +15,6 @@ function OrderDetail() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const [reviewForm, setReviewForm] = useState({ rating: 5, content: "" });
 
   const STATUS_CONFIG = {
     pending: { label: 'Chờ xác nhận', color: '#ffc107', icon: '⏳', description: 'Đơn hàng đang chờ được xác nhận' },
@@ -66,36 +65,9 @@ function OrderDetail() {
     setShowReviewModal(true);
   };
 
-  const handleSubmitReview = async (e) => {
-    e.preventDefault();
-    
-    if (!reviewForm.content.trim()) {
-      alert("Vui lòng nhập nội dung đánh giá!");
-      return;
-    }
-
-    try {
-      const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001';
-      const token = localStorage.getItem('token');
-      
-      await axios.post(`${baseURL}/api/comments`, {
-        productId: selectedProduct.ProductId,
-        rating: reviewForm.rating,
-        content: reviewForm.content
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-
-      alert("✓ Đánh giá của bạn đã được gửi thành công!");
-      
-      // Reset and close
-      setReviewForm({ rating: 5, content: "" });
-      setShowReviewModal(false);
-      setSelectedProduct(null);
-    } catch (err) {
-      console.error("Error submitting review:", err);
-      alert("❌ " + (err.response?.data?.error || "Không thể gửi đánh giá!"));
-    }
+  const handleReviewSuccess = () => {
+    console.log('Review submitted successfully');
+    // Optionally refresh order data
   };
 
   if (loading) {
@@ -313,80 +285,15 @@ function OrderDetail() {
       </div>
 
       {/* Review Modal */}
-      {showReviewModal && selectedProduct && (
-        <div className="modal-overlay" onClick={() => setShowReviewModal(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h2>Đánh giá sản phẩm</h2>
-              <button 
-                className="modal-close"
-                onClick={() => {
-                  setShowReviewModal(false);
-                  setReviewForm({ rating: 5, content: "" });
-                }}
-              >
-                ✕
-              </button>
-            </div>
-            <div className="modal-body">
-              <div className="review-product-info">
-                <img 
-                  src={selectedProduct.ProductImage || `${BACKEND_URL}/images/default.jpg`}
-                  alt={selectedProduct.ProductName}
-                  className="review-product-image"
-                />
-                <div>
-                  <h3>{selectedProduct.ProductName}</h3>
-                  <p>{parseFloat(selectedProduct.Price).toLocaleString('vi-VN')}đ</p>
-                </div>
-              </div>
-
-              <form onSubmit={handleSubmitReview} className="review-form-modal">
-                <div className="form-group">
-                  <label>Đánh giá của bạn:</label>
-                  <div className="star-selector">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <span
-                        key={star}
-                        className={star <= reviewForm.rating ? "star filled" : "star"}
-                        onClick={() => setReviewForm({ ...reviewForm, rating: star })}
-                        style={{ cursor: 'pointer', fontSize: '32px' }}
-                      >
-                        ★
-                      </span>
-                    ))}
-                  </div>
-                </div>
-                <div className="form-group">
-                  <label>Nội dung đánh giá:</label>
-                  <textarea
-                    value={reviewForm.content}
-                    onChange={(e) => setReviewForm({ ...reviewForm, content: e.target.value })}
-                    placeholder="Chia sẻ trải nghiệm của bạn về sản phẩm này..."
-                    rows="6"
-                    required
-                  />
-                </div>
-                <div className="modal-actions">
-                  <button type="submit" className="btn-submit-modal">
-                    Gửi đánh giá
-                  </button>
-                  <button 
-                    type="button" 
-                    className="btn-cancel-modal"
-                    onClick={() => {
-                      setShowReviewModal(false);
-                      setReviewForm({ rating: 5, content: "" });
-                    }}
-                  >
-                    Hủy
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      )}
+      <ReviewModal
+        isOpen={showReviewModal}
+        onClose={() => {
+          setShowReviewModal(false);
+          setSelectedProduct(null);
+        }}
+        product={selectedProduct}
+        onReviewSuccess={handleReviewSuccess}
+      />
     </div>
   );
 }
