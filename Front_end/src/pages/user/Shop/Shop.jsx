@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect } from "react"; // <--- Bỏ "useCallback" đi
 import { Link } from "react-router-dom";
 import ProductCard from "../../../components/ProductCard/ProductCard.jsx";
 import SearchBar from "../../../components/SearchBar/SearchBar.jsx";
 import { fetchProducts, addToCart } from "../../../api";
 import "./Shop.css";
 
-// ⭐️ Vẫn import 6 ảnh voucher
+// Vẫn import 6 ảnh voucher
 import voucher1 from "../../../assets/voucher1.jpg";
 import voucher2 from "../../../assets/voucher2.jpg";
 import voucher3 from "../../../assets/voucher3.jpg";
@@ -21,7 +21,7 @@ const CATEGORIES = [
   { id: 4, name: "Thiết bị y tế", icon: "🩺", key: "thiet-bi" },
 ];
 
-// ⭐️ Gom 6 voucher vào 1 mảng để chạy slide
+// Gom 6 voucher vào 1 mảng để chạy slide
 const banners = [voucher1, voucher2, voucher3, voucher4, voucher5, voucher6];
 
 export default function Shop() {
@@ -31,22 +31,33 @@ export default function Shop() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
-  // ⭐️ State mới để điều khiển carousel
   const [currentSlide, setCurrentSlide] = useState(0);
 
-  // ⭐️ Hàm chuyển slide
+  // === 💡 ĐOẠN SỬA LỖI BANNER (THEO CÁCH 2) ===
+
+  const slidesPerView = 2;
+  const maxSlidePage = Math.ceil(banners.length / slidesPerView) - 1; // (6 / 2) - 1 = 2
+
+  // ⭐️ Hàm chuyển slide (Giữ nguyên, chỉ dùng cho nút bấm)
   const nextSlide = () => {
-    setCurrentSlide(s => (s === banners.length - 1 ? 0 : s + 1));
+    setCurrentSlide(s => (s === maxSlidePage ? 0 : s + 1));
   };
   const prevSlide = () => {
-    setCurrentSlide(s => (s === 0 ? banners.length - 1 : s - 1));
+    setCurrentSlide(s => (s === 0 ? maxSlidePage : s - 1));
   };
 
-  // ⭐️ useEffect mới để tự động lướt (3 giây)
+  // ⭐️ useEffect (Đã sửa lại)
   useEffect(() => {
-    const slideInterval = setInterval(nextSlide, 3000);
+    // Đặt logic tự động chạy trực tiếp vào đây
+    const slideInterval = setInterval(() => {
+      setCurrentSlide(s => (s === maxSlidePage ? 0 : s + 1));
+    }, 3000);
+    
     return () => clearInterval(slideInterval); // Dọn dẹp khi component unmount
-  }, []);
+  }, [maxSlidePage]); // Phụ thuộc vào maxSlidePage (là hằng số)
+  
+  // === 💡 KẾT THÚC ĐOẠN SỬA LỖI BANNER ===
+
 
   // Fetch products từ API (Giữ nguyên)
   useEffect(() => {
@@ -73,7 +84,6 @@ export default function Shop() {
   }, [selectedCategory, searchTerm]);
 
   // (Các hàm mapCategoryToId, transformedProducts giữ nguyên)
-  // ... (existing code) ...
   const mapCategoryToId = (category) => {
     const categoryMap = {
       "thuoc": 1,
@@ -99,7 +109,6 @@ export default function Shop() {
     };
   });
 
-  // Group products by category (Giữ nguyên 6 cột)
   const groupedProducts = CATEGORIES.map(cat => {
     const categoryProducts = transformedProducts.filter(
       p => p.categoryId === cat.id
@@ -167,10 +176,9 @@ export default function Shop() {
         </div>
       </div>
 
-      {/* ====== 💎 BANNER CAROUSEL MỚI (THAY THẾ LƯỚI VOUCHER) ====== */}
-      <div className="banner-carousel-container"> {/* Bọc card đẹp */}
+      {/* BANNER CAROUSEL (Giữ nguyên) */}
+      <div className="banner-carousel-container">
         <div className="banner-carousel">
-          {/* Lớp track chứa các slide, di chuyển bằng transform */}
           <div className="carousel-track" style={{ transform: `translateX(-${currentSlide * 100}%)` }}>
             {banners.map((banner, index) => (
               <div className="carousel-slide" key={index}>
@@ -180,14 +188,13 @@ export default function Shop() {
               </div>
             ))}
           </div>
-          {/* 2 button lướt */}
+          {/* Nút bấm vẫn dùng hàm `nextSlide` và `prevSlide` bình thường */}
           <button className="carousel-btn prev" onClick={prevSlide}>&#10094;</button>
           <button className="carousel-btn next" onClick={nextSlide}>&#10095;</button>
         </div>
       </div>
-      {/* ====== KẾT THÚC BANNER CAROUSEL ====== */}
-
-      {/* ====== DÒNG CHỮ CHẠY (MARQUEE) (Giữ nguyên) ====== */}
+      
+      {/* MARQUEE (Giữ nguyên) */}
       <div className="marquee-section">
         <div className="marquee-content">
           <span>🎉 Giảm giá áp dụng từ ngày 15/11/2025 - 15/12/2025</span>
@@ -199,7 +206,7 @@ export default function Shop() {
         </div>
       </div>
       
- {/* Products Section */}
+      {/* Products Section (Giữ nguyên) */}
       <div className="products-section">
         {loading ? (
           <div className="loading">
@@ -216,7 +223,6 @@ export default function Shop() {
         ) : (
           groupedProducts.map(group => (
             <div key={group.id} className="category-section">
-              {/* Section Header */}
               <div className="section-header">
                 <h2 className="section-title">
                   <span className="section-icon"></span>
@@ -231,8 +237,6 @@ export default function Shop() {
                   </button>
                 )}
               </div>
-
-              {/* Products Grid */}
               <div className="products-grid">
                 {group.products.map(product => (
                   <ProductCard

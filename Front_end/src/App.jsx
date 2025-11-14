@@ -8,6 +8,8 @@ import Cart from "./pages/user/Cart/Cart.jsx";
 import Orders from "./pages/user/Orders/Orders.jsx";
 import OrderDetail from "./pages/user/OrderDetail/OrderDetail.jsx";
 import Checkout from "./pages/user/Checkout/Checkout.jsx";
+// 1. THÊM DÒNG IMPORT NÀY
+import CheckoutSuccess from "./pages/user/Checkout/CheckoutSuccess.jsx";
 import Diseases from "./pages/user/Diseases/Diseases.jsx";
 import DiseaseDetail from "./pages/user/DiseaseDetail/DiseaseDetail.jsx";
 import ProtectedRoute from "./components/ProtectedRoute/ProtectedRoute.jsx";
@@ -105,6 +107,19 @@ export default function App() {
           </ProtectedRoute>
         }
       />
+      
+      {/* 2. THÊM ROUTE MỚI CHO TRANG SUCCESS TẠI ĐÂY */}
+      <Route
+        path="/checkout/success"
+        element={
+          <ProtectedRoute>
+            <UserLayout>
+              <CheckoutSuccess />
+            </UserLayout>
+          </ProtectedRoute>
+        }
+      />
+
       <Route
         path="/profile"
         element={

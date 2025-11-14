@@ -51,17 +51,33 @@ const chatRoutes = require("./src/routes/chatRoutes");
 const dashboardRoutes = require("./src/routes/dashboardRoutes");
 const uploadRoutes = require("./src/routes/uploadRoutes");
 
+// ... import các routes cho payment
+const paymentRoutes = require('./src/routes/paymentRoutes');
+
+// Xác thực
 app.use("/api/auth", authRoutes);
+// Sản phẩm
 app.use("/api/products", productRoutes);
+// Giỏ hàng
 app.use("/api/cart", cartRoutes);
+// Đơn hàng
 app.use("/api/orders", orderRoutes);
+// Người dùng
 app.use("/api/users", userRoutes);
+// Thông báo
 app.use("/api/announcements", announcementRoutes);
+// Đánh giá sản phẩm
 app.use("/api/comments", commentRoutes);
+// Tra cứu bệnh
 app.use("/api/diseases", diseaseRoutes);
+// chat
 app.use("/api/chat", chatRoutes);
+// Dashboard admin
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/upload", uploadRoutes); // 📸 Cloudinary upload routes
+// Payment routes
+app.use('/api/orders', orderRoutes);
+app.use('/api/payment', paymentRoutes);
 
 // Swagger setup
 const swaggerOptions = {
@@ -99,3 +115,7 @@ server.listen(PORT, () => {
   console.log(`📑 Swagger Docs: http://localhost:${PORT}/api-docs`);
   console.log(`💬 Socket.IO Chat đã sẵn sàng`);
 });
+
+
+
+
