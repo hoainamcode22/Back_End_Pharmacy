@@ -18,6 +18,7 @@ import MedicineManagement from "./pages/admin/AdminDashboard/MedicineManagement.
 import AdminChatManagement from "./pages/admin/AdminChatManagement/AdminChatManagement.jsx";
 import UserManagement from "./pages/admin/UserManagement/UserManagement.jsx";
 import OrderManagement from "./pages/admin/OrderManagement/OrderManagement.jsx";
+import EventPage from "./pages/user/EventPage/EventPage.jsx";
 
 export default function App() {
   return (
@@ -135,6 +136,17 @@ export default function App() {
         }
       />
 
+      {/* ⭐️ ĐÃ THÊM ROUTE CHO TRANG EVENT */}
+      <Route
+        path="/event"
+        element={
+          <ProtectedRoute>
+            <UserLayout>
+              <EventPage />
+            </UserLayout>
+          </ProtectedRoute>
+        }
+      />
       {/* Mặc định - User chưa login → /login, User đã login → /shop */}
       <Route path="/" element={<Navigate to="/shop" replace />} />
       <Route path="*" element={<Navigate to="/shop" replace />} />

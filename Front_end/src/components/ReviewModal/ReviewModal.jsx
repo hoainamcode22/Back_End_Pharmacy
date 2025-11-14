@@ -27,9 +27,17 @@ const ReviewModal = ({ isOpen, onClose, product, onReviewSuccess }) => {
     try {
       setIsSubmitting(true);
       const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001';
-      const token = localStorage.getItem('token');
-
-      console.log('🔐 Review - Token from localStorage:', token ? 'Exists' : 'NOT FOUND');
+      
+      // ⭐️ SỬA LỖI: Đọc đúng key "ph_auth" từ localStorage
+      let token = null;
+      try {
+        const authData = JSON.parse(localStorage.getItem("ph_auth") || "{}");
+        token = authData.token; // Lấy token từ object
+      } catch (e) {
+        console.error("Không thể đọc auth token", e);
+      }
+      
+      console.log('🔐 Review - Token from localStorage ("ph_auth"):', token ? 'Exists' : 'NOT FOUND');
       console.log('📦 Review - Product data:', product);
       console.log('📝 Review - Submitting:', {
         productId: product.ProductId || product.id,
@@ -38,7 +46,8 @@ const ReviewModal = ({ isOpen, onClose, product, onReviewSuccess }) => {
       });
 
       if (!token) {
-        alert('⚠️ Phiên đăng nhập đã hết. Vui lòng đăng nhập lại!');
+        // ⭐️ SỬA LỖI: Thông báo lỗi rõ ràng hơn
+        alert('⚠️ Phiên đăng nhập đã hết (Không tìm thấy "ph_auth"). Vui lòng đăng nhập lại!');
         window.location.href = '/login';
         return;
       }
@@ -78,8 +87,8 @@ const ReviewModal = ({ isOpen, onClose, product, onReviewSuccess }) => {
       // Nếu lỗi authentication, redirect về login
       if (error.response?.status === 401 || error.response?.status === 403) {
         alert('❌ ' + errorMsg + '\n\nBạn sẽ được chuyển đến trang đăng nhập.');
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+        // ⭐️ SỬA LỖI: Xóa đúng key "ph_auth"
+        localStorage.removeItem('ph_auth'); 
         window.location.href = '/login';
         return;
       }

@@ -39,7 +39,7 @@ export default function SearchBar({ onSearch, placeholder = "Tìm kiếm sản p
             setSearchTerm("");
             if (onSearch) onSearch("");
           }}
-        >
+        > {}
           ×
         </button>
       )}

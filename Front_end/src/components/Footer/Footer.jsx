@@ -28,7 +28,7 @@ export default function Footer() {
             <div className="footer-title">Hỗ trợ</div>
             {/* Dùng <a> cho số điện thoại và email */}
             <a href="tel:18006821" className="footer-link">1800 6821</a>
-            <a href="mailto:support@pharmacy.local" className="footer-link">support@pharmacy.local</a>
+            <a href="mailto:nam695472@gmail.com" className="footer-link">nam695472@gmail.com</a>
           </div>
 
         </div>

@@ -5,6 +5,113 @@ import { AuthContext } from "../../../context/AuthContext/AuthContext";
 import axios from "axios";
 import "./ProductDetail.css";
 
+// Helper function to check if token is expired
+const _isTokenExpired = (token) => {
+  if (!token) return true;
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    const currentTime = Date.now() / 1000;
+    return payload.exp < currentTime;
+  } catch (_e) {
+    return true;
+  }
+};
+
+// Helper function to get product specifications
+const getProductSpecs = (productName) => {
+  const name = productName.toLowerCase();
+  
+  if (name.includes('paracetamol')) {
+    return {
+      thanhPhan: 'Paracetamol 500mg',
+      lieuDung: 'Người lớn: 1-2 viên/lần, 3-4 lần/ngày. Trẻ em: Theo cân nặng, không quá 60mg/kg/ngày.',
+      cachDung: 'Uống với nước, có thể uống trước hoặc sau ăn. Không dùng quá 10 ngày liên tục.',
+      chiDinh: 'Giảm đau, hạ sốt do cảm cúm, đau đầu, đau răng.',
+      chongChiDinh: 'Bệnh nhân dị ứng với Paracetamol, suy gan nặng.',
+      tacDungPhu: 'Buồn nôn, phát ban nhẹ (hiếm gặp).',
+      baoQuan: 'Nơi khô ráo, dưới 30°C.',
+      keDon: 'Thuốc không kê đơn (OTC).'
+    };
+  }
+  
+  if (name.includes('amoxicillin')) {
+    return {
+      thanhPhan: 'Amoxicillin 500mg (dạng viên nén)',
+      lieuDung: 'Người lớn: 500mg/lần, 3 lần/ngày. Trẻ em: 20-40mg/kg/ngày chia 3 lần.',
+      cachDung: 'Uống trước ăn 30 phút - 1 giờ, uống đủ nước.',
+      chiDinh: 'Nhiễm trùng đường hô hấp, tai mũi họng, da, tiết niệu.',
+      chongChiDinh: 'Dị ứng với penicillin, bệnh gan thận nặng.',
+      tacDungPhu: 'Tiêu chảy, buồn nôn, phát ban.',
+      baoQuan: 'Nơi mát, dưới 25°C.',
+      keDon: 'Thuốc kê đơn.'
+    };
+  }
+  
+  if (name.includes('vitamin c')) {
+    return {
+      thanhPhan: 'Vitamin C (Ascorbic Acid) 1000mg',
+      lieuDung: 'Người lớn: 500-1000mg/ngày. Trẻ em: 100-500mg/ngày.',
+      cachDung: 'Uống sau ăn để tránh kích ứng dạ dày.',
+      chiDinh: 'Bổ sung Vitamin C, tăng cường miễn dịch, chống oxy hóa.',
+      chongChiDinh: 'Sỏi thận, thalassemia.',
+      tacDungPhu: 'Buồn nôn, tiêu chảy nếu liều cao.',
+      baoQuan: 'Nơi khô ráo, tránh ánh sáng.',
+      keDon: 'Thuốc không kê đơn (OTC).'
+    };
+  }
+  
+  if (name.includes('omega') || name.includes('fish oil')) {
+    return {
+      thanhPhan: 'Omega-3 Fish Oil (EPA + DHA) 1000mg',
+      lieuDung: '1-2 viên/ngày với bữa ăn.',
+      cachDung: 'Uống cùng thức ăn để tăng hấp thu.',
+      chiDinh: 'Hỗ trợ tim mạch, giảm cholesterol, cải thiện trí nhớ.',
+      chongChiDinh: 'Dị ứng hải sản, rối loạn đông máu.',
+      tacDungPhu: 'Ợ nóng, mùi tanh (hiếm).',
+      baoQuan: 'Nơi mát, dưới 25°C.',
+      keDon: 'Thuốc không kê đơn (OTC).'
+  };
+  }
+  
+  if (name.includes('cephalexin')) {
+    return {
+      thanhPhan: 'Cephalexin 500mg',
+      lieuDung: 'Người lớn: 500mg/lần, 4 lần/ngày. Trẻ em: 25-50mg/kg/ngày chia 4 lần.',
+      cachDung: 'Uống đều đặn cách nhau 6 giờ, uống với nước.',
+      chiDinh: 'Nhiễm trùng da, đường tiết niệu, hô hấp.',
+      chongChiDinh: 'Dị ứng cephalosporin.',
+      tacDungPhu: 'Tiêu chảy, đau bụng.',
+      baoQuan: 'Nơi khô ráo, dưới 30°C.',
+      keDon: 'Thuốc kê đơn.'
+    };
+  }
+  
+  if (name.includes('oresol')) {
+    return {
+      thanhPhan: 'Oresol (Glucose, Natri clorid, Kali clorid)',
+      lieuDung: '1 gói pha với 1 lít nước, uống từ từ.',
+      cachDung: 'Pha với nước đun sôi để nguội, uống trong ngày.',
+      chiDinh: 'Bù nước điện giải khi tiêu chảy, nôn mửa.',
+      chongChiDinh: 'Suy thận nặng, phù não.',
+      tacDungPhu: 'Không có tác dụng phụ khi dùng đúng liều.',
+      baoQuan: 'Nơi khô ráo, dưới 30°C.',
+      keDon: 'Thuốc không kê đơn (OTC).'
+    };
+  }
+  
+  // Default for other products - Mock data for all medicines
+  return {
+    thanhPhan: 'Thành phần chính: Theo công thức của nhà sản xuất',
+    lieuDung: 'Người lớn: 1-2 viên/lần, 2-3 lần/ngày. Trẻ em: Theo chỉ định của bác sĩ.',
+    cachDung: 'Uống với nước ấm, có thể uống trước hoặc sau ăn. Không nhai hoặc nghiền viên.',
+    chiDinh: 'Giảm đau, hạ sốt, hỗ trợ điều trị các triệu chứng thông thường.',
+    chongChiDinh: 'Không dùng cho trẻ em dưới 2 tuổi, phụ nữ mang thai, người dị ứng với thành phần.',
+    tacDungPhu: 'Buồn nôn, chóng mặt, phát ban nhẹ (hiếm gặp). Ngừng dùng và hỏi bác sĩ nếu có dấu hiệu bất thường.',
+    baoQuan: 'Nơi khô ráo, thoáng mát, dưới 30°C. Tránh ánh nắng trực tiếp.',
+    keDon: 'Thuốc không kê đơn (OTC).'
+  };
+};
+
 export default function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -20,6 +127,8 @@ export default function ProductDetail() {
   const [canReview, setCanReview] = useState(false);
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [reviewForm, setReviewForm] = useState({ rating: 5, content: "" });
+  const [replyingTo, setReplyingTo] = useState(null); // ID của comment đang reply
+  const [replyForm, setReplyForm] = useState({ content: "" });
   const [activeTab, setActiveTab] = useState("description");
   // const [selectedImage, setSelectedImage] = useState(0); // TODO: For gallery
 
@@ -173,10 +282,11 @@ export default function ProductDetail() {
       
       // Reload comments
       const response = await axios.get(`${baseURL}/api/comments/${id}`);
-      setComments(response.data.comments || []);
+      const result = response.data;
+      setComments(result.comments || []);
       setCommentStats({
-        averageRating: response.data.averageRating || 0,
-        totalComments: response.data.totalComments || 0
+        averageRating: result.averageRating || 0,
+        totalComments: result.totalComments || 0
       });
 
       // Reset form
@@ -185,7 +295,71 @@ export default function ProductDetail() {
       setCanReview(false);
     } catch (err) {
       console.error("Error submitting review:", err);
+      
+      // Check if token expired
+      if (err.response?.status === 403 && err.response?.data?.error?.includes('token')) {
+        alert("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!");
+        localStorage.removeItem('token');
+        navigate("/login");
+        return;
+      }
+      
       alert("❌ " + (err.response?.data?.error || "Không thể gửi đánh giá!"));
+    }
+  };
+
+  const handleSubmitReply = async (e, parentId) => {
+    e.preventDefault();
+    
+    if (!user) {
+      alert("Vui lòng đăng nhập để trả lời!");
+      navigate("/login");
+      return;
+    }
+
+    if (!replyForm.content.trim()) {
+      alert("Vui lòng nhập nội dung trả lời!");
+      return;
+    }
+
+    try {
+      const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001';
+      const token = localStorage.getItem('token');
+      
+      await axios.post(`${baseURL}/api/comments`, {
+        productId: id,
+        content: replyForm.content,
+        parentId: parentId
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      alert("✓ Trả lời của bạn đã được gửi thành công!");
+      
+      // Reload comments
+      const response = await axios.get(`${baseURL}/api/comments/${id}`);
+      const result = response.data;
+      setComments(result.comments || []);
+      setCommentStats({
+        averageRating: result.averageRating || 0,
+        totalComments: result.totalComments || 0
+      });
+
+      // Reset form
+      setReplyForm({ content: "" });
+      setReplyingTo(null);
+    } catch (err) {
+      console.error("Error submitting reply:", err);
+      
+      // Check if token expired
+      if (err.response?.status === 403 && err.response?.data?.error?.includes('token')) {
+        alert("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!");
+        localStorage.removeItem('token');
+        navigate("/login");
+        return;
+      }
+      
+      alert("❌ " + (err.response?.data?.error || "Không thể gửi trả lời!"));
     }
   };
 
@@ -407,7 +581,52 @@ export default function ProductDetail() {
           {activeTab === 'specs' && (
             <div className="specs-content">
               <h3>Thành phần & Liều dùng</h3>
-              <p>Thông tin chi tiết đang được cập nhật...</p>
+              {(() => {
+                const specs = getProductSpecs(product.name);
+                return (
+                  <div className="product-specs-detailed">
+                    <div className="spec-section">
+                      <h4>Thành phần</h4>
+                      <p>{specs.thanhPhan}</p>
+                    </div>
+                    
+                    <div className="spec-section">
+                      <h4>Liều dùng</h4>
+                      <p>{specs.lieuDung}</p>
+                    </div>
+                    
+                    <div className="spec-section">
+                      <h4>Cách dùng</h4>
+                      <p>{specs.cachDung}</p>
+                    </div>
+                    
+                    <div className="spec-section">
+                      <h4>Chỉ định</h4>
+                      <p>{specs.chiDinh}</p>
+                    </div>
+                    
+                    <div className="spec-section">
+                      <h4>Chống chỉ định</h4>
+                      <p>{specs.chongChiDinh}</p>
+                    </div>
+                    
+                    <div className="spec-section">
+                      <h4>Tác dụng phụ</h4>
+                      <p>{specs.tacDungPhu}</p>
+                    </div>
+                    
+                    <div className="spec-section">
+                      <h4>Bảo quản</h4>
+                      <p>{specs.baoQuan}</p>
+                    </div>
+                    
+                    <div className="spec-section">
+                      <h4>Kê đơn</h4>
+                      <p>{specs.keDon}</p>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           )}
 
@@ -489,19 +708,82 @@ export default function ProductDetail() {
                   <p className="no-reviews">Chưa có đánh giá nào cho sản phẩm này.</p>
                 ) : (
                   comments.map((comment) => (
-                    <div key={comment.Id} className="comment-item">
-                      <div className="comment-header">
-                        <div className="comment-user">
-                          <strong>{comment.Fullname || comment.Username}</strong>
-                          {renderStars(comment.Rating)}
+                    <div key={comment.Id} className="comment-thread">
+                      {/* Comment gốc */}
+                      <div className="comment-item">
+                        <div className="comment-header">
+                          <div className="comment-user">
+                            <strong>{comment.Fullname || comment.Username}</strong>
+                            {comment.Rating && renderStars(comment.Rating)}
+                          </div>
+                          <div className="comment-date">
+                            {new Date(comment.CreatedAt).toLocaleDateString('vi-VN')}
+                          </div>
                         </div>
-                        <div className="comment-date">
-                          {new Date(comment.CreatedAt).toLocaleDateString('vi-VN')}
+                        <div className="comment-content">
+                          {comment.Content}
+                        </div>
+                        <div className="comment-actions">
+                          <button 
+                            className="reply-btn"
+                            onClick={() => setReplyingTo(replyingTo === comment.Id ? null : comment.Id)}
+                          >
+                            Trả lời
+                          </button>
                         </div>
                       </div>
-                      <div className="comment-content">
-                        {comment.Content}
-                      </div>
+
+                      {/* Reply form */}
+                      {replyingTo === comment.Id && (
+                        <div className="reply-form-container">
+                          <form onSubmit={(e) => handleSubmitReply(e, comment.Id)} className="reply-form">
+                            <textarea
+                              value={replyForm.content}
+                              onChange={(e) => setReplyForm({ content: e.target.value })}
+                              placeholder={`Trả lời ${comment.Fullname || comment.Username}...`}
+                              rows="3"
+                              required
+                            />
+                            <div className="form-actions">
+                              <button type="submit" className="btn-submit-reply">
+                                Gửi trả lời
+                              </button>
+                              <button 
+                                type="button" 
+                                className="btn-cancel-reply"
+                                onClick={() => {
+                                  setReplyingTo(null);
+                                  setReplyForm({ content: "" });
+                                }}
+                              >
+                                Hủy
+                              </button>
+                            </div>
+                          </form>
+                        </div>
+                      )}
+
+                      {/* Danh sách replies */}
+                      {comment.replies && comment.replies.length > 0 && (
+                        <div className="replies-list">
+                          {comment.replies.map((reply) => (
+                            <div key={reply.Id} className="reply-item">
+                              <div className="comment-header">
+                                <div className="comment-user">
+                                  <strong>{reply.Fullname || reply.Username}</strong>
+                                  <span className="reply-indicator">trả lời</span>
+                                </div>
+                                <div className="comment-date">
+                                  {new Date(reply.CreatedAt).toLocaleDateString('vi-VN')}
+                                </div>
+                              </div>
+                              <div className="comment-content">
+                                {reply.Content}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   ))
                 )}

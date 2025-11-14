@@ -3,7 +3,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
 const JWT_SECRET = process.env.JWT_SECRET || "secretkey";
-const TOKEN_EXPIRES = "1d";
+const TOKEN_EXPIRES = "7d";
 
 // Helper query
 const dbQuery = async (sql, params) => {

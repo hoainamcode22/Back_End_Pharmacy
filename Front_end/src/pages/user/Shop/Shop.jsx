@@ -1,10 +1,19 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import ProductCard from "../../../components/ProductCard/ProductCard.jsx";
 import SearchBar from "../../../components/SearchBar/SearchBar.jsx";
-import { fetchProducts, addToCart, getFeaturedProduct } from "../../../api";
+import { fetchProducts, addToCart } from "../../../api";
 import "./Shop.css";
 
-// CATEGORIES - Danh mục sản phẩm (khớp với database)
+// ⭐️ Vẫn import 6 ảnh voucher
+import voucher1 from "../../../assets/voucher1.jpg";
+import voucher2 from "../../../assets/voucher2.jpg";
+import voucher3 from "../../../assets/voucher3.jpg";
+import voucher4 from "../../../assets/voucher4.jpg";
+import voucher5 from "../../../assets/voucher5.jpg";
+import voucher6 from "../../../assets/voucher6.jpg";
+
+// CATEGORIES - (Giữ nguyên)
 const CATEGORIES = [
   { id: 1, name: "Thuốc", icon: "💊", key: "thuoc" },
   { id: 2, name: "Vitamin & Chức năng", icon: "🌿", key: "vitamin" },
@@ -12,39 +21,44 @@ const CATEGORIES = [
   { id: 4, name: "Thiết bị y tế", icon: "🩺", key: "thiet-bi" },
 ];
 
+// ⭐️ Gom 6 voucher vào 1 mảng để chạy slide
+const banners = [voucher1, voucher2, voucher3, voucher4, voucher5, voucher6];
+
 export default function Shop() {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [products, setProducts] = useState([]);
-  const [featuredProduct, setFeaturedProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  // ⭐️ State mới để điều khiển carousel
+  const [currentSlide, setCurrentSlide] = useState(0);
 
-  // Fetch featured product (chỉ load 1 lần khi mount)
+  // ⭐️ Hàm chuyển slide
+  const nextSlide = () => {
+    setCurrentSlide(s => (s === banners.length - 1 ? 0 : s + 1));
+  };
+  const prevSlide = () => {
+    setCurrentSlide(s => (s === 0 ? banners.length - 1 : s - 1));
+  };
+
+  // ⭐️ useEffect mới để tự động lướt (3 giây)
   useEffect(() => {
-    const loadFeaturedProduct = async () => {
-      try {
-        const data = await getFeaturedProduct();
-        setFeaturedProduct(data.product);
-      } catch (err) {
-        console.error("Error loading featured product:", err);
-      }
-    };
-    loadFeaturedProduct();
+    const slideInterval = setInterval(nextSlide, 3000);
+    return () => clearInterval(slideInterval); // Dọn dẹp khi component unmount
   }, []);
 
-  // Fetch products từ API
+  // Fetch products từ API (Giữ nguyên)
   useEffect(() => {
     const loadProducts = async () => {
       try {
         setLoading(true);
-        const params = { limit: 50 }; // Lấy đủ 50 sản phẩm để hiển thị tất cả
+        const params = { limit: 50 };
         if (selectedCategory) {
           const category = CATEGORIES.find(c => c.id === selectedCategory);
           if (category) params.category = category.key;
         }
         if (searchTerm) params.search = searchTerm;
-
         const data = await fetchProducts(params);
         setProducts(data.products || []);
         setError(null);
@@ -55,11 +69,11 @@ export default function Shop() {
         setLoading(false);
       }
     };
-
     loadProducts();
   }, [selectedCategory, searchTerm]);
 
-  // Map category from API to categoryId
+  // (Các hàm mapCategoryToId, transformedProducts giữ nguyên)
+  // ... (existing code) ...
   const mapCategoryToId = (category) => {
     const categoryMap = {
       "thuoc": 1,
@@ -70,11 +84,8 @@ export default function Shop() {
     return categoryMap[category] || 1;
   };
 
-  // Transform API products to match frontend structure
   const transformedProducts = products.map(p => {
-    // API đã trả imageUrl tuyệt đối, dùng luôn
     const imagePath = p.imageUrl || p.ImageUrl || p.image || "/images/default.jpg";
-
     return {
       id: p.id || p.Id,
       name: p.name || p.Name,
@@ -83,12 +94,12 @@ export default function Shop() {
       categoryId: mapCategoryToId(p.category || p.Category),
       stock: p.stock || p.Stock || 0,
       image: imagePath,
-      imageUrl: imagePath, // Thêm imageUrl để ProductCard dùng
+      imageUrl: imagePath,
       description: p.shortDesc || p.ShortDesc || p.description || ''
     };
   });
 
-  // Group products by category
+  // Group products by category (Giữ nguyên 6 cột)
   const groupedProducts = CATEGORIES.map(cat => {
     const categoryProducts = transformedProducts.filter(
       p => p.categoryId === cat.id
@@ -97,15 +108,15 @@ export default function Shop() {
       id: cat.id,
       name: cat.name,
       icon: cat.icon,
-      products: categoryProducts.slice(0, 5), // Chỉ lấy 5 sản phẩm đầu tiên
-      totalProducts: categoryProducts.length // Tổng số sản phẩm trong danh mục
+      products: categoryProducts.slice(0, 6), // Vẫn lấy 6 sản phẩm
+      totalProducts: categoryProducts.length
     };
   }).filter(group => group.products.length > 0);
 
+  // handleAddToCart (Giữ nguyên)
   const handleAddToCart = async (product) => {
     try {
       await addToCart(product.id, 1);
-      // Cập nhật badge giỏ hàng ở Header
       window.dispatchEvent(new Event('cart:updated'));
       const btn = document.getElementById('cart-icon-button');
       if (btn) {
@@ -121,7 +132,7 @@ export default function Shop() {
 
   return (
     <div className="shop-container">
-      {/* Header Section */}
+      {/* Header Section (Giữ nguyên) */}
       <div className="shop-header">
         <div className="shop-hero">
           <h1 className="shop-title">Cửa Hàng Dược Phẩm</h1>
@@ -129,16 +140,12 @@ export default function Shop() {
             Chất lượng - Uy tín - Giá tốt | Giao hàng nhanh toàn quốc
           </p>
         </div>
-
-        {/* Search Bar */}
         <div className="search-section">
           <SearchBar
             onSearch={setSearchTerm}
             placeholder="Tìm kiếm thuốc, vitamin, dụng cụ y tế..."
           />
         </div>
-
-        {/* Category Filter */}
         <div className="category-filter">
           <button
             className={`category-btn ${!selectedCategory ? "active" : ""}`}
@@ -160,25 +167,39 @@ export default function Shop() {
         </div>
       </div>
 
-      {/* Featured Product Section */}
-      {featuredProduct && (
-        <div className="featured-section">
-          <div className="featured-header">
-            <h2 className="featured-title">
-              <span className="featured-icon">⭐</span>
-              Sản phẩm nổi bật
-            </h2>
+      {/* ====== 💎 BANNER CAROUSEL MỚI (THAY THẾ LƯỚI VOUCHER) ====== */}
+      <div className="banner-carousel-container"> {/* Bọc card đẹp */}
+        <div className="banner-carousel">
+          {/* Lớp track chứa các slide, di chuyển bằng transform */}
+          <div className="carousel-track" style={{ transform: `translateX(-${currentSlide * 100}%)` }}>
+            {banners.map((banner, index) => (
+              <div className="carousel-slide" key={index}>
+                <Link to="/event">
+                  <img src={banner} alt={`Banner ${index + 1}`} />
+                </Link>
+              </div>
+            ))}
           </div>
-          <div className="featured-product-wrapper">
-            <ProductCard
-              product={featuredProduct}
-              onAddToCart={handleAddToCart}
-            />
-          </div>
+          {/* 2 button lướt */}
+          <button className="carousel-btn prev" onClick={prevSlide}>&#10094;</button>
+          <button className="carousel-btn next" onClick={nextSlide}>&#10095;</button>
         </div>
-      )}
+      </div>
+      {/* ====== KẾT THÚC BANNER CAROUSEL ====== */}
 
-      {/* Products Section */}
+      {/* ====== DÒNG CHỮ CHẠY (MARQUEE) (Giữ nguyên) ====== */}
+      <div className="marquee-section">
+        <div className="marquee-content">
+          <span>🎉 Giảm giá áp dụng từ ngày 15/11/2025 - 15/12/2025</span>
+          <span>🌟 Hãy tạo thành viên để được giảm giá 50% cho lần đầu mua hàng</span>
+          <span>🔥 Ưu đãi độc quyền: Mua 2 Tính 1 cho sản phẩm Cocoon!</span>
+          <span>🎉 Giảm giá áp dụng từ ngày 15/11/2025 - 15/12/2025</span>
+          <span>🌟 Hãy tạo thành viên để được giảm giá 50% cho lần đầu mua hàng</span>
+          <span>🔥 Ưu đãi độc quyền: Mua 2 Tính 1 cho sản phẩm Cocoon!</span>
+        </div>
+      </div>
+      
+ {/* Products Section */}
       <div className="products-section">
         {loading ? (
           <div className="loading">
@@ -201,7 +222,7 @@ export default function Shop() {
                   <span className="section-icon"></span>
                   {group.name}
                 </h2>
-                {group.totalProducts > 5 && (
+                {group.totalProducts > 4 && (
                   <button
                     className="view-more"
                     onClick={() => setSelectedCategory(group.id)}

@@ -6,7 +6,7 @@
 
 .search-icon {
   position: absolute;
-  left: 16px;
+  left: 18px; /* Đặt icon cách lề 18px */
   top: 50%;
   transform: translateY(-50%);
   color: #636e72;
@@ -16,12 +16,16 @@
 
 .search-input {
   width: 100%;
-  padding: 14px 48px 14px 70px;
+  /* ⭐️ SỬA DÒNG NÀY: Giảm padding-left xuống */
+  padding: 14px 48px 14px 18px; 
+  /* ⭐️ THÊM DÒNG NÀY: Dùng text-indent để lùi chữ vào 32px (tổng cộng 18+32 = 50px) */
+  text-indent: 32px;
   border: 2px solid #e9ecef;
   border-radius: 12px;
   font-size: 15px;
   transition: all 0.3s ease;
   background: white;
+  box-sizing: border-box; /* Thêm để đảm bảo padding hoạt động đúng */
 }
 
 .search-input:focus {

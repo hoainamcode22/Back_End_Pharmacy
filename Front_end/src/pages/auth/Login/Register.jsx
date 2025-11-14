@@ -74,6 +74,9 @@ export default function Register() {
 
       const { token, user } = res;
 
+      // ⭐️ SỬA LỖI: Thêm dòng này để ép lưu vào localStorage
+      localStorage.setItem("ph_auth", JSON.stringify({ token, user }));
+
       // Tự động đăng nhập sau khi đăng ký thành công
       setAuthToken(token);
       login(token, user);

@@ -103,6 +103,14 @@
   animation: pulseCart 0.6s ease;
 }
 
+/* * * ===== 📍 FIX LỖI NẰM Ở ĐÂY =====
+ * Thêm position: relative cho nút giỏ hàng
+ * để làm thẻ cha cho .cart-badge (position: absolute)
+ * */
+#cart-icon-button {
+  position: relative;
+}
+
 /* Badge số lượng giỏ hàng */
 .cart-badge {
   display: inline-flex;

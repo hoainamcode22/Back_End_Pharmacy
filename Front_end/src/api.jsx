@@ -35,8 +35,8 @@ api.interceptors.response.use(
         localStorage.removeItem('ph_auth');
         delete api.defaults.headers.common["Authorization"];
 
-        // Thông báo cho user
-        alert('⚠️ Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!');
+        // ⭐️ SỬA: Bỏ alert() và thay bằng console.error cho đỡ phiền
+        console.error('⚠️ Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!');
 
         // Chuyển về trang login
         window.location.href = '/login';

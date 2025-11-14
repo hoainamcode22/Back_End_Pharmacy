@@ -175,21 +175,29 @@ COMMENT ON TABLE public."ChatMessages" IS 'Tin nhắn trong cuộc hội thoại
 COMMENT ON COLUMN public."ChatMessages"."AttachedProductId" IS 'ID sản phẩm đính kèm (User hỏi hoặc Bác sĩ giới thiệu)';
 
 -- =============================================
--- 8. BẢNG COMMENTS (Đánh giá sản phẩm)
+-- 8. BẢNG COMMENTS (Đánh giá và bình luận sản phẩm - THREAD SYSTEM)
 -- =============================================
 CREATE TABLE public."Comments" (
     "Id" BIGSERIAL PRIMARY KEY,
     "UserId" BIGINT NOT NULL REFERENCES public."Users"("Id") ON DELETE CASCADE,
     "ProductId" BIGINT NOT NULL REFERENCES public."Products"("Id") ON DELETE CASCADE,
+    "OrderId" BIGINT REFERENCES public."Orders"("Id") ON DELETE CASCADE, -- Link với đơn hàng
+    "ParentId" BIGINT REFERENCES public."Comments"("Id") ON DELETE CASCADE, -- Cho thread comments
     "Rating" INTEGER CHECK ("Rating" >= 1 AND "Rating" <= 5),
     "Content" TEXT NOT NULL,
-    "CreatedAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
+    "CreatedAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
+    "UpdatedAt" TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
 );
 
 CREATE INDEX idx_comments_product ON public."Comments" ("ProductId");
 CREATE INDEX idx_comments_user ON public."Comments" ("UserId");
+CREATE INDEX idx_comments_order ON public."Comments" ("OrderId");
+CREATE INDEX idx_comments_parent ON public."Comments" ("ParentId");
+CREATE INDEX idx_comments_thread ON public."Comments" ("ProductId", "ParentId");
 
-COMMENT ON TABLE public."Comments" IS 'Đánh giá và bình luận sản phẩm';
+COMMENT ON TABLE public."Comments" IS 'Đánh giá và bình luận sản phẩm với hệ thống thread';
+COMMENT ON COLUMN public."Comments"."ParentId" IS 'ID của comment cha (NULL = comment gốc)';
+COMMENT ON COLUMN public."Comments"."OrderId" IS 'Link với đơn hàng đã mua sản phẩm';
 
 -- =============================================
 -- 9. DỮ LIỆU MẪU (SAMPLE DATA)
@@ -630,8 +638,8 @@ CREATE TRIGGER update_orders_updated_at BEFORE UPDATE ON public."Orders"
 CREATE TRIGGER update_chatthreads_updated_at BEFORE UPDATE ON public."ChatThreads"
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
--- Trigger cho Announcements
-CREATE TRIGGER update_announcements_updated_at BEFORE UPDATE ON public."Announcements"
+-- Trigger cho Comments
+CREATE TRIGGER update_comments_updated_at BEFORE UPDATE ON public."Comments"
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- Trigger cho Diseases

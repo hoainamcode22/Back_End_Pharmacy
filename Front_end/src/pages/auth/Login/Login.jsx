@@ -48,6 +48,9 @@ export default function Login() {
       const res = await loginAPI(loginForm.email, loginForm.password);
       const { token, user } = res;
 
+      // ⭐️ SỬA LỖI: Thêm dòng này để ép lưu vào localStorage
+      localStorage.setItem("ph_auth", JSON.stringify({ token, user }));
+      
       setAuthToken(token);   // gắn header cho axios
       login(token, user);    // lưu context + localStorage
 

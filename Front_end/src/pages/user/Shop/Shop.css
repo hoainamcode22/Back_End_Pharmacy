@@ -24,6 +24,7 @@
   overflow: hidden;
 }
 
+/* (Giữ nguyên .shop-hero::before, @keyframes pulse, .shop-title, .shop-subtitle) */
 .shop-hero::before {
   content: "";
   position: absolute;
@@ -58,14 +59,13 @@
   z-index: 1;
 }
 
-/* ====== SEARCH SECTION ====== */
+/* (Giữ nguyên .search-section, .category-filter, .category-btn, .category-icon) */
 .search-section {
   display: flex;
   justify-content: center;
   margin-bottom: 36px;
 }
 
-/* ====== CATEGORY FILTER ====== */
 .category-filter {
   display: flex;
   gap: 14px;
@@ -109,49 +109,108 @@
   font-size: 20px;
 }
 
-/* ====== FEATURED PRODUCT SECTION ====== */
-.featured-section {
-  background: linear-gradient(135deg, #fff9e6 0%, #fffbf0 100%);
-  border-radius: 16px;
-  padding: 24px;
-  margin-bottom: 32px;
-  box-shadow: 0 4px 12px rgba(255, 193, 7, 0.15);
-  border: 2px solid #ffd54f;
+
+/* ====== 💎 BANNER CAROUSEL MỚI (THAY THẾ CSS LƯỚI VOUCHER) ====== */
+/* Bọc card đẹp, bo góc (giống ảnh mẫu) */
+.banner-carousel-container {
+  background: #ffffff;
+  border-radius: 16px; /* Bo góc */
+  padding: 16px; /* Khoảng đệm bên trong card */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e0e0e0;
+  margin-bottom: 24px;
 }
 
-.featured-header {
-  margin-bottom: 20px;
-  text-align: center;
+.banner-carousel {
+  position: relative;
+  overflow: hidden; /* Đây là chìa khóa! */
+  border-radius: 12px; /* Bo góc cho chính cái banner */
 }
 
-.featured-title {
-  font-size: 24px;
-  font-weight: 700;
-  color: #f57c00;
+.carousel-track {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  margin: 0;
+  transition: transform 0.5s ease-in-out; /* Hiệu ứng lướt */
 }
 
-.featured-icon {
-  font-size: 28px;
-  animation: sparkle 2s infinite;
+.carousel-slide {
+  flex: 0 0 50%; /* Mỗi slide chiếm 100% */
+  width: 50%;
 }
 
-@keyframes sparkle {
-  0%, 100% { transform: scale(1) rotate(0deg); }
-  25% { transform: scale(1.2) rotate(-10deg); }
-  75% { transform: scale(1.2) rotate(10deg); }
+.carousel-slide img {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: cover;
 }
 
-.featured-product-wrapper {
-  max-width: 280px;
-  margin: 0 auto;
+/* 2 button lướt */
+.carousel-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(255, 255, 255, 0.7);
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 20px;
+  font-weight: bold;
+  color: #333;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  z-index: 10;
 }
 
-/* ====== PRODUCTS SECTION ====== */
+.carousel-btn:hover {
+  background: #ffffff;
+  color: #00a859;
+}
+
+.carousel-btn.prev {
+  left: 10px;
+}
+
+.carousel-btn.next {
+  right: 10px;
+}
+/* ====== KẾT THÚC CSS CAROUSEL ====== */
+
+
+/* Dòng chữ chạy ngang (Giữ nguyên) */
+.marquee-section {
+  width: 100%;
+  background: linear-gradient(135deg, #00a859, #00c16e);
+  color: white;
+  padding: 12px 0;
+  overflow: hidden;
+  white-space: nowrap;
+  box-sizing: border-box;
+  border-radius: 8px;
+  margin-bottom: 32px;
+  box-shadow: 0 4px 12px rgba(0, 168, 89, 0.25);
+}
+
+.marquee-content {
+  display: inline-block;
+  padding-left: 100%;
+  animation: marquee-scroll 30s linear infinite;
+}
+
+.marquee-content span {
+  font-size: 15px;
+  font-weight: 600;
+  margin-right: 60px; /* Khoảng cách giữa các thông báo */
+}
+
+@keyframes marquee-scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-100%); }
+}
+
+
+/* ====== PRODUCTS SECTION (Giữ nguyên) ====== */
 .products-section {
   display: flex;
   flex-direction: column;
@@ -159,7 +218,7 @@
   padding-bottom: 40px;
 }
 
-/* ====== CATEGORY SECTION ====== */
+/* (Giữ nguyên .category-section, .section-header, .section-title, .section-icon, .product-count, .view-more) */
 .category-section {
   background: #ffffff;
   border-radius: 16px;
@@ -171,13 +230,10 @@
   box-sizing: border-box;
   overflow: hidden;
 }
-
 .category-section:hover {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   border-color: #e0e0e0;
 }
-
-/* ====== CATEGORY TITLE ====== */
 .section-header {
   display: flex;
   justify-content: space-between;
@@ -187,7 +243,6 @@
   border-bottom: 2px solid #e5e7eb;
   position: relative;
 }
-
 .section-title {
   font-size: 20px;
   font-weight: 700;
@@ -197,7 +252,6 @@
   gap: 10px;
   margin: 0;
 }
-
 .section-icon {
   display: inline-flex;
   align-items: center;
@@ -211,20 +265,17 @@
   border-radius: 6px;
   line-height: 1;
 }
-
 .section-icon::before {
   content: '+';
   display: block;
   transform: translateY(-1px);
 }
-
 .product-count {
   font-size: 14px;
   font-weight: 500;
   color: #6b7280;
   margin-left: 8px;
 }
-
 .view-more {
   font-size: 14px;
   font-weight: 600;
@@ -239,17 +290,16 @@
   padding: 8px 16px;
   border-radius: 8px;
 }
-
 .view-more:hover {
   color: #008744;
   background: rgba(0, 168, 89, 0.08);
   gap: 10px;
 }
 
-/* ====== PRODUCTS GRID ====== */
+/* ====== PRODUCTS GRID (Giữ nguyên 6 cột) ====== */
 .products-grid {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(6, minmax(0, 1fr)); 
   gap: 14px;
   padding: 8px 0 16px;
   width: 100%;
@@ -257,31 +307,27 @@
   overflow: visible;
 }
 
+/* (Giữ nguyên scrollbar, .product-card, .no-products) */
 .products-grid::-webkit-scrollbar {
   height: 6px;
 }
-
 .products-grid::-webkit-scrollbar-track {
   background: #f1f5f9;
   border-radius: 10px;
 }
-
 .products-grid::-webkit-scrollbar-thumb {
   background: #cbd5e1;
   border-radius: 10px;
 }
-
 .products-grid::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
-
 .products-grid .product-card {
   width: 100%;
   height: auto;
   min-width: 0;
   box-sizing: border-box;
 }
-
 .no-products {
   text-align: center;
   padding: 80px 20px;
@@ -292,11 +338,13 @@
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
 }
 
-/* ====== RESPONSIVE ====== */
+/* ====== RESPONSIVE (Cập nhật) ====== */
 @media (max-width: 1024px) {
   .shop-title {
     font-size: 34px;
   }
+  
+  /* ⭐️ Xóa responsive voucher-grid-section */
 
   .products-grid {
     gap: 18px;
@@ -307,7 +355,7 @@
   }
 }
 
-/* Giữ 5 cột cho màn hình lớn, chỉ giảm khi màn hình nhỏ hơn 1100px */
+/* (Giữ nguyên media queries) */
 @media (max-width: 1100px) {
   .products-grid {
     grid-template-columns: repeat(4, 1fr);
@@ -334,6 +382,20 @@
     font-size: 14px;
   }
 
+  /* ⭐️ THÊM: Responsive cho carousel */
+  .carousel-btn {
+    width: 30px;
+    height: 30px;
+    font-size: 16px;
+  }
+  .banner-carousel-container {
+    padding: 8px; /* Giảm padding trên mobile */
+  }
+  
+  .marquee-content {
+    animation-duration: 20s;
+  }
+
   .products-grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 16px;
@@ -352,6 +414,8 @@
   .shop-subtitle {
     font-size: 14px;
   }
+  
+  /* ⭐️ Xóa responsive voucher-grid-section */
 
   .products-grid {
     grid-template-columns: 1fr;
