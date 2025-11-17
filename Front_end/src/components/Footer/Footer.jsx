@@ -10,9 +10,9 @@ export default function Footer() {
           {/* Cột 1: Về chúng tôi */}
           <div className="footer-column">
             <div className="footer-title">Về chúng tôi</div>
-            <Link to="/about" className="footer-link">Giới thiệu</Link>
+            <Link to="/gioi-thieu" className="footer-link">Giới thiệu</Link>
             <Link to="/stores" className="footer-link">Hệ thống cửa hàng</Link>
-            <Link to="/policy" className="footer-link">Chính sách bảo mật</Link>
+            <Link to="/chinh-sach-bao-mat" className="footer-link">Chính sách bảo mật</Link>
           </div>
 
           {/* Cột 2: Danh mục */}
