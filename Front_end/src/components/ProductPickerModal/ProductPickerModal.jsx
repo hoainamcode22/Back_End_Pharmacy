@@ -1,5 +1,5 @@
 // ProductPickerModal - Chọn sản phẩm để gửi trong chat
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import api from '../../api';
 import './ProductPickerModal.css';
 
@@ -9,29 +9,47 @@ const ProductPickerModal = ({ isOpen, onClose, onSelectProduct }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
 
-  useEffect(() => {
-    if (isOpen) {
-      loadProducts();
-    }
-  }, [isOpen]);
 
-  const loadProducts = async () => {
+  // SỬA: Dùng useCallback để không bị warning về dependency
+  const loadProducts = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await api.get('/products');
+      const params = {};
+      if (searchTerm) params.search = searchTerm;
+      if (selectedCategory !== 'all') params.category = selectedCategory;
+      const response = await api.get('/products', { params });
       setProducts(response.data.products || []);
     } catch (error) {
       console.error('Error loading products:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [searchTerm, selectedCategory]);
 
-  const filteredProducts = products.filter(product => {
-    const matchSearch = product.name?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchCategory = selectedCategory === 'all' || product.category === selectedCategory;
-    return matchSearch && matchCategory;
-  });
+  // Load products khi modal mở
+  useEffect(() => {
+    if (isOpen) {
+      loadProducts();
+    }
+  }, [isOpen, loadProducts]);
+
+  // Bổ sung debounce khi search/category thay đổi
+  useEffect(() => {
+    if (isOpen) {
+      const timer = setTimeout(() => {
+        loadProducts();
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [isOpen, searchTerm, selectedCategory, loadProducts]);
+
+  // SỬA: Không cần filter ở frontend nữa vì backend đã làm
+  // const filteredProducts = products.filter(product => {
+  //   const matchSearch = product.name?.toLowerCase().includes(searchTerm.toLowerCase());
+  //   const matchCategory = selectedCategory === 'all' || product.category === selectedCategory;
+  //   return matchSearch && matchCategory;
+  // });
+  const filteredProducts = products; // Dùng trực tiếp
 
   const handleSelectProduct = (product) => {
     onSelectProduct(product);
@@ -88,11 +106,23 @@ const ProductPickerModal = ({ isOpen, onClose, onSelectProduct }) => {
                 onClick={() => handleSelectProduct(product)}
               >
                 <div className="product-image">
+                  
+                  {/* ============ ⭐️ SỬA LỖI ẢNH Ở ĐÂY ⭐️ ============ */}
+                  {/* Lỗi: Dùng 'product.image' và tự build link sai
                   <img 
                     src={`http://localhost:5001/images/products/${product.image}`}
+                    ...
+                  />
+                  */}
+                  
+                  {/* Sửa: Dùng 'product.imageUrl' (link tuyệt đối từ backend) */}
+                  <img 
+                    src={product.imageUrl}
                     alt={product.name}
                     onError={(e) => e.target.src = 'https://via.placeholder.com/100?text=No+Image'}
                   />
+                  {/* ============ ⭐️ KẾT THÚC SỬA ⭐️ ============ */}
+
                 </div>
                 <div className="product-details">
                   <h4>{product.name}</h4>

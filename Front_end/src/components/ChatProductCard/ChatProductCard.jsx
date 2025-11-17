@@ -47,15 +47,22 @@ const ChatProductCard = ({ product, isInMessage = true }) => {
   };
 
   // Normalize product fields - hỗ trợ nhiều format
+  // ============ ⭐️ SỬA LỖI ẢNH (BẮT ĐẦU) ⭐️ ============
+  // Sửa: Đọc "imageUrl" (link tuyệt đối) thay vì "image" (tên file)
+  // Backend (chatService.js) đã gửi về "image" là link tuyệt đối
   const productImage = product.image || product.Image || product.ProductImage || product.ImageURL;
   const productName = product.name || product.Name || product.ProductName;
   const productPrice = product.price || product.Price || product.ProductPrice;
 
-  const imageUrl = productImage
-    ? `http://localhost:5001/images/products/${productImage}`
-    : 'https://via.placeholder.com/80x80?text=No+Image';
+  // Sửa: Dùng trực tiếp link (productImage)
+  const imageUrl = productImage || 'https://via.placeholder.com/80x80?text=No+Image';
+  // Xóa code build link thủ công bị sai:
+  // const imageUrl = productImage
+  //   ? `http://localhost:5001/images/products/${productImage}`
+  //   : 'https://via.placeholder.com/80x80?text=No+Image';
+  // ============ ⭐️ SỬA LỖI ẢNH (KẾT THÚC) ⭐️ ============
 
-  console.log('📦 ChatProductCard render:', { productName, productPrice, productImage });
+  console.log('📦 ChatProductCard render:', { productName, productPrice, productImage, imageUrl });
 
   // Kiểm tra có phải admin đang ở trang admin không
   const isAdminPage = location.pathname.startsWith('/admin');

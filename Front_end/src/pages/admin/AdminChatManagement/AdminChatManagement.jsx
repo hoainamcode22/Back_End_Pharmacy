@@ -22,7 +22,7 @@ const AdminChatManagement = () => {
     total: 0,
     active: 0,
     closed: 0,
-    onlineUsers: 0 // Moved to stats object
+    onlineUsers: 0
   });
   const [showProductPicker, setShowProductPicker] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -32,7 +32,6 @@ const AdminChatManagement = () => {
     if (user?.role === 'admin') {
       loadAllThreads();
       
-      // Admin joins all thread rooms for real-time updates
       if (socket && isConnected) {
         console.log('👨‍💼 Admin joining all thread rooms...');
         socket.emit('admin_join_all_threads');
@@ -46,23 +45,35 @@ const AdminChatManagement = () => {
 
     console.log('🔌 Setting up admin socket listeners...');
 
+    // ============ ⭐️ SỬA LỖI LẶP TIN (ADMIN) (BẮT ĐẦU) ⭐️ ============
     const handleNewMessage = (data) => {
       console.log('📩 New message received:', data);
+
+      // Sửa: Bỏ qua tin nhắn do chính mình gửi (vì đã có Optimistic Update)
+      // (user.id là ID của admin đang đăng nhập)
+      if (data.SenderId === user.id) {
+        console.log('Admin ignoring self-sent message from socket');
+        return;
+      }
       
-      // Map backend fields to frontend
       const mappedMessage = {
-        id: data.Id || data.id,
+        id: data.Id || data.id || `msg_${Date.now()}`, // Fallback ID
         threadId: data.ThreadId || data.threadId,
         senderId: data.SenderId || data.senderId,
         senderRole: data.SenderRole || data.senderRole,
         content: data.Content || data.content,
         createdAt: data.CreatedAt || data.createdAt,
         senderName: data.SenderName || data.senderName,
-        product: data.product || null // Thông tin sản phẩm đính kèm
+        product: data.product || null
       };
       
       if (selectedThread && mappedMessage.threadId === selectedThread.id) {
-        setMessages(prev => [...prev, mappedMessage]);
+        setMessages(prev => {
+          if (prev.some(m => m.id === mappedMessage.id)) {
+            return prev;
+          }
+          return [...prev, mappedMessage];
+        });
       }
       
       // Update thread list
@@ -72,10 +83,11 @@ const AdminChatManagement = () => {
           : thread
       ));
     };
+    // ============ ⭐️ SỬA LỖI LẶP TIN (ADMIN) (KẾT THÚC) ⭐️ ============
 
     const handleNewThread = (thread) => {
       console.log('🆕 New thread notification:', thread);
-      loadAllThreads(); // Reload all threads
+      loadAllThreads();
     };
 
     const handleThreadClosed = ({ threadId }) => {
@@ -100,7 +112,7 @@ const AdminChatManagement = () => {
       socket.off('new_thread_notification', handleNewThread);
       socket.off('thread_closed', handleThreadClosed);
     };
-  }, [socket, selectedThread, user]);
+  }, [socket, selectedThread, user]); // Sửa: Thêm 'user' vào dependency
 
   const loadAllThreads = async () => {
     try {
@@ -112,7 +124,6 @@ const AdminChatManagement = () => {
         return;
       }
       
-      // Map backend fields to frontend format
       const mappedThreads = (response.data.threads || []).map(thread => ({
         id: thread.id,
         userId: thread.user_id,
@@ -151,7 +162,6 @@ const AdminChatManagement = () => {
         return;
       }
       
-      // Map backend message fields to frontend format (lowercase)
       const mappedMessages = (response.data.messages || []).map(msg => ({
         id: msg.Id,
         threadId: msg.ThreadId,
@@ -161,13 +171,12 @@ const AdminChatManagement = () => {
         createdAt: msg.CreatedAt,
         senderName: msg.SenderName || 'Unknown',
         senderUsername: msg.SenderUsername || '',
-        product: msg.product || null // Thông tin sản phẩm đính kèm
+        product: msg.product || null
       }));
       
       setMessages(mappedMessages);
       setSelectedThread(thread);
       
-      // Join thread room via socket for real-time updates
       if (socket && isConnected) {
         console.log(`🚪 Joining thread room: thread_${thread.id}`);
         socket.emit('join_thread', thread.id);
@@ -179,34 +188,64 @@ const AdminChatManagement = () => {
     }
   };
 
+  // (Hàm 'handleSendMessage' giữ nguyên)
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (!messageText.trim() || !selectedThread) return;
+    const content = messageText.trim();
+    const productToSend = selectedProduct;
+    
+    // Sửa: Cho phép gửi nếu có content HOẶC có sản phẩm
+    if ((!content && !productToSend) || !selectedThread) return;
+
+    // 1. Tự cập nhật (Optimistic Update)
+    const tempId = `temp_${Date.now()}`;
+    const optimisticMessage = {
+      id: tempId,
+      threadId: selectedThread.id,
+      senderId: user.id,
+      senderRole: 'admin',
+      content: content,
+      createdAt: new Date().toISOString(),
+      senderName: user.fullname || user.username || 'Bạn',
+      product: productToSend ? {
+        id: productToSend.id,
+        Id: productToSend.id,
+        name: productToSend.name,
+        ProductName: productToSend.name,
+        image: productToSend.imageUrl,
+        ProductImage: productToSend.imageUrl,
+        price: productToSend.price,
+        ProductPrice: productToSend.price
+      } : null
+    };
+
+    setMessages(prev => [...prev, optimisticMessage]);
+
+    // Reset input
+    setMessageText('');
+    setSelectedProduct(null);
 
     try {
+      // 2. Gửi API
       console.log('📤 Sending message via API...');
-      
-      // Send via API (which will trigger socket event on backend)
       const response = await api.post(`/chat/threads/${selectedThread.id}/messages`, {
-        content: messageText.trim(),
-        attachedProductId: selectedProduct?.id || null
+        content: content,
+        attachedProductId: productToSend?.id || null
       });
       
-      console.log('✅ Message sent successfully:', response.data);
-      setMessageText('');
-      setSelectedProduct(null);
+      console.log('✅ Message sent successfully via API:', response.data);
+
+      // 3. Cập nhật tin nhắn tạm bằng ID thật
+      setMessages(prev => prev.map(msg => 
+        msg.id === tempId 
+        ? { ...optimisticMessage, ...response.data.message } // Ghi đè tin tạm bằng tin thật
+        : msg
+      ));
       
-      // Optionally also send via socket for instant feedback
-      if (socket && isConnected) {
-        socket.emit('send_message', {
-          threadId: selectedThread.id,
-          content: messageText.trim(),
-          attachedProductId: selectedProduct?.id || null
-        });
-      }
     } catch (error) {
       console.error('❌ Error sending message:', error);
       alert('Không thể gửi tin nhắn. Vui lòng thử lại.');
+      setMessages(prev => prev.filter(m => m.id !== tempId));
     }
   };
 
@@ -221,29 +260,24 @@ const AdminChatManagement = () => {
 
   const handleCloseThread = async (threadId) => {
     try {
-      const response = await api.patch(`/chat/threads/${threadId}/close`);
+      await api.patch(`/chat/threads/${threadId}/close`);
+      console.log('✅ Thread closed successfully');
       
-      if (response.data.success) {
-        console.log('✅ Thread closed successfully');
-        
-        // Update local state
-        setThreads(prev => prev.map(thread => 
-          thread.id === threadId 
-            ? { ...thread, status: 'closed' }
-            : thread
-        ));
+      setThreads(prev => prev.map(thread => 
+        thread.id === threadId 
+          ? { ...thread, status: 'closed' }
+          : thread
+      ));
 
-        if (selectedThread?.id === threadId) {
-          setSelectedThread({ ...selectedThread, status: 'closed' });
-        }
-        
-        // Update stats
-        setStats(prev => ({ 
-          ...prev, 
-          active: Math.max(0, prev.active - 1), 
-          closed: prev.closed + 1 
-        }));
+      if (selectedThread?.id === threadId) {
+        setSelectedThread({ ...selectedThread, status: 'closed' });
       }
+      
+      setStats(prev => ({ 
+        ...prev, 
+        active: Math.max(0, prev.active - 1), 
+        closed: prev.closed + 1 
+      }));
     } catch (error) {
       console.error('❌ Error closing thread:', error.response?.data || error.message);
       alert('Không thể đóng hội thoại. Vui lòng thử lại.');
@@ -285,7 +319,7 @@ const AdminChatManagement = () => {
 
   return (
     <div className="admin-chat-management">
-      {/* Header */}
+      {/* (Header và Stats giữ nguyên) */}
       <div className="chat-admin-header">
         <div className="header-title">
           <h2>Quản lý Chat hỗ trợ</h2>
@@ -294,8 +328,6 @@ const AdminChatManagement = () => {
             {isConnected ? 'Đã kết nối' : 'Mất kết nối'}
           </div>
         </div>
-
-        {/* Stats */}
         <div className="chat-stats">
           <div className="stat-item">
             <span className="stat-number">{stats.total}</span>
@@ -317,7 +349,7 @@ const AdminChatManagement = () => {
       </div>
 
       <div className="chat-admin-content">
-        {/* Thread List */}
+        {/* (Thread List giữ nguyên) */}
         <div className="threads-panel">
           <div className="threads-header">
             <h3>Danh sách hội thoại</h3>
@@ -329,7 +361,6 @@ const AdminChatManagement = () => {
               ↻
             </button>
           </div>
-
           {loading ? (
             <div className="loading">Đang tải...</div>
           ) : (
@@ -359,13 +390,11 @@ const AdminChatManagement = () => {
                       </span>
                     </div>
                   </div>
-                  
                   {thread.lastMessage && (
                     <div className="last-message">
                       {thread.lastMessage}
                     </div>
                   )}
-                  
                   <div className="thread-footer">
                     <span className="message-count">
                       {thread.messageCount || 0} tin nhắn
@@ -376,7 +405,6 @@ const AdminChatManagement = () => {
                   </div>
                 </div>
               ))}
-
               {threads.length === 0 && (
                 <div className="empty-threads">
                   <p>Chưa có hội thoại nào</p>
@@ -390,7 +418,7 @@ const AdminChatManagement = () => {
         <div className="chat-panel">
           {selectedThread ? (
             <>
-              {/* Chat Header */}
+              {/* (Chat Header giữ nguyên) */}
               <div className="chat-panel-header">
                 <div className="chat-user-info">
                   <div className="user-avatar large">
@@ -402,7 +430,6 @@ const AdminChatManagement = () => {
                     <p className="thread-subject">{selectedThread.subject}</p>
                   </div>
                 </div>
-                
                 <div className="chat-actions">
                   {selectedThread.status === 'active' && (
                     <button
@@ -415,7 +442,7 @@ const AdminChatManagement = () => {
                 </div>
               </div>
 
-              {/* Messages */}
+              {/* (Messages giữ nguyên) */}
               <div className="chat-messages">
                 {messages.map((message, index) => {
                   const showDateDivider = index === 0 || 
@@ -441,7 +468,6 @@ const AdminChatManagement = () => {
                           </div>
                           <div className="message-bubble">
                             <p>{message.content}</p>
-                            {/* Hiển thị sản phẩm đính kèm */}
                             {message.product && (
                               <ChatProductCard product={message.product} />
                             )}
@@ -451,7 +477,6 @@ const AdminChatManagement = () => {
                     </React.Fragment>
                   );
                 })}
-
                 {messages.length === 0 && (
                   <div className="empty-messages">
                     <p>Chưa có tin nhắn nào trong hội thoại này</p>
@@ -462,12 +487,12 @@ const AdminChatManagement = () => {
               {/* Message Input */}
               {selectedThread.status === 'active' && (
                 <div className="message-input-container">
-                  {/* Hiển thị sản phẩm đã chọn */}
+                  {/* (Hiển thị sản phẩm đã chọn giữ nguyên) */}
                   {selectedProduct && (
                     <div className="selected-product-preview">
                       <div className="preview-content">
                         <img 
-                          src={`http://localhost:5001/images/products/${selectedProduct.image}`} 
+                          src={selectedProduct.imageUrl} 
                           alt={selectedProduct.name}
                           onError={(e) => e.target.src = 'https://via.placeholder.com/50?text=No+Image'}
                         />
@@ -505,7 +530,8 @@ const AdminChatManagement = () => {
                     <button 
                       type="submit" 
                       className="send-btn"
-                      disabled={!messageText.trim() || !isConnected}
+                      // Sửa: Cho phép gửi khi có text HOẶC có sản phẩm
+                      disabled={(!messageText.trim() && !selectedProduct) || !isConnected}
                     >
                       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
                         <line x1="22" y1="2" x2="11" y2="13"></line>

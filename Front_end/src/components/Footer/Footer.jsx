@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'; // Dùng Link để chuyển trang
+import { Link } from 'react-router-dom'; 
 import './Footer.css';
 
 export default function Footer() {

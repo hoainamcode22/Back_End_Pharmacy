@@ -33,7 +33,7 @@ const createSignature = (rawSignature) => {
 const createMomoPayment = async (orderId, amount, orderInfo) => {
   const momoOrderId = `MOMO_${orderId}_${Date.now()}`;
   const requestId = momoOrderId;
-  const requestType = "captureWallet";
+  const requestType = "payWithATM";
   const extraData = ""; // Dữ liệu thêm (nếu cần)
 
   const rawSignature = `accessKey=${accessKey}&amount=${amount}&extraData=${extraData}&ipnUrl=${ipnUrl}&orderId=${momoOrderId}&orderInfo=${orderInfo}&partnerCode=${partnerCode}&redirectUrl=${redirectUrl}&requestId=${requestId}&requestType=${requestType}`;

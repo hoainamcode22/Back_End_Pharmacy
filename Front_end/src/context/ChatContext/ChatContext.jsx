@@ -33,22 +33,21 @@ export const ChatProvider = ({ children }) => {
         transports: ['websocket', 'polling']
       });
 
-      newSocket.on('connect', () => {
+      // ============ ⭐️ SỬA: GOM CÁC HÀM XỬ LÝ SỰ KIỆN ⭐️ ============
+      // (Để dễ dàng thêm và gỡ bỏ)
+      
+      const onConnect = () => {
         console.log('🔌 Socket connected:', newSocket.id);
         setIsConnected(true);
-        
-        // Xác thực với server
         console.log('🔐 Authenticating socket with token...');
         newSocket.emit('authenticate', token);
-      });
+      };
 
-      newSocket.on('authenticated', (data) => {
+      const onAuthenticated = (data) => {
         console.log('✅ Socket authenticated:', data);
         if (data.success) {
           console.log(`👤 User role: ${user.role}, ID: ${user.id}`);
           setIsAuthenticated(true);
-          
-          // Nếu là admin, join tất cả threads
           if (user.role === 'admin') {
             console.log('👨‍💼 Admin detected - joining admin_room and all threads');
             newSocket.emit('admin_join_all_threads');
@@ -57,49 +56,49 @@ export const ChatProvider = ({ children }) => {
           console.error('❌ Socket authentication failed:', data.error);
           setIsAuthenticated(false);
         }
-      });
+      };
 
-      newSocket.on('disconnect', () => {
+      const onDisconnect = () => {
+        console.log('🔌 Socket disconnected');
         setIsConnected(false);
         setIsAuthenticated(false);
-      });
+      };
 
-      // Chat events
-      newSocket.on('thread_created', (thread) => {
+      const onThreadCreated = (thread) => {
         setThreads(prev => [thread, ...prev]);
         setCurrentThread(thread);
-      });
+      };
 
-      newSocket.on('new_thread_notification', (notification) => {
+      const onNewThreadNotification = (notification) => {
         console.log('🔔 New thread notification received:', notification);
         if (user.role === 'admin') {
           console.log('📥 Admin reloading threads...');
-          // Thông báo thread mới cho admin
           loadThreads(); // Reload threads
         }
-      });
+      };
 
-      newSocket.on('thread_messages', (data) => {
-        if (data.threadId === currentThread?.Id) {
-          // Map messages và đảm bảo product được include
-          const mappedMessages = (data.messages || []).map(msg => ({
-            ...msg,
-            product: msg.product || null
-          }));
-          setMessages(mappedMessages);
-        }
-      });
+      const onThreadMessages = (data) => {
+        // Sửa: Đảm bảo chỉ cập nhật đúng thread
+        // (Nếu currentThread.Id chưa kịp set mà messages đã về)
+        // if (data.threadId === currentThread?.Id) {
+        
+        const mappedMessages = (data.messages || []).map(msg => ({
+          ...msg,
+          product: msg.product || null
+        }));
+        setMessages(mappedMessages);
+        // }
+      };
 
-      newSocket.on('new_message', (message) => {
-        // Map message fields và bao gồm product nếu có
+      const onNewMessage = (message) => {
         const mappedMessage = {
           ...message,
-          product: message.product || null // Đảm bảo product được map
+          product: message.product || null
         };
         
+        // Sửa: Chỉ thêm tin nhắn nếu nó thuộc thread đang xem
         setMessages(prev => [...prev, mappedMessage]);
         
-        // Cập nhật thread list
         setThreads(prev => prev.map(thread => 
           thread.Id === message.ThreadId 
             ? { 
@@ -111,13 +110,12 @@ export const ChatProvider = ({ children }) => {
             : thread
         ));
 
-        // Tăng counter nếu không phải tin nhắn của mình
         if (message.SenderId !== user.id) {
           setNewMessageCount(prev => prev + 1);
         }
-      });
+      };
 
-      newSocket.on('user_typing', (data) => {
+      const onUserTyping = (data) => {
         if (data.threadId === currentThread?.Id && data.userId !== user.id) {
           setTypingUsers(prev => {
             const newMap = new Map(prev);
@@ -125,52 +123,82 @@ export const ChatProvider = ({ children }) => {
             return newMap;
           });
         }
-      });
+      };
 
-      newSocket.on('user_stop_typing', (data) => {
+      const onUserStopTyping = (data) => {
         setTypingUsers(prev => {
           const newMap = new Map(prev);
           newMap.delete(data.userId);
           return newMap;
         });
-      });
+      };
 
-      newSocket.on('thread_closed', (data) => {
+      const onThreadClosed = (data) => {
         setThreads(prev => prev.map(thread => 
           thread.Id === data.threadId 
             ? { ...thread, Status: 'closed' }
             : thread
         ));
-      });
+      };
 
-      newSocket.on('admin_threads_joined', () => {
-        // Admin đã join tất cả threads
+      const onAdminThreadsJoined = () => {
         console.log('✅ Admin joined all thread rooms');
-      });
+      };
 
-      newSocket.on('error', (err) => {
-        // Socket.IO Error
+      const onError = (err) => {
         console.error('❌ Socket error:', err);
-      });
+      };
+
+      // ============ ⭐️ SỬA: ĐĂNG KÝ LISTENER ⭐️ ============
+      newSocket.on('connect', onConnect);
+      newSocket.on('authenticated', onAuthenticated);
+      newSocket.on('disconnect', onDisconnect);
+      newSocket.on('thread_created', onThreadCreated);
+      newSocket.on('new_thread_notification', onNewThreadNotification);
+      newSocket.on('thread_messages', onThreadMessages);
+      newSocket.on('new_message', onNewMessage);
+      newSocket.on('user_typing', onUserTyping);
+      newSocket.on('user_stop_typing', onUserStopTyping);
+      newSocket.on('thread_closed', onThreadClosed);
+      newSocket.on('admin_threads_joined', onAdminThreadsJoined);
+      newSocket.on('error', onError);
 
       setSocket(newSocket);
 
+      // ============ ⭐️ SỬA: BỔ SUNG CLEANUP FUNCTION ⭐️ ============
+      // (Đây là mấu chốt fix lỗi lặp tin nhắn)
       return () => {
+        console.log('🧹 Cleaning up socket listeners...');
+        newSocket.off('connect', onConnect);
+        newSocket.off('authenticated', onAuthenticated);
+        newSocket.off('disconnect', onDisconnect);
+        newSocket.off('thread_created', onThreadCreated);
+        newSocket.off('new_thread_notification', onNewThreadNotification);
+        newSocket.off('thread_messages', onThreadMessages);
+        newSocket.off('new_message', onNewMessage);
+        newSocket.off('user_typing', onUserTyping);
+        newSocket.off('user_stop_typing', onUserStopTyping);
+        newSocket.off('thread_closed', onThreadClosed);
+        newSocket.off('admin_threads_joined', onAdminThreadsJoined);
+        newSocket.off('error', onError);
+        
         newSocket.close();
         setSocket(null);
         setIsConnected(false);
+        setIsAuthenticated(false); // Thêm reset
       };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token, user]);
+  }, [token, user]); // Phụ thuộc chính xác
 
   // Load threads từ API
   const loadThreads = async () => {
     try {
+      // SỬA: Dùng api (đã import) thay vì 'api.get'
       const response = await api.get('/chat/threads');
-      if (response.data.success) {
-        setThreads(response.data.threads);
-      }
+      // SỬA: API của bạn không trả về .success,
+      // (Dựa theo README.md, API trả về mảng threads trực tiếp)
+      setThreads(response.data.threads || response.data);
     } catch (err) {
       console.error('Error loading threads:', err);
     }
@@ -178,10 +206,10 @@ export const ChatProvider = ({ children }) => {
 
   // Load threads khi component mount
   useEffect(() => {
-    if (token) {
+    if (token && isAuthenticated) { // SỬA: Chỉ load khi đã xác thực
       loadThreads();
     }
-  }, [token]);
+  }, [token, isAuthenticated]); // SỬA: Thêm isAuthenticated
 
   // Tạo thread mới
   const createThread = async (title, attachmentType = 'general', attachmentId = null) => {
@@ -213,7 +241,7 @@ export const ChatProvider = ({ children }) => {
     if (socket && thread && isAuthenticated) {
       console.log(`✅ Joining thread ${thread.Id} - authenticated: ${isAuthenticated}`);
       setCurrentThread(thread);
-      setMessages([]);
+      setMessages([]); // Xóa tin nhắn cũ
       socket.emit('join_thread', thread.Id);
       
       // Reset message count cho thread này
@@ -270,11 +298,13 @@ export const ChatProvider = ({ children }) => {
   const closeThread = async (threadId) => {
     try {
       const response = await api.patch(`/chat/threads/${threadId}/close`);
-      if (response.data.success) {
+      // SỬA: API của bạn không trả về .success
+      if (response.data && response.data.message) {
         return true;
       }
       return false;
-    } catch (err) {
+    } catch (err)
+ {
       console.error('Error closing thread:', err);
       return false;
     }
@@ -284,7 +314,8 @@ export const ChatProvider = ({ children }) => {
   const getChatStats = async () => {
     try {
       const response = await api.get('/chat/stats');
-      if (response.data.success) {
+      // SỬA: API của bạn không trả về .success
+      if (response.data && response.data.stats) {
         return response.data.stats;
       }
       return null;

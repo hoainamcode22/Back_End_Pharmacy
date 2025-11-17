@@ -8,7 +8,6 @@ import Cart from "./pages/user/Cart/Cart.jsx";
 import Orders from "./pages/user/Orders/Orders.jsx";
 import OrderDetail from "./pages/user/OrderDetail/OrderDetail.jsx";
 import Checkout from "./pages/user/Checkout/Checkout.jsx";
-// 1. THÊM DÒNG IMPORT NÀY
 import CheckoutSuccess from "./pages/user/Checkout/CheckoutSuccess.jsx";
 import Diseases from "./pages/user/Diseases/Diseases.jsx";
 import DiseaseDetail from "./pages/user/DiseaseDetail/DiseaseDetail.jsx";
@@ -21,6 +20,10 @@ import AdminChatManagement from "./pages/admin/AdminChatManagement/AdminChatMana
 import UserManagement from "./pages/admin/UserManagement/UserManagement.jsx";
 import OrderManagement from "./pages/admin/OrderManagement/OrderManagement.jsx";
 import EventPage from "./pages/user/EventPage/EventPage.jsx";
+
+// CÁC IMPORT MỚI CHO TRANG TĨNH
+import AboutPage from "./pages/info/AboutPage.jsx";
+import PrivacyPage from "./pages/info/PrivacyPage.jsx";
 
 export default function App() {
   return (
@@ -108,7 +111,6 @@ export default function App() {
         }
       />
       
-      {/* 2. THÊM ROUTE MỚI CHO TRANG SUCCESS TẠI ĐÂY */}
       <Route
         path="/checkout/success"
         element={
@@ -151,7 +153,6 @@ export default function App() {
         }
       />
 
-      {/* ⭐️ ĐÃ THÊM ROUTE CHO TRANG EVENT */}
       <Route
         path="/event"
         element={
@@ -162,6 +163,34 @@ export default function App() {
           </ProtectedRoute>
         }
       />
+
+      {/* ===== BỔ SUNG 3 ROUTE CHO TRANG TĨNH ===== */}
+      {/* * Tôi đổi path="/about" thành "/gioi-thieu" để thống nhất
+      */}
+      <Route
+        path="/gioi-thieu" 
+        element={
+          <ProtectedRoute>
+            <UserLayout>
+              <AboutPage />
+            </UserLayout>
+          </ProtectedRoute>
+        }
+      />
+      
+      <Route
+        path="/chinh-sach-bao-mat"
+        element={
+          <ProtectedRoute>
+            <UserLayout>
+              <PrivacyPage />
+            </UserLayout>
+          </ProtectedRoute>
+        }
+      />
+      {/* ============================================== */}
+
+
       {/* Mặc định - User chưa login → /login, User đã login → /shop */}
       <Route path="/" element={<Navigate to="/shop" replace />} />
       <Route path="*" element={<Navigate to="/shop" replace />} />

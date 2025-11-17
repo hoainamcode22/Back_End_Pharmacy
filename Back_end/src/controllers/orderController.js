@@ -182,16 +182,21 @@ const checkout = async (req, res) => {
 
     } else if (dbPaymentMethod === 'Momo') {
       // LOGIC MOMO (Mới)
-      // KHÔNG xóa giỏ, KHÔNG trừ kho (đã làm ở trên)
+      // KHÔNG trừ kho (đã làm ở trên)
       
       // 1. Tạo link thanh toán MoMo
       const orderInfo = `Thanh toan don hang ${order.Code || order.Id}`; // Dùng Code (nếu có)
       const momoResponse = await createMomoPayment(order.Id, finalTotal, orderInfo);
 
-      // 2. Commit
+      // ============ ⭐️ BỔ SUNG FIX 1 ⭐️ ============
+      // 2. Xóa giỏ hàng
+      await client.query('DELETE FROM "CartItems" WHERE "UserId" = $1', [userId]);
+      // =============================================
+
+      // 3. Commit
       await client.query('COMMIT');
 
-      // 3. Trả về payUrl cho frontend
+      // 4. Trả về payUrl cho frontend
       res.status(201).json({
         order: orderResponse,
         payUrl: momoResponse.payUrl // 💡 Trả về link MoMo
@@ -199,7 +204,13 @@ const checkout = async (req, res) => {
       
     } else { // Xử lý 'Banking' và các trường hợp khác
       // LOGIC CHUYỂN KHOẢN (hoặc khác)
-      // KHÔNG xóa giỏ, KHÔNG trừ kho
+      // KHÔNG trừ kho
+
+      // ============ ⭐️ BỔ SUNG FIX 1 ⭐️ ============
+      // 1. Xóa giỏ hàng
+      await client.query('DELETE FROM "CartItems" WHERE "UserId" = $1', [userId]);
+      // =============================================
+
       await client.query('COMMIT');
       res.status(201).json({ order: orderResponse });
     }
@@ -213,7 +224,11 @@ const checkout = async (req, res) => {
   }
 };
 
-// =================== GET ORDERS ===================
+// =================== CÁC HÀM KHÁC GIỮ NGUYÊN ===================
+// ... (getOrders, getOrderById, cancelOrder, ...)
+// ... (getAllOrders, getOrderByIdAdmin, updateOrderStatus, ...)
+// =============================================================
+
 // (GIỮ NGUYÊN)
 const getOrders = async (req, res) => {
   try {
@@ -242,7 +257,6 @@ const getOrders = async (req, res) => {
   }
 };
 
-// =================== GET ORDER BY ID ===================
 // (GIỮ NGUYÊN)
 const getOrderById = async (req, res) => {
   try {
@@ -283,7 +297,6 @@ const getOrderById = async (req, res) => {
   }
 };
 
-// =================== CANCEL ORDER ===================
 // (SỬA ĐỔI logic để an toàn hơn)
 const cancelOrder = async (req, res) => {
   const client = await db.pool.connect();
@@ -340,35 +353,6 @@ const cancelOrder = async (req, res) => {
 
 /**
  * ============== ADMIN FUNCTIONS ==============
- */
-
-/**
- * @swagger
- * /api/orders/admin/all:
- *   get:
- *     summary: Lấy tất cả đơn hàng (Admin only)
- *     tags: [Admin]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: query
- *         name: status
- *         schema:
- *           type: string
- *         description: Lọc theo trạng thái (pending, confirmed, shipping, delivered, cancelled)
- *       - in: query
- *         name: page
- *         schema:
- *           type: integer
- *           default: 1
- *       - in: query
- *         name: limit
- *         schema:
- *           type: integer
- *           default: 20
- *     responses:
- *       200:
- *         description: Danh sách đơn hàng
  */
 const getAllOrders = async (req, res) => {
   try {
