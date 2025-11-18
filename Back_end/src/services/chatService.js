@@ -2,6 +2,35 @@
 const jwt = require('jsonwebtoken');
 const db = require('../../db_config');
 
+// ============ ⭐️ BỔ SUNG: HÀM BUILD URL ẢNH ⭐️ ============
+// (Giả sử file .env đã được load ở index.js)
+const buildProductImageUrl = (host, dbImage, dbImageUrl) => {
+  const cloudinaryCloudName = process.env.CLOUDINARY_CLOUD_NAME;
+  
+  // Ưu tiên Cloudinary (dựa theo README.md)
+  if (cloudinaryCloudName && dbImageUrl) {
+    // dbImageUrl có thể lưu 'v176.../abc.jpg'
+    const cloudinaryBase = `https://res.cloudinary.com/${cloudinaryCloudName}/image/upload/`;
+    return `${cloudinaryBase}${dbImageUrl.replace(/^\/+/, '')}`;
+  }
+  
+  // Dùng ảnh local
+  if (dbImage) {
+    const protocol = (host && host.startsWith('localhost')) ? 'http' : 'https';
+    const localBaseUrl = `${protocol}://${host}/images/`;
+    
+    if (dbImage.startsWith('http')) return dbImage; // Nếu đã là link
+    return `${localBaseUrl}${dbImage.replace(/^\/+/, '')}`; // Build link local
+  }
+
+  // Fallback
+  const protocol = (host && host.startsWith('localhost')) ? 'http' : 'http';
+  const localBaseUrl = `${protocol}://${host}/images/`;
+  return `${localBaseUrl}default.jpg`;
+};
+// ============ ⭐️ KẾT THÚC BỔ SUNG ⭐️ ============
+
+
 class ChatService {
   constructor() {
     this.connectedUsers = new Map(); // userId -> socketId
@@ -95,8 +124,15 @@ class ChatService {
 
           socket.join(`thread_${threadId}`);
           
+          // ============ ⭐️ SỬA: Lấy host ⭐️ ============
+          // Lấy host từ socket để build URL
+          const host = socket.handshake.headers.host;
+          // ============ ⭐️ KẾT THÚC SỬA ⭐️ ============
+
           // Lấy lịch sử tin nhắn
-          const messages = await this.getThreadMessages(threadId);
+          // ============ ⭐️ SỬA: Truyền host vào ⭐️ ============
+          const messages = await this.getThreadMessages(threadId, host);
+          // ============ ⭐️ KẾT THÚC SỬA ⭐️ ============
           socket.emit('thread_messages', { threadId, messages });
 
         } catch (error) {
@@ -108,6 +144,10 @@ class ChatService {
       socket.on('send_message', async (data) => {
         try {
           if (!socket.userId) return;
+
+          // ============ ⭐️ SỬA: Lấy host ⭐️ ============
+          const host = socket.handshake.headers.host;
+          // ============ ⭐️ KẾT THÚC SỬA ⭐️ ============
 
           const message = await this.createMessage({
             threadId: data.threadId,
@@ -126,13 +166,20 @@ class ChatService {
             );
             if (productQuery.rows[0]) {
               const p = productQuery.rows[0];
+
+              // ============ ⭐️ SỬA: Build URL ảnh ⭐️ ============
+              const imageUrl = buildProductImageUrl(host, p.Image, p.ImageURL);
+              // ============ ⭐️ KẾT THÚC SỬA ⭐️ ============
+              
               productData = {
                 id: p.Id,
                 Id: p.Id,
                 name: p.ProductName || p.Name,
                 ProductName: p.ProductName || p.Name,
-                image: p.ImageURL || p.Image,
-                ProductImage: p.ImageURL || p.Image,
+                // ============ ⭐️ SỬA: Gán URL ⭐️ ============
+                image: imageUrl,
+                ProductImage: imageUrl,
+                // ============ ⭐️ KẾT THÚC SỬA ⭐️ ============
                 price: parseFloat(p.Price || 0),
                 ProductPrice: parseFloat(p.Price || 0)
               };
@@ -159,12 +206,16 @@ class ChatService {
               product: productData
             });
             
+            // ============ ⭐️ SỬA: XÓA 4 DÒNG SAU ĐỂ TRÁNH LẶP TIN NHẮN ⭐️ ============
+            /*
             // Emit new_message riêng cho admin để cập nhật UI
             socket.broadcast.to('admin_room').emit('new_message', {
               ...message,
               senderName: socket.userName,
               product: productData
             });
+            */
+            // ============ ⭐️ KẾT THÚC SỬA ⭐️ ============
           }
 
         } catch (error) {
@@ -255,7 +306,9 @@ class ChatService {
     return result.rows[0];
   }
 
-  async getThreadMessages(threadId) {
+  // ============ ⭐️ SỬA: Thêm 'host' vào tham số ⭐️ ============
+  async getThreadMessages(threadId, host) {
+  // ============ ⭐️ KẾT THÚC SỬA ⭐️ ============
     const query = `
       SELECT 
         cm.*,
@@ -279,13 +332,19 @@ class ChatService {
     
     // Format lại messages với object product đầy đủ
     return result.rows.map(row => {
+      // ============ ⭐️ SỬA: Build URL ảnh ⭐️ ============
+      const imageUrl = buildProductImageUrl(host, row.ProductImageAlt, row.ProductImage);
+      // ============ ⭐️ KẾT THÚC SỬA ⭐️ ============
+
       const productData = row.ProductId ? {
         id: row.ProductId,
         Id: row.ProductId,
         name: row.ProductName || row.ProductNameAlt,
         ProductName: row.ProductName || row.ProductNameAlt,
-        image: row.ProductImage || row.ProductImageAlt,
-        ProductImage: row.ProductImage || row.ProductImageAlt,
+        // ============ ⭐️ SỬA: Gán URL ⭐️ ============
+        image: imageUrl,
+        ProductImage: imageUrl,
+        // ============ ⭐️ KẾT THÚC SỬA ⭐️ ============
         price: parseFloat(row.ProductPrice || 0),
         ProductPrice: parseFloat(row.ProductPrice || 0)
       } : null;

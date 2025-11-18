@@ -47,6 +47,7 @@ const SupportChat = () => {
   const handleSendMessage = (e) => {
     e.preventDefault();
     if (inputMessage.trim() && currentThread) {
+      // SỬA: Đảm bảo gửi đúng ID (README.md nói API product trả về 'id' và 'imageUrl')
       const success = sendMessage(inputMessage, selectedProduct?.id);
       if (success) {
         setInputMessage('');
@@ -315,7 +316,8 @@ const SupportChat = () => {
                               <div className="message-bubble">
                                 <p>{message.Content}</p>
                                 {/* Hiển thị sản phẩm đính kèm */}
-                                {message.product && (
+                                {/* SỬA: Đảm bảo 'product' tồn tại và có 'image' */}
+                                {message.product && message.product.image && (
                                   <ChatProductCard product={message.product} />
                                 )}
                               </div>
@@ -357,11 +359,17 @@ const SupportChat = () => {
                     {selectedProduct && (
                       <div className="selected-product-preview">
                         <div className="preview-content">
+                          
+                          {/* ============ ⭐️ SỬA: Dùng .imageUrl (link tuyệt đối) ⭐️ ============ */}
+                          {/* (Modal trả về product object có 'imageUrl' từ API) */}
                           <img 
-                            src={`http://localhost:5001/images/products/${selectedProduct.Image}`} 
+                            src={selectedProduct.imageUrl} 
                             alt={selectedProduct.Name}
                           />
+                          {/* ============ ⭐️ KẾT THÚC SỬA ⭐️ ============ */}
+
                           <div className="preview-info">
+                            {/* SỬA: Đảm bảo dùng đúng key (Name từ modal) */}
                             <p className="preview-name">{selectedProduct.Name}</p>
                             <p className="preview-price">{selectedProduct.Price?.toLocaleString('vi-VN')}đ</p>
                           </div>

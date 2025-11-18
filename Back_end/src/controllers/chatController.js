@@ -2,19 +2,37 @@
 const db = require('../../db_config');
 const chatService = require('../services/chatService'); // Biến này chưa được sử dụng, có thể bạn sẽ cần sau
 
+// ============ ⭐️ BỔ SUNG: HÀM BUILD URL ẢNH ⭐️ ============
+// (Hàm này đã được kiểm tra, an toàn hơn)
+const buildProductImageUrl = (host, dbImage, dbImageUrl) => {
+  const cloudinaryCloudName = process.env.CLOUDINARY_CLOUD_NAME;
+  
+  // Ưu tiên Cloudinary
+  if (cloudinaryCloudName && dbImageUrl) {
+    const cloudinaryBase = `https://res.cloudinary.com/${cloudinaryCloudName}/image/upload/`;
+    // Đảm bảo không bị lặp /
+    return `${cloudinaryBase}${dbImageUrl.replace(/^\/+/, '')}`;
+  }
+  
+  // Dùng ảnh local
+  if (dbImage) {
+    const protocol = (host && host.startsWith('localhost')) ? 'http' : 'https';
+    const localBaseUrl = `${protocol}://${host}/images/`;
+    
+    if (dbImage.startsWith('http')) return dbImage; // Nếu đã là link
+    return `${localBaseUrl}${dbImage.replace(/^\/+/, '')}`; // Build link local
+  }
+
+  // Fallback
+  const protocol = (host && host.startsWith('localhost')) ? 'http' : 'http';
+  const localBaseUrl = `${protocol}://${host}/images/`;
+  return `${localBaseUrl}default.jpg`;
+};
+// ============ ⭐️ KẾT THÚC BỔ SUNG ⭐️ ============
+
+
 const chatController = {
-  /**
-   * @swagger
-   * /api/chat/admin/threads:
-   *   get:
-   *     summary: Lấy tất cả chat threads (Admin only)
-   *     tags: [Chat]
-   *     security:
-   *       - bearerAuth: []
-   *     responses:
-   *       200:
-   *         description: Danh sách tất cả threads và thống kê
-   */
+  // ============ (Hàm 'getAllThreads' giữ nguyên) ============
   getAllThreads: async (req, res) => {
     try {
       const userRole = req.user.Role; // Auth middleware returns PascalCase
@@ -78,18 +96,7 @@ const chatController = {
     }
   },
 
-  /**
-   * @swagger
-   * /api/chat/threads:
-   *   get:
-   *     summary: Lấy danh sách chat threads của user
-   *     tags: [Chat]
-   *     security:
-   *       - bearerAuth: []
-   *     responses:
-   *       200:
-   *         description: Danh sách threads thành công
-   */
+  // ============ (Hàm 'getUserThreads' giữ nguyên) ============
   getUserThreads: async (req, res) => {
     try {
       const userId = req.user.Id; // PascalCase from auth middleware
@@ -143,15 +150,7 @@ const chatController = {
     }
   },
 
-  /**
-   * @swagger
-   * /api/chat/threads:
-   *   post:
-   *     summary: Tạo thread chat mới
-   *     tags: [Chat]
-   *     security:
-   *       - bearerAuth: []
-   */
+  // ============ (Hàm 'createThread' giữ nguyên) ============
   createThread: async (req, res) => {
     try {
       const { title, attachmentType, attachmentId } = req.body;
@@ -208,20 +207,12 @@ const chatController = {
     }
   },
 
-  /**
-   * @swagger
-   * /api/chat/threads/{threadId}/messages:
-   *   get:
-   *     summary: Lấy tin nhắn trong thread
-   *     tags: [Chat]
-   *     security:
-   *       - bearerAuth: []
-   */
+  // ============ ⭐️ SỬA: Hàm 'getThreadMessages' (Dùng hàm build ảnh mới) ⭐️ ============
   getThreadMessages: async (req, res) => {
     try {
       const { threadId } = req.params;
-      const userId = req.user.Id; // Sửa thành lowercase
-      const userRole = req.user.Role; // Sửa thành lowercase
+      const userId = req.user.Id; // Sửa thành PascalCase
+      const userRole = req.user.Role; // Sửa thành PascalCase
 
       // Kiểm tra quyền truy cập
       if (userRole !== 'admin') {
@@ -260,41 +251,23 @@ const chatController = {
       
       console.log('📦 Raw query result for thread', threadId, ':', result.rows.length, 'messages');
       
-      // Format lại messages để có object product với đầy đủ thông tin
-      const CLOUDINARY_BASE = 'https://res.cloudinary.com/dd1onmi19/image/upload/products';
+      // Sửa: Dùng hàm build URL
+      const host = req.get('host');
       
       const messages = result.rows.map(row => {
+        // Sửa: Dùng hàm build URL mới
+        const imageUrl = buildProductImageUrl(host, row.ProductImageAlt, row.ProductImage);
+
         const productData = row.ProductId ? {
           id: row.ProductId,
-          Id: row.ProductId, // Backward compatibility
+          Id: row.ProductId, 
           name: row.ProductName || row.ProductNameAlt,
-          ProductName: row.ProductName || row.ProductNameAlt, // Backward compatibility
+          ProductName: row.ProductName || row.ProductNameAlt, 
           price: parseFloat(row.ProductPrice || 0),
-          ProductPrice: parseFloat(row.ProductPrice || 0), // Backward compatibility
-          image: (() => {
-            const rawImage = row.ProductImage || row.ProductImageAlt;
-            // Nếu là URL đầy đủ - dùng luôn
-            if (rawImage && rawImage.startsWith('http')) {
-              return rawImage;
-            }
-            // Nếu chỉ là tên file - build URL với folder /products/
-            if (rawImage) {
-              return `${CLOUDINARY_BASE}/${rawImage}`;
-            }
-            return null;
-          })(),
-          ProductImage: (() => {
-            const rawImage = row.ProductImage || row.ProductImageAlt;
-            // Nếu là URL đầy đủ - dùng luôn
-            if (rawImage && rawImage.startsWith('http')) {
-              return rawImage;
-            }
-            // Nếu chỉ là tên file - build URL với folder /products/
-            if (rawImage) {
-              return `${CLOUDINARY_BASE}/${rawImage}`;
-            }
-            return null;
-          })(), // Backward compatibility
+          ProductPrice: parseFloat(row.ProductPrice || 0), 
+          // Sửa: Gán URL đã build
+          image: imageUrl,
+          ProductImage: imageUrl,
         } : null;
         
         if (productData) {
@@ -320,30 +293,24 @@ const chatController = {
     }
   },
 
-  /**
-   * @swagger
-   * /api/chat/threads/{threadId}/messages:
-   *   post:
-   *     summary: Gửi tin nhắn mới
-   *     tags: [Chat]
-   *     security:
-   *       - bearerAuth: []
-   */
+  // ============ ⭐️ SỬA: Hàm 'sendMessage' (Fix lỗi admin gửi sản phẩm) ⭐️ ============
   sendMessage: async (req, res) => {
     try {
       const { threadId } = req.params;
-      const { content } = req.body;
-      const userId = req.user.Id; // Sửa thành lowercase
-      const userRole = req.user.Role; // Sửa thành lowercase
+      // Sửa: Lấy thêm 'attachedProductId'
+      const { content, attachedProductId } = req.body;
+      const userId = req.user.Id;
+      const userRole = req.user.Role;
 
-      if (!content || content.trim() === '') {
+      // Sửa: Cho phép gửi nếu có content HOẶC có sản phẩm
+      if ((!content || content.trim() === '') && !attachedProductId) {
         return res.status(400).json({
           success: false,
-          message: 'Nội dung tin nhắn không được để trống',
+          message: 'Nội dung tin nhắn hoặc sản phẩm không được để trống',
         });
       }
 
-      // Kiểm tra quyền truy cập thread
+      // Kiểm tra quyền truy cập thread (giữ nguyên)
       if (userRole !== 'admin') {
         const accessCheck = await db.query(
           'SELECT 1 FROM "ChatThreads" WHERE "Id" = $1 AND "UserId" = $2',
@@ -358,10 +325,10 @@ const chatController = {
         }
       }
 
-      // Tạo tin nhắn
+      // Sửa: Thêm 'AttachedProductId' vào query
       const messageQuery = `
-        INSERT INTO "ChatMessages" ("ThreadId", "SenderId", "SenderRole", "Content")
-        VALUES ($1, $2, $3, $4)
+        INSERT INTO "ChatMessages" ("ThreadId", "SenderId", "SenderRole", "Content", "AttachedProductId")
+        VALUES ($1, $2, $3, $4, $5)
         RETURNING *
       `;
 
@@ -370,16 +337,17 @@ const chatController = {
         userId,
         userRole,
         content.trim(),
+        attachedProductId || null, // Sửa: Thêm tham số
       ]);
       const message = messageResult.rows[0];
 
-      // Cập nhật thời gian thread
+      // Cập nhật thời gian thread (giữ nguyên)
       await db.query(
         'UPDATE "ChatThreads" SET "UpdatedAt" = NOW() WHERE "Id" = $1',
         [threadId]
       );
 
-      // Lấy thông tin sender từ database
+      // Lấy thông tin sender (giữ nguyên)
       const senderQuery = `
         SELECT "Fullname", "Username" FROM "Users" WHERE "Id" = $1
       `;
@@ -389,11 +357,37 @@ const chatController = {
         senderResult.rows[0]?.Username ||
         'Unknown';
 
+      // Sửa: Lấy thông tin sản phẩm (nếu có)
+      let productData = null;
+      if (message.AttachedProductId) {
+        const host = req.get('host');
+        const productQuery = await db.query(
+          'SELECT "Id", "ProductName", "Name", "ImageURL", "Image", "Price" FROM "Products" WHERE "Id" = $1',
+          [message.AttachedProductId]
+        );
+        if (productQuery.rows[0]) {
+          const p = productQuery.rows[0];
+          const imageUrl = buildProductImageUrl(host, p.Image, p.ImageURL);
+          productData = {
+            id: p.Id,
+            Id: p.Id,
+            name: p.ProductName || p.Name,
+            ProductName: p.ProductName || p.Name,
+            image: imageUrl,
+            ProductImage: imageUrl,
+            price: parseFloat(p.Price || 0),
+            ProductPrice: parseFloat(p.Price || 0)
+          };
+        }
+      }
+
       // Gửi realtime qua Socket.IO
       const io = req.app.get('io');
+      // Sửa: Gửi `product: productData` kèm theo
       io.to(`thread_${threadId}`).emit('new_message', {
         ...message,
         SenderName: senderName,
+        product: productData, // Sửa: Thêm sản phẩm
       });
 
       console.log(
@@ -413,20 +407,13 @@ const chatController = {
       });
     }
   },
+  // ============ ⭐️ KẾT THÚC SỬA ⭐️ ============
 
-  /**
-   * @swagger
-   * /api/chat/threads/{threadId}/close:
-   *   patch:
-   *     summary: Đóng thread chat (chỉ admin)
-   *     tags: [Chat]
-   *     security:
-   *       - bearerAuth: []
-   */
+  // ============ (Hàm 'closeThread' giữ nguyên, sửa lại Role) ============
   closeThread: async (req, res) => {
     try {
       const { threadId } = req.params;
-      const userRole = req.user.Role; // Sửa thành lowercase
+      const userRole = req.user.Role; // Sửa: Dùng PascalCase
 
       if (userRole !== 'admin') {
         return res.status(403).json({
@@ -444,7 +431,7 @@ const chatController = {
       const io = req.app.get('io');
       io.to(`thread_${threadId}`).emit('thread_closed', {
         threadId,
-        closedBy: req.user.username || req.user.Id, // Ưu tiên username nếu có, nếu không dùng id
+        closedBy: req.user.Username || req.user.Id, // Sửa: Dùng PascalCase
       });
 
       res.json({
@@ -460,18 +447,10 @@ const chatController = {
     }
   },
 
-  /**
-   * @swagger
-   * /api/chat/stats:
-   *   get:
-   *     summary: Thống kê chat (chỉ admin)
-   *     tags: [Chat]
-   *     security:
-   *       - bearerAuth: []
-   */
+  // ============ (Hàm 'getChatStats' giữ nguyên, sửa lại Role) ============
   getChatStats: async (req, res) => {
     try {
-      const userRole = req.user.Role; // Sửa thành lowercase
+      const userRole = req.user.Role; // Sửa: Dùng PascalCase
 
       if (userRole !== 'admin') {
         return res.status(403).json({

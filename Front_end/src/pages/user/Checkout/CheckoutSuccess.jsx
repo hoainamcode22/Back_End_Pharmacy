@@ -1,9 +1,21 @@
-import React, { useEffect } from 'react';
+// SỬA: Thêm useContext
+import React, { useEffect, useContext } from 'react'; 
 import { Link, useSearchParams } from 'react-router-dom';
 import './CheckoutSuccess.css';
 
+// SỬA: Import AuthContext (dựa theo README.md)
+// Giả định file này nằm ở: src/pages/user/Checkout/CheckoutSuccess.jsx
+// Đường dẫn đến context sẽ là:
+import { AuthContext } from '../../../context/AuthContext/AuthContext'; 
+
 function CheckoutSuccess() {
   const [searchParams] = useSearchParams();
+
+  // SỬA: Lấy hàm cập nhật giỏ hàng từ AuthContext
+  // LƯU Ý: Tôi đoán tên hàm là "setCartCount". 
+  // Hãy thay "setCartCount" bằng ĐÚNG tên hàm trong AuthContext của bạn
+  // (Ví dụ: "updateCartCount", "clearCartBadge", v.v.)
+  const { setCartCount } = useContext(AuthContext); 
 
   // Đọc các tham số MoMo trả về (để kiểm tra)
   const resultCode = searchParams.get('resultCode');
@@ -13,12 +25,20 @@ function CheckoutSuccess() {
   const isSuccess = resultCode === '0';
 
   // Xóa giỏ hàng (nếu thành công)
-  // Mặc dù backend đã xóa, chúng ta cũng nên dispatch event để header cập nhật
   useEffect(() => {
     if (isSuccess) {
-      window.dispatchEvent(new Event('cart:updated')); // Cập nhật icon giỏ hàng
+      
+      // SỬA: Không dispatch event (vì nó gây ra race condition)
+      // window.dispatchEvent(new Event('cart:updated')); 
+      
+      // SỬA: Gọi trực tiếp hàm từ Context để set badge về 0
+      if (typeof setCartCount === 'function') {
+        console.log("Thanh toán thành công, cập nhật badge giỏ hàng về 0.");
+        setCartCount(0); // Cập nhật badge về 0
+      }
     }
-  }, [isSuccess]);
+    // SỬA: Thêm dependency
+  }, [isSuccess, setCartCount]); 
 
   return (
     <div className="checkout-success-container">

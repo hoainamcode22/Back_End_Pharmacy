@@ -25,10 +25,9 @@ const handleMomoIPN = async (req, res) => {
     signature // Chữ ký của MoMo gửi qua
   } = req.body;
 
-  console.log("MoMo IPN Received:", req.body);
+  console.log("--- Đã nhận MoMo IPN ---:", req.body);
 
   // 1. Tạo chữ ký (giống hệt lúc tạo link) để XÁC THỰC
-  // Chú ý: accessKey không có trong IPN, ta phải lấy từ .env
   const accessKey = process.env.MOMO_ACCESS_KEY;
   const rawSignature = `accessKey=${accessKey}&amount=${amount}&extraData=${extraData}&ipnUrl=${process.env.MOMO_IPN_URL}&orderId=${orderId}&orderInfo=${orderInfo}&orderType=${orderType}&partnerCode=${partnerCode}&payType=${payType}&redirectUrl=${process.env.MOMO_REDIRECT_URL}&requestId=${requestId}&responseTime=${responseTime}&resultCode=${resultCode}&transId=${transId}`;
   
@@ -39,7 +38,7 @@ const handleMomoIPN = async (req, res) => {
 
   // 2. So sánh chữ ký
   if (signature !== expectedSignature) {
-    console.error("MoMo IPN Signature Invalid!");
+    console.error("MoMo IPN: Chữ ký không hợp lệ!");
     // Báo lỗi cho MoMo, họ sẽ không gửi lại
     return res.status(400).json({ resultCode: 99, message: 'Invalid Signature' });
   }
@@ -53,13 +52,14 @@ const handleMomoIPN = async (req, res) => {
       await client.query('BEGIN');
 
       // 3a. Tìm đơn hàng trong CSDL bằng MomoRequestId
+      // Đây là bước mấu chốt: tìm đơn hàng 'pending' khớp với requestId
       const orderResult = await client.query(
-        'SELECT * FROM "Orders" WHERE "MomoRequestId" = $1 AND "Status" = $2',
-        [requestId, 'pending'] // Chỉ tìm đơn hàng 'pending'
+        'SELECT * FROM "Orders" WHERE "MomoRequestId" = $1 AND "Status" = $2 FOR UPDATE',
+        [requestId, 'pending'] // Chỉ tìm đơn hàng 'pending' và KHÓA HÀNG (FOR UPDATE)
       );
 
       if (orderResult.rows.length === 0) {
-        // Đơn hàng không tồn tại hoặc đã được xử lý
+        // Đơn hàng không tồn tại hoặc đã được xử lý (ví dụ IPN gọi 2 lần)
         console.warn(`MoMo IPN: Không tìm thấy đơn hàng ${requestId} hoặc đã xử lý.`);
         await client.query('ROLLBACK');
         // Vẫn trả 200 để MoMo không gửi lại
@@ -95,13 +95,13 @@ const handleMomoIPN = async (req, res) => {
       );
       
       await client.query('COMMIT');
-      console.log(`Xử lý thành công đơn hàng ${orderId_internal} từ MoMo.`);
+      console.log(`Đã xử lý thành công (Trừ kho & Xóa giỏ) cho đơn hàng ${orderId_internal}.`);
       
       // Trả về 200 cho MoMo (bắt buộc)
       return res.status(200).json({ resultCode: 0, message: 'Success' });
 
     } catch (error) {
-      console.error("Lỗi khi xử lý IPN:", error);
+      console.error("Lỗi nghiêm trọng khi xử lý IPN:", error);
       await client.query('ROLLBACK');
       // Trả 500 để MoMo biết và gửi lại IPN
       return res.status(500).json({ resultCode: 99, message: 'Server Error' });
@@ -112,8 +112,9 @@ const handleMomoIPN = async (req, res) => {
   } else {
     // Thanh toán thất bại (resultCode != 0)
     console.warn(`Thanh toán MoMo thất bại cho ${requestId}, resultCode: ${resultCode}`);
-    // Cập nhật trạng thái đơn hàng (ví dụ: 'cancelled') (Tùy chọn)
-    await db.query('UPDATE "Orders" SET "Status" = $1 WHERE "MomoRequestId" = $2', ['cancelled', requestId]);
+    // Cập nhật trạng thái đơn hàng (ví dụ: 'cancelled')
+    await db.pool.query('UPDATE "Orders" SET "Status" = $1 WHERE "MomoRequestId" = $2 AND "Status" = $3', 
+        ['cancelled', requestId, 'pending']);
     
     // Vẫn trả 200 cho MoMo
     return res.status(200).json({ resultCode: 0, message: 'Failed transaction logged' });

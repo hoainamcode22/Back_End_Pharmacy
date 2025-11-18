@@ -1,6 +1,4 @@
 const db = require('../../db_config');
-
-// Fallback mock (chỉ dùng khi bảng chưa tồn tại lần đầu)
 const fallbackAnnouncements = [
   {
     id: 1,

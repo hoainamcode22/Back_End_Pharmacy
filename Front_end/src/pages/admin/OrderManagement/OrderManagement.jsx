@@ -33,20 +33,52 @@ export default function OrderManagement() {
     }
   };
 
+  // ============ ⭐️ BỔ SUNG FIX 2 (Hàm này được sửa) ⭐️ ============
   const handleStatusChange = async (orderId, newStatus) => {
-    if (!window.confirm(`Xác nhận chuyển trạng thái đơn hàng sang "${getStatusText(newStatus)}"?`)) {
+    if (
+      !window.confirm(
+        `Xác nhận chuyển trạng thái đơn hàng sang "${getStatusText(newStatus)}"?`
+      )
+    ) {
       return;
     }
 
     try {
-      await updateOrderStatus(orderId, newStatus);
+      // 1. Gọi API và nhận lại data (API của bạn đã trả về { order: ... })
+      const data = await updateOrderStatus(orderId, newStatus);
+      const updatedOrder = data.order; // Lấy đơn hàng đã cập nhật từ response
+
       alert("✅ Đã cập nhật trạng thái đơn hàng!");
-      loadOrders();
+      
+      // 2. Tắt hàm loadOrders()
+      // loadOrders(); // BÌNH LUẬN DÒNG NÀY LẠI
+
+      // 3. Cập nhật state local (hiệu quả hơn)
+      setOrders((prevOrders) =>
+        prevOrders.map((order) =>
+          order.Id === orderId
+            ? { ...order, Status: updatedOrder.Status } // Cập nhật trạng thái mới
+            : order
+        )
+      );
+
+      // 4. (Tùy chọn) Nếu có filter,
+      // xóa đơn hàng khỏi danh sách NẾU nó không còn khớp
+      if (statusFilter && updatedOrder.Status !== statusFilter) {
+        setTimeout(() => {
+          setOrders((prevOrders) =>
+            prevOrders.filter((order) => order.Id !== orderId)
+          );
+        }, 1000); // Thêm 1s delay để admin thấy sự thay đổi
+      }
+
     } catch (err) {
       console.error("Error updating order status:", err);
       alert(err.response?.data?.error || "Lỗi khi cập nhật trạng thái");
     }
   };
+  // =============================================================
+
 
   const getStatusText = (status) => {
     const statusMap = {
@@ -54,7 +86,7 @@ export default function OrderManagement() {
       confirmed: "Đã xác nhận",
       shipping: "Đang giao",
       delivered: "Đã giao",
-      cancelled: "Đã hủy"
+      cancelled: "Đã hủy",
     };
     return statusMap[status] || status;
   };
@@ -63,20 +95,20 @@ export default function OrderManagement() {
     const flow = {
       pending: "confirmed",
       confirmed: "shipping",
-      shipping: "delivered"
+      shipping: "delivered",
     };
     return flow[currentStatus];
   };
 
   const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND'
+    return new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
     }).format(amount);
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleString('vi-VN');
+    return new Date(dateString).toLocaleString("vi-VN");
   };
 
   return (
@@ -91,12 +123,18 @@ export default function OrderManagement() {
           type="text"
           placeholder="🔍 Tìm kiếm theo mã đơn, tên khách hàng..."
           value={search}
-          onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setCurrentPage(1);
+          }}
           className="search-input"
         />
-        <select 
-          value={statusFilter} 
-          onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
+        <select
+          value={statusFilter}
+          onChange={(e) => {
+            setStatusFilter(e.target.value);
+            setCurrentPage(1);
+          }}
           className="filter-select"
         >
           <option value="">Tất cả trạng thái</option>
@@ -131,19 +169,25 @@ export default function OrderManagement() {
               </thead>
               <tbody>
                 {orders.length > 0 ? (
-                  orders.map(order => {
+                  orders.map((order) => {
                     const nextStatus = getNextStatus(order.Status);
                     return (
                       <tr key={order.Id}>
                         <td className="order-code">{order.Code}</td>
                         <td>
                           <div className="customer-info">
-                            <div className="customer-name">{order.CustomerName || 'Khách'}</div>
-                            <div className="customer-email">{order.CustomerEmail}</div>
+                            <div className="customer-name">
+                              {order.CustomerName || "Khách"}
+                            </div>
+                            <div className="customer-email">
+                              {order.CustomerEmail}
+                            </div>
                           </div>
                         </td>
                         <td>{order.ItemsCount} sản phẩm</td>
-                        <td className="order-total">{formatCurrency(order.Total)}</td>
+                        <td className="order-total">
+                          {formatCurrency(order.Total)}
+                        </td>
                         <td>
                           <span className={`status-badge ${order.Status}`}>
                             {getStatusText(order.Status)}
@@ -153,16 +197,22 @@ export default function OrderManagement() {
                         <td className="actions">
                           {nextStatus && (
                             <button
-                              onClick={() => handleStatusChange(order.Id, nextStatus)}
+                              onClick={() =>
+                                handleStatusChange(order.Id, nextStatus)
+                              }
                               className="btn-next-status"
-                              title={`Chuyển sang: ${getStatusText(nextStatus)}`}
+                              title={`Chuyển sang: ${getStatusText(
+                                nextStatus
+                              )}`}
                             >
                               ➡️ {getStatusText(nextStatus)}
                             </button>
                           )}
-                          {order.Status === 'pending' && (
+                          {order.Status === "pending" && (
                             <button
-                              onClick={() => handleStatusChange(order.Id, 'cancelled')}
+                              onClick={() =>
+                                handleStatusChange(order.Id, "cancelled")
+                              }
                               className="btn-cancel-order"
                               title="Hủy đơn hàng"
                             >
@@ -188,18 +238,22 @@ export default function OrderManagement() {
           {pagination.totalPages > 1 && (
             <div className="pagination">
               <button
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
                 className="btn-page"
               >
                 ← Trước
               </button>
               <span className="page-info">
-                Trang {pagination.currentPage} / {pagination.totalPages}
-                ({pagination.totalItems} đơn hàng)
+                Trang {pagination.currentPage} / {pagination.totalPages} (
+                {pagination.totalItems} đơn hàng)
               </span>
               <button
-                onClick={() => setCurrentPage(p => Math.min(pagination.totalPages, p + 1))}
+                onClick={() =>
+                  setCurrentPage((p) =>
+                    Math.min(pagination.totalPages, p + 1)
+                  )
+                }
                 disabled={currentPage === pagination.totalPages}
                 className="btn-page"
               >
