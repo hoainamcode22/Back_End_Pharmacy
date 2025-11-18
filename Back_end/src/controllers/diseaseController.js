@@ -34,7 +34,7 @@ const searchDiseases = async (req, res) => {
       const searchTerm = `%${q.trim().toLowerCase()}%`; 
       
       query = `
-        SELECT "Id", "Name", "Slug", "Overview", "Symptoms", "Category", "CreatedAt"
+        SELECT "Id", "Name", "Slug", "Overview", "Symptoms", "Category", "ImageUrl", "CreatedAt"
         FROM public."Diseases"
         WHERE 
           LOWER("Name") LIKE $1 OR
@@ -49,7 +49,7 @@ const searchDiseases = async (req, res) => {
     } else {
       // Không có từ khóa, trả về 40 bệnh mới nhất
       query = `
-        SELECT "Id", "Name", "Slug", "Overview", "Symptoms", "Category", "CreatedAt"
+        SELECT "Id", "Name", "Slug", "Overview", "Symptoms", "Category", "ImageUrl", "CreatedAt"
         FROM public."Diseases"
         ORDER BY "CreatedAt" DESC
         LIMIT 40
@@ -107,7 +107,7 @@ const getDiseaseBySlug = async (req, res) => {
       SELECT 
         "Id", "Name", "Slug", "Overview", "Symptoms", 
         "Causes", "Treatment", "Prevention", "Category", 
-        "CreatedAt", "UpdatedAt"
+        "ImageUrl", "CreatedAt", "UpdatedAt"
       FROM public."Diseases"
       WHERE "Slug" = $1
     `;
@@ -137,5 +137,74 @@ const getDiseaseBySlug = async (req, res) => {
 
 module.exports = {
   searchDiseases,
-  getDiseaseBySlug
+  getDiseaseBySlug,
+  updateDiseaseImage
+};
+
+/**
+ * @swagger
+ * /api/diseases/{id}/image:
+ *   patch:
+ *     summary: Cập nhật ảnh bệnh (admin only)
+ *     tags: [Diseases]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               imageUrl:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Cập nhật thành công
+ */
+const updateDiseaseImage = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { imageUrl } = req.body;
+    
+    if (!id || !imageUrl) {
+      return res.status(400).json({ 
+        success: false,
+        error: 'Thiếu ID bệnh hoặc URL ảnh!' 
+      });
+    }
+    
+    const query = `
+      UPDATE public."Diseases"
+      SET "ImageUrl" = $1, "UpdatedAt" = NOW()
+      WHERE "Id" = $2
+      RETURNING *
+    `;
+    
+    const result = await db.query(query, [imageUrl, id]);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ 
+        success: false,
+        error: 'Không tìm thấy bệnh!' 
+      });
+    }
+    
+    res.json({
+      success: true,
+      message: 'Cập nhật ảnh thành công!',
+      disease: result.rows[0]
+    });
+    
+  } catch (error) {
+    console.error('❌ Lỗi updateDiseaseImage:', error);
+    res.status(500).json({ 
+      success: false,
+      error: 'Lỗi server khi cập nhật ảnh!' 
+    });
+  }
 };

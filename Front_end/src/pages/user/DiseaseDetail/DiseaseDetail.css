@@ -1,9 +1,9 @@
 /* ===== CONTAINER ===== */
 .disease-detail-container {
-  max-width: 1200px;
+  max-width: 900px;
   margin: 0 auto;
   padding: 40px 24px;
-  background: #f8fafb;
+  background: #ffffff;
   min-height: 100vh;
 }
 
@@ -48,140 +48,188 @@
   margin-bottom: 20px;
 }
 
-/* ===== HEADER ===== */
-.disease-header {
-  position: relative;
-  background: linear-gradient(135deg, #00a859 0%, #00d478 100%);
-  padding: 48px 40px;
-  border-radius: 20px;
-  margin-bottom: 32px;
-  box-shadow: 0 8px 32px rgba(0, 168, 89, 0.25);
-  color: white;
-  overflow: hidden;
-}
-
-.disease-header::before {
-  content: "";
-  position: absolute;
-  top: -50%;
-  right: -20%;
-  width: 300px;
-  height: 300px;
-  background: radial-gradient(circle, rgba(255,255,255,0.15), transparent 70%);
-  border-radius: 50%;
-}
-
-.btn-back-small {
-  background: rgba(255,255,255,0.2);
-  border: 2px solid rgba(255,255,255,0.3);
-  color: white;
-  padding: 10px 20px;
-  border-radius: 10px;
-  font-size: 15px;
+/* ===== BACK BUTTON ===== */
+.btn-back-nav {
+  background: transparent;
+  border: none;
+  color: #00a859;
+  padding: 10px 0;
+  font-size: 16px;
   font-weight: 600;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 8px;
   transition: all 0.3s ease;
-  margin-bottom: 20px;
-  backdrop-filter: blur(10px);
+  margin-bottom: 32px;
+  font-family: inherit;
 }
 
-.btn-back-small:hover {
-  background: rgba(255,255,255,0.3);
+.btn-back-nav:hover {
+  color: #008a48;
   transform: translateX(-5px);
 }
 
-.disease-title {
-  font-size: 40px;
-  font-weight: 800;
-  margin: 0 0 16px 0;
-  text-shadow: 0 2px 8px rgba(0,0,0,0.08);
-  letter-spacing: -1px;
-  position: relative;
-  z-index: 1;
-  line-height: 1.2;
-  word-spacing: 0.1em;
+/* ===== ARTICLE ===== */
+.disease-article {
+  display: block;
 }
 
-.disease-category-badge {
-  display: inline-flex;
+/* ===== ARTICLE HEADER ===== */
+.article-header {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 48px;
   align-items: center;
-  gap: 8px;
-  background: rgba(255,255,255,0.25);
-  padding: 10px 24px;
-  border-radius: 24px;
-  font-weight: 700;
-  font-size: 15px;
-  backdrop-filter: blur(10px);
-  border: 2px solid rgba(255,255,255,0.3);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  position: relative;
-  z-index: 1;
+  margin-bottom: 48px;
 }
 
-/* ===== CONTENT SECTIONS ===== */
-.disease-content {
+.header-content {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 16px;
 }
 
-.disease-section {
-  background: white;
-  border-radius: 20px;
-  padding: 32px;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.06);
-  border: 1px solid rgba(0,168,89,0.08);
+.breadcrumb {
   display: flex;
-  gap: 20px;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.breadcrumb .separator {
+  color: #d1d5db;
+}
+
+.article-title {
+  font-size: 48px;
+  font-weight: 800;
+  color: #1f2937;
+  margin: 0;
+  line-height: 1.2;
+  letter-spacing: -1px;
+}
+
+.article-category {
+  display: inline-block;
+  background: linear-gradient(135deg, #00a859, #00d478);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 24px;
+  font-size: 14px;
+  font-weight: 700;
+  width: fit-content;
+  box-shadow: 0 4px 12px rgba(0, 168, 89, 0.2);
+}
+
+.article-meta {
+  font-size: 16px;
+  color: #9ca3af;
+  margin: 0;
+  font-weight: 500;
+}
+
+/* ===== FEATURED IMAGE ===== */
+.header-image-wrapper {
+  position: relative;
+}
+
+.header-image {
+  aspect-ratio: 1 / 1;
+  background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+}
+
+.header-image.loaded {
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12);
+}
+
+.disease-featured-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.placeholder-icon {
+  width: 120px;
+  height: 120px;
+  color: #00a859;
+  opacity: 0.6;
+}
+
+/* ===== DISEASE SECTIONS ===== */
+.disease-section {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  padding: 32px;
+  background: #f9fafb;
+  border-radius: 12px;
+  border-left: 5px solid #00a859;
   transition: all 0.3s ease;
 }
 
 .disease-section:hover {
-  box-shadow: 0 8px 24px rgba(0,0,0,0.1);
-  transform: translateY(-2px);
+  background: #f3f4f6;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transform: translateX(4px);
+}
+
+.section-header {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  min-width: fit-content;
 }
 
 .section-icon {
-  font-size: 48px;
+  font-size: 40px;
   line-height: 1;
   flex-shrink: 0;
-  width: 80px;
-  height: 80px;
+  width: 60px;
+  height: 60px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #e8f5f3, #d1fae5);
-  border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(0,168,89,0.15);
-}
-
-.section-content {
-  flex: 1;
 }
 
 .section-title {
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 700;
   color: #1f2937;
-  margin: 0 0 24px 0;
-  display: flex;
-  align-items: center;
-  gap: 12px;
+  margin: 0;
   letter-spacing: -0.3px;
 }
 
 .section-title::before {
-  content: "";
-  width: 5px;
-  height: 28px;
-  background: linear-gradient(135deg, #00a859, #00d478);
-  border-radius: 3px;
+  display: none;
 }
 
-/* ===== CONTENT TEXT ===== */
+/* ===== DISEASE CONTENT ===== */
+.disease-content {
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
 .disease-text,
 .disease-overview p,
 .disease-symptoms p,
@@ -210,24 +258,15 @@
   font-size: 16px;
   line-height: 1.8;
   color: #374151;
-  padding: 14px 0 14px 36px;
+  padding: 12px 0 12px 32px;
   position: relative;
-  border-radius: 8px;
   font-weight: 500;
-  word-spacing: 0.1em;
-  letter-spacing: 0.3px;
-  transition: all 0.2s ease;
-}
-
-.disease-list li:hover {
-  background: rgba(0, 168, 89, 0.05);
-  padding-left: 40px;
 }
 
 .disease-list li::before {
   content: "▸";
   position: absolute;
-  left: 8px;
+  left: 0;
   color: #00a859;
   font-size: 18px;
   font-weight: bold;
@@ -239,55 +278,58 @@
   font-size: 16px;
 }
 
-/* ===== SPECIAL SECTIONS ===== */
+/* ===== SECTION COLORS ===== */
 .overview-section {
-  background: linear-gradient(135deg, #f9fdfa 0%, #ecfdf5 100%);
+  border-left-color: #10b981;
 }
 
-.symptoms-section .section-icon {
-  background: linear-gradient(135deg, #fef3c7, #fde68a);
+.symptoms-section {
+  border-left-color: #f59e0b;
 }
 
-.causes-section .section-icon {
-  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+.causes-section {
+  border-left-color: #3b82f6;
 }
 
-.treatment-section .section-icon {
-  background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
+.treatment-section {
+  border-left-color: #8b5cf6;
 }
 
-.prevention-section .section-icon {
-  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+.prevention-section {
+  border-left-color: #06b6d4;
 }
 
-/* ===== FOOTER NOTE ===== */
-.disease-footer-note {
-  background: linear-gradient(135deg, #fff7ed 0%, #fed7aa 100%);
-  border: 2px solid #fb923c;
-  border-radius: 16px;
-  padding: 24px 28px;
-  margin-top: 32px;
+/* ===== DISCLAIMER BOX ===== */
+.disclaimer-box {
+  background: linear-gradient(135deg, #fef3c7, #fef08a);
+  border: 2px solid #fcd34d;
+  border-radius: 12px;
+  padding: 28px;
   display: flex;
-  align-items: start;
-  gap: 16px;
-  box-shadow: 0 4px 12px rgba(251,146,60,0.15);
+  gap: 20px;
+  margin-top: 48px;
+  box-shadow: 0 4px 12px rgba(251, 146, 60, 0.1);
 }
 
-.disease-footer-note svg {
+.disclaimer-icon {
   flex-shrink: 0;
-  margin-top: 2px;
-}
-
-.disease-footer-note p {
-  font-size: 16px;
-  line-height: 1.7;
-  color: #7c2d12;
-  margin: 0;
-}
-
-.disease-footer-note strong {
   color: #ea580c;
-  font-weight: 800;
+  margin-top: 4px;
+}
+
+.disclaimer-content h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #92400e;
+  margin: 0 0 8px 0;
+}
+
+.disclaimer-content p {
+  font-size: 16px;
+  line-height: 1.6;
+  color: #78350f;
+  margin: 0;
+  font-weight: 500;
 }
 
 /* ===== BUTTONS ===== */
@@ -317,13 +359,14 @@
     padding: 24px 16px;
   }
 
-  .disease-header {
-    padding: 32px 24px;
-    border-radius: 16px;
+  .article-header {
+    grid-template-columns: 1fr;
+    gap: 32px;
+    margin-bottom: 32px;
   }
 
-  .disease-title {
-    font-size: 28px;
+  .article-title {
+    font-size: 32px;
     letter-spacing: -0.5px;
   }
 
@@ -331,25 +374,16 @@
     flex-direction: column;
     padding: 24px 20px;
     gap: 16px;
-    border-radius: 16px;
   }
 
-  .section-icon {
-    width: 64px;
-    height: 64px;
-    font-size: 32px;
-    margin: 0 auto;
-    border-radius: 12px;
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
   }
 
   .section-title {
     font-size: 20px;
-    text-align: center;
-    margin: 0 0 20px 0;
-  }
-
-  .section-title::before {
-    display: none;
   }
 
   .disease-text,
@@ -359,25 +393,67 @@
   }
 
   .disease-list li {
-    padding: 12px 0 12px 32px;
+    padding: 10px 0 10px 28px;
   }
 
-  .disease-list li:hover {
-    padding-left: 32px;
+  .disease-list li::before {
+    font-size: 16px;
   }
 
-  .disease-footer-note {
+  .disclaimer-box {
     flex-direction: column;
-    text-align: center;
     padding: 20px;
-    border-radius: 12px;
+    margin-top: 32px;
   }
 
-  .disease-footer-note svg {
-    margin: 0 auto;
+  .disclaimer-icon {
+    margin-top: 0;
   }
 
-  .disease-footer-note p {
+  .disclaimer-content h3 {
+    font-size: 16px;
+  }
+
+  .disclaimer-content p {
     font-size: 14px;
+  }
+
+  .btn-back-nav {
+    margin-bottom: 24px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .disease-detail-container {
+    padding: 16px 12px;
+  }
+
+  .article-title {
+    font-size: 24px;
+  }
+
+  .breadcrumb {
+    font-size: 12px;
+  }
+
+  .article-meta {
+    font-size: 14px;
+  }
+
+  .disease-section {
+    padding: 20px 16px;
+  }
+
+  .section-icon {
+    font-size: 32px;
+  }
+
+  .section-title {
+    font-size: 18px;
+  }
+
+  .disclaimer-box {
+    padding: 16px;
   }
 }

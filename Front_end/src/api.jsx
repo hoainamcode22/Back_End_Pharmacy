@@ -160,6 +160,10 @@ export const searchDiseases = (query) =>
 export const getDiseaseBySlug = (slug) =>
   api.get(`/diseases/slug/${slug}`).then((r) => r.data);
 
+/** [ADMIN] Cập nhật ảnh bệnh */
+export const updateDiseaseImage = (diseaseId, imageUrl) =>
+  api.patch(`/diseases/${diseaseId}/image`, { imageUrl }).then((r) => r.data);
+
 // ========== ANNOUNCEMENTS ==========
 /** [PUBLIC] Lấy danh sách thông báo */
 export const getAnnouncements = () =>

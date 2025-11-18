@@ -47,4 +47,31 @@ router.get('/', diseaseController.searchDiseases);
  */
 router.get('/slug/:slug', diseaseController.getDiseaseBySlug);
 
+/**
+ * @swagger
+ * /api/diseases/{id}/image:
+ *   patch:
+ *     summary: Cập nhật ảnh bệnh (admin only)
+ *     tags: [Diseases]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               imageUrl:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Cập nhật thành công
+ */
+router.patch('/:id/image', diseaseController.updateDiseaseImage);
+
 module.exports = router;

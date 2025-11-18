@@ -9,6 +9,7 @@ export default function DiseaseDetail() {
   const [disease, setDisease] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   useEffect(() => {
     const loadDisease = async () => {
@@ -93,31 +94,63 @@ export default function DiseaseDetail() {
 
   return (
     <div className="disease-detail-container">
-      {/* Header */}
-      <div className="disease-header">
-        <button className="btn-back-small" onClick={() => navigate("/diseases")}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <path d="M19 12H5M12 19l-7-7 7-7" strokeWidth="2" strokeLinecap="round"/>
-          </svg>
-          Quay lại
-        </button>
-        <h1 className="disease-title">{disease.Name}</h1>
-        {disease.Category && (
-          <span className="disease-category-badge">{disease.Category}</span>
-        )}
-      </div>
+      {/* Back button */}
+      <button className="btn-back-nav" onClick={() => navigate("/diseases")}>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path d="M19 12H5M12 19l-7-7 7-7" strokeWidth="2" strokeLinecap="round"/>
+        </svg>
+        Quay lại
+      </button>
 
-      {/* Content */}
-      <div className="disease-content">
+      {/* Article Header */}
+      <article className="disease-article">
+        {/* Featured Image & Header Section */}
+        <div className="article-header">
+          <div className="header-content">
+            <div className="breadcrumb">
+              <span>Thông tin Y tế</span>
+              <span className="separator">/</span>
+              <span>{disease.Category || 'Bệnh'}</span>
+            </div>
+            <h1 className="article-title">{disease.Name}</h1>
+            {disease.Category && (
+              <span className="article-category">{disease.Category}</span>
+            )}
+            <p className="article-meta">Cập nhật thông tin y tế chuyên nghiệp</p>
+          </div>
+          <div className="header-image-wrapper">
+            <div className={`header-image ${imageLoaded ? 'loaded' : ''}`}>
+              {disease.ImageUrl ? (
+                <img 
+                  src={disease.ImageUrl} 
+                  alt={disease.Name}
+                  className="disease-featured-image"
+                  onLoad={() => setImageLoaded(true)}
+                  onError={(e) => {
+                    e.target.src = 'https://via.placeholder.com/400x300?text=' + encodeURIComponent(disease.Name);
+                    setImageLoaded(true);
+                  }}
+                />
+              ) : (
+                <svg className="placeholder-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" fill="currentColor"/>
+                </svg>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="disease-content">
         {/* Tổng quan */}
         {disease.Overview && (
           <section className="disease-section overview-section">
-            <div className="section-icon">📋</div>
-            <div className="section-content">
+            <div className="section-header">
+              <div className="section-icon">📋</div>
               <h2 className="section-title">Tổng quan</h2>
-              <div className="disease-overview">
-                {renderContent(disease.Overview)}
-              </div>
+            </div>
+            <div className="disease-overview">
+              {renderContent(disease.Overview)}
             </div>
           </section>
         )}
@@ -125,12 +158,12 @@ export default function DiseaseDetail() {
         {/* Triệu chứng */}
         {disease.Symptoms && (
           <section className="disease-section symptoms-section">
-            <div className="section-icon">🩺</div>
-            <div className="section-content">
+            <div className="section-header">
+              <div className="section-icon">🩺</div>
               <h2 className="section-title">Triệu chứng</h2>
-              <div className="disease-symptoms">
-                {renderContent(disease.Symptoms)}
-              </div>
+            </div>
+            <div className="disease-symptoms">
+              {renderContent(disease.Symptoms)}
             </div>
           </section>
         )}
@@ -138,12 +171,12 @@ export default function DiseaseDetail() {
         {/* Nguyên nhân */}
         {disease.Causes && (
           <section className="disease-section causes-section">
-            <div className="section-icon">🔬</div>
-            <div className="section-content">
+            <div className="section-header">
+              <div className="section-icon">🔬</div>
               <h2 className="section-title">Nguyên nhân</h2>
-              <div className="disease-causes">
-                {renderContent(disease.Causes)}
-              </div>
+            </div>
+            <div className="disease-causes">
+              {renderContent(disease.Causes)}
             </div>
           </section>
         )}
@@ -151,12 +184,12 @@ export default function DiseaseDetail() {
         {/* Điều trị */}
         {disease.Treatment && (
           <section className="disease-section treatment-section">
-            <div className="section-icon">💊</div>
-            <div className="section-content">
+            <div className="section-header">
+              <div className="section-icon">💊</div>
               <h2 className="section-title">Điều trị</h2>
-              <div className="disease-treatment">
-                {renderContent(disease.Treatment)}
-              </div>
+            </div>
+            <div className="disease-treatment">
+              {renderContent(disease.Treatment)}
             </div>
           </section>
         )}
@@ -164,29 +197,32 @@ export default function DiseaseDetail() {
         {/* Phòng ngừa */}
         {disease.Prevention && (
           <section className="disease-section prevention-section">
-            <div className="section-icon">🛡️</div>
-            <div className="section-content">
+            <div className="section-header">
+              <div className="section-icon">🛡️</div>
               <h2 className="section-title">Phòng ngừa</h2>
-              <div className="disease-prevention">
-                {renderContent(disease.Prevention)}
-              </div>
+            </div>
+            <div className="disease-prevention">
+              {renderContent(disease.Prevention)}
             </div>
           </section>
         )}
-      </div>
 
-      {/* Footer note */}
-      <div className="disease-footer-note">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffa500">
-          <circle cx="12" cy="12" r="10" strokeWidth="2"/>
-          <line x1="12" y1="16" x2="12" y2="12" strokeWidth="2"/>
-          <line x1="12" y1="8" x2="12.01" y2="8" strokeWidth="2"/>
-        </svg>
-        <p>
-          <strong>Lưu ý:</strong> Thông tin chỉ mang tính chất tham khảo. 
-          Vui lòng tham khảo ý kiến bác sĩ để được chẩn đoán và điều trị chính xác.
-        </p>
+        {/* Disclaimer */}
+        <div className="disclaimer-box">
+          <div className="disclaimer-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z" strokeWidth="1.5" fill="currentColor"/>
+              <line x1="12" y1="16" x2="12" y2="12" strokeWidth="2"/>
+              <line x1="12" y1="8" x2="12.01" y2="8" strokeWidth="2"/>
+            </svg>
+          </div>
+          <div className="disclaimer-content">
+            <h3>Lưu ý quan trọng</h3>
+            <p>Thông tin cung cấp chỉ mang tính chất tham khảo. Vui lòng tham khảo ý kiến bác sĩ chuyên khoa để được chẩn đoán và điều trị chính xác.</p>
+          </div>
+        </div>
       </div>
+    </article>
     </div>
   );
 }

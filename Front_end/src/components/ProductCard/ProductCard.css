@@ -23,25 +23,26 @@
 .product-image-container { /* Đổi tên class để rõ ràng hơn */
     position: relative;
     width: 100%;
-    height: 200px; /* Chiều cao cố định cho ảnh */
-    background: #ffffff;
+    height: 220px; /* Chiều cao cố định cho ảnh */
+    background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
     overflow: hidden;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 16px;
+    padding: 12px;
     box-sizing: border-box; /* Quan trọng */
 }
 
 .product-image-container img {
     width: 100%;
     height: 100%;
-    object-fit: contain;
+    object-fit: cover;
     transition: transform 0.3s ease;
+    border-radius: 6px;
 }
 
 .product-card:hover .product-image-container img {
-    transform: scale(1.05);
+    transform: scale(1.08);
 }
 
 /* ====== PRODUCT BADGES (Giữ nguyên) ====== */

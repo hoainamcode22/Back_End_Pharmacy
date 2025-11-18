@@ -172,14 +172,14 @@
 .disease-card {
   background: white;
   border-radius: 20px;
-  padding: 28px;
+  overflow: hidden;
   box-shadow: 0 4px 16px rgba(0,0,0,0.06);
   border: 2px solid rgba(0,168,89,0.08);
   cursor: pointer;
   transition: all 0.3s ease;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 0;
 }
 
 .disease-card:hover {
@@ -188,10 +188,44 @@
   transform: translateY(-4px);
 }
 
+.disease-card-image {
+  width: 100%;
+  height: 200px;
+  background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+}
+
+.disease-card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.disease-card:hover .disease-card-image img {
+  transform: scale(1.05);
+}
+
+.disease-card-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #e8f5f3, #d1fae5);
+  color: #00a859;
+  opacity: 0.4;
+}
+
 .disease-card-header {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  padding: 20px;
 }
 
 .disease-card-title {
@@ -220,13 +254,14 @@
   line-height: 1.7;
   color: #6b7280;
   margin: 0;
+  padding: 0 20px;
   flex: 1;
 }
 
 .disease-card-footer {
   display: flex;
   justify-content: flex-end;
-  padding-top: 12px;
+  padding: 16px 20px;
   border-top: 2px solid #f0f4f3;
 }
 

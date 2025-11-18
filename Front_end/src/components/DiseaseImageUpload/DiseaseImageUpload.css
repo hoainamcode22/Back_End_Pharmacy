@@ -1,0 +1,154 @@
+/* ===== DISEASE IMAGE UPLOAD ===== */
+.disease-image-upload {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e5e7eb;
+}
+
+.upload-form h3 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 20px 0;
+}
+
+.input-group {
+  margin-bottom: 16px;
+}
+
+.input-group label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+.input-group input[type="file"] {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  border: 2px dashed #d1d5db;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+
+.input-group input[type="file"]:hover:not(:disabled) {
+  border-color: #00a859;
+}
+
+.input-group input[type="file"]:disabled {
+  background: #f3f4f6;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.file-name {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 13px;
+  color: #059669;
+  font-weight: 600;
+}
+
+/* ===== BUTTONS ===== */
+.btn-upload {
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #00a859, #00d478);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 100%;
+}
+
+.btn-upload:hover:not(:disabled) {
+  background: linear-gradient(135deg, #008a48, #00b963);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 168, 89, 0.25);
+}
+
+.btn-upload:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ===== MESSAGES ===== */
+.error-message {
+  margin-top: 12px;
+  padding: 12px;
+  background: #fee;
+  border-left: 4px solid #ff6b6b;
+  color: #c92a2a;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.success-message {
+  margin-top: 12px;
+  padding: 12px;
+  background: #efe;
+  border-left: 4px solid #00a859;
+  color: #006b2a;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* ===== IMAGE PREVIEW ===== */
+.image-preview {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 2px solid #f0f4f3;
+}
+
+.image-preview h4 {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 12px 0;
+}
+
+.image-preview img {
+  max-width: 300px;
+  height: 250px;
+  object-fit: cover;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.image-url {
+  margin-top: 12px;
+  font-size: 12px;
+  color: #6b7280;
+  word-break: break-all;
+  font-family: monospace;
+  background: #f9fafb;
+  padding: 8px;
+  border-radius: 4px;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+  .disease-image-upload {
+    padding: 16px;
+  }
+
+  .upload-form h3 {
+    font-size: 16px;
+  }
+
+  .image-preview img {
+    max-width: 100%;
+    height: auto;
+  }
+}
