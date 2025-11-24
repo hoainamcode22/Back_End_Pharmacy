@@ -1,6 +1,5 @@
 const axios = require('axios');
 const crypto = require('crypto');
-// Dùng đúng đường dẫn: ../../db_config vì file này ở trong src/services/
 const db = require('../../db_config');
 
 // Lấy thông tin từ file .env
@@ -33,7 +32,7 @@ const createSignature = (rawSignature) => {
 const createMomoPayment = async (orderId, amount, orderInfo) => {
   const momoOrderId = `MOMO_${orderId}_${Date.now()}`;
   const requestId = momoOrderId;
-  const requestType = "payWithATM";
+  const requestType = "captureWallet";
   const extraData = ""; // Dữ liệu thêm (nếu cần)
 
   const rawSignature = `accessKey=${accessKey}&amount=${amount}&extraData=${extraData}&ipnUrl=${ipnUrl}&orderId=${momoOrderId}&orderInfo=${orderInfo}&partnerCode=${partnerCode}&redirectUrl=${redirectUrl}&requestId=${requestId}&requestType=${requestType}`;

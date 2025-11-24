@@ -21,9 +21,10 @@ import UserManagement from "./pages/admin/UserManagement/UserManagement.jsx";
 import OrderManagement from "./pages/admin/OrderManagement/OrderManagement.jsx";
 import EventPage from "./pages/user/EventPage/EventPage.jsx";
 
-// CÁC IMPORT MỚI CHO TRANG TĨNH
+// CÁC IMPORT CHO TRANG TĨNH & THÔNG TIN
 import AboutPage from "./pages/info/AboutPage.jsx";
 import PrivacyPage from "./pages/info/PrivacyPage.jsx";
+import StoreSystem from "./pages/info/StoreSystem.jsx"; // <-- Đã thêm Import StoreSystem
 
 export default function App() {
   return (
@@ -164,9 +165,9 @@ export default function App() {
         }
       />
 
-      {/* ===== BỔ SUNG 3 ROUTE CHO TRANG TĨNH ===== */}
-      {/* * Tôi đổi path="/about" thành "/gioi-thieu" để thống nhất
-      */}
+      {/* ===== CÁC ROUTE CHO TRANG TĨNH ===== */}
+      
+      {/* Trang Giới Thiệu */}
       <Route
         path="/gioi-thieu" 
         element={
@@ -178,6 +179,7 @@ export default function App() {
         }
       />
       
+      {/* Trang Chính Sách Bảo Mật */}
       <Route
         path="/chinh-sach-bao-mat"
         element={
@@ -188,7 +190,19 @@ export default function App() {
           </ProtectedRoute>
         }
       />
-      {/* ============================================== */}
+
+      {/* Trang Hệ Thống Cửa Hàng */}
+      <Route
+        path="/he-thong-cua-hang"
+        element={
+          <ProtectedRoute>
+            <UserLayout>
+              <StoreSystem />
+            </UserLayout>
+          </ProtectedRoute>
+        }
+      />
+      {/* ==================================== */}
 
 
       {/* Mặc định - User chưa login → /login, User đã login → /shop */}

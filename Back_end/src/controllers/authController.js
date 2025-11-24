@@ -66,7 +66,7 @@ const registerUser = async (req, res) => {
         fullname: user.Fullname,
         email: user.Email,
         role: user.Role,
-        Role: user.Role, // Để tương thích
+        Role: user.Role, 
       },
       token: generateToken(user.Id, user.Role),
     });
@@ -108,7 +108,7 @@ const loginUser = async (req, res) => {
         fullname: user.Fullname,
         email: user.Email,
         role: user.Role,
-        Role: user.Role, // Để tương thích với code frontend
+        Role: user.Role, 
       },
     });
   } catch (err) {

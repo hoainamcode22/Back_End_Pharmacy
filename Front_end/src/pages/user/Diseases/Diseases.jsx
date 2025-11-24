@@ -18,6 +18,7 @@ export default function Diseases() {
   const loadLatestDiseases = async () => {
     try {
       setIsSearching(true);
+      // API này phải được sửa ở backend để trả về "ImageUrl"
       const response = await searchDiseases("");
       
       if (response.success && response.diseases) {
@@ -39,6 +40,7 @@ export default function Diseases() {
     try {
       setIsSearching(true);
       setHasSearched(true);
+      // API này phải được sửa ở backend để trả về "ImageUrl"
       const response = await searchDiseases(searchTerm.trim());
       
       if (response.success && response.diseases) {
@@ -125,22 +127,32 @@ export default function Diseases() {
                   className="disease-card"
                   onClick={() => handleDiseaseClick(disease.Slug)}
                 >
-                  <div className="disease-card-header">
-                    <h3 className="disease-card-title">{disease.Name}</h3>
-                    {disease.Category && (
-                      <span className="disease-card-category">{disease.Category}</span>
-                    )}
-                  </div>
-                  <p className="disease-card-overview">
-                    {truncateText(disease.Overview || disease.Symptoms)}
-                  </p>
-                  <div className="disease-card-footer">
-                    <span className="read-more">
-                      Xem chi tiết
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <path d="M5 12h14M12 5l7 7-7 7" strokeWidth="2" strokeLinecap="round"/>
-                      </svg>
-                    </span>
+                  {/* ✨ BƯỚC 1: THÊM KHUNG ẢNH MỚI ✨ */}
+                  {disease.ImageUrl && (
+                    <div className="disease-card-image">
+                      <img src={disease.ImageUrl} alt={disease.Name} />
+                    </div>
+                  )}
+
+                  {/* ✨ BƯỚC 2: BỌC NỘI DUNG VĂN BẢN VÀO DIV NÀY ✨ */}
+                  <div className="disease-card-content">
+                    <div className="disease-card-header">
+                      <h3 className="disease-card-title">{disease.Name}</h3>
+                      {disease.Category && (
+                        <span className="disease-card-category">{disease.Category}</span>
+                      )}
+                    </div>
+                    <p className="disease-card-overview">
+                      {truncateText(disease.Overview || disease.Symptoms)}
+                    </p>
+                    <div className="disease-card-footer">
+                      <span className="read-more">
+                        Xem chi tiết
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                          <path d="M5 12h14M12 5l7 7-7 7" strokeWidth="2" strokeLinecap="round"/>
+                        </svg>
+                      </span>
+                    </div>
                   </div>
                 </div>
               ))}

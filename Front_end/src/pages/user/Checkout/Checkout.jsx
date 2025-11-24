@@ -1,9 +1,16 @@
+/*
+ * Tên file: Front_end/src/pages/Checkout/Checkout.jsx
+ * (Cập nhật Logo MoMo và ZaloPay)
+ */
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-// Sửa đổi: import hàm checkout từ api.jsx
 import { getCart, checkout } from '../../../api'; 
 import * as provinces from 'vietnam-provinces';
 import './Checkout.css';
+
+// === BỔ SUNG: Import Logo ===
+import momoLogo from '../../../assets/momo.png';
+import zalopayLogo from '../../../assets/zalopay.png';
 
 const BACKEND_URL =
   import.meta.env.VITE_API_BASE?.replace('/api', '') || 'http://localhost:5001';
@@ -11,7 +18,7 @@ const BACKEND_URL =
 function Checkout() {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
-  const [paymentMethod, setPaymentMethod] = useState('cod'); // GIỮ NGUYÊN
+  const [paymentMethod, setPaymentMethod] = useState('cod');
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
@@ -34,7 +41,6 @@ function Checkout() {
   const [allWards, setAllWards] = useState([]);
 
   // (TOÀN BỘ LOGIC TẢI GIỎ HÀNG VÀ XỬ LÝ ĐỊA CHỈ ĐƯỢC GIỮ NGUYÊN)
-  // Load danh sách tỉnh, quận, phường khi component mount
   useEffect(() => {
     try {
       const provinces_data = provinces.getProvinces();
@@ -52,14 +58,12 @@ function Checkout() {
     }
   }, []);
 
-  // Khi chọn tỉnh -> load quận/huyện
   useEffect(() => {
     if (formData.city && provinceList.length > 0) {
       const selectedProvince = provinceList.find(
         (p) => p.name === formData.city
       );
       if (selectedProvince) {
-        // ✅ Filter districts theo province_code
         const filteredDistricts = allDistricts.filter(
           (d) => d.province_code === selectedProvince.code
         );
@@ -74,14 +78,12 @@ function Checkout() {
     }
   }, [formData.city, provinceList, allDistricts]);
 
-  // Khi chọn quận/huyện -> load phường/xã
   useEffect(() => {
     if (formData.district && districtList.length > 0) {
       const selectedDistrict = districtList.find(
         (d) => d.name === formData.district
       );
       if (selectedDistrict) {
-        // ✅ Filter wards theo district_code
         const filteredWards = allWards.filter(
           (w) => w.district_code === selectedDistrict.code
         );
@@ -179,16 +181,13 @@ function Checkout() {
     return true;
   };
 
-  // === 💡 THAY ĐỔI LỚN BẮT ĐẦU TỪ ĐÂY ===
   const handlePlaceOrder = async () => {
-    // 1. Kiểm tra checkbox (Thêm)
     const termsCheckbox = document.getElementById('termsCheckbox');
     if (!termsCheckbox.checked) {
       alert('Bạn phải đồng ý với điều khoản và điều kiện để đặt hàng.');
       return;
     }
     
-    // 2. Kiểm tra validate (Giữ nguyên)
     if (!validateStep1()) {
       setStep(1);
       return;
@@ -196,58 +195,41 @@ function Checkout() {
 
     setIsPlacingOrder(true);
 
-    // 3. Tạo payload (Giữ nguyên)
     try {
-      // Logic build địa chỉ đã có trong file gốc của bạn, nhưng mình thấy
-      // bạn build lại ở đây, mình sẽ dùng logic build lại này
       const payload = {
         fullName: formData.fullName,
         email: formData.email,
-        address: formData.address, // Gửi địa chỉ gốc (backend của bạn đã build lại)
+        address: formData.address,
         phone: formData.phone,
         note: formData.note,
         city: formData.city,
         district: formData.district,
         ward: formData.ward,
-        paymentMethod: paymentMethod // 'cod', 'momo', 'bank'
+        paymentMethod: paymentMethod 
       };
 
-      // 4. Gọi API checkout (Sửa đổi)
-      // Chú ý: api.jsx của bạn phải trả về response.data
       const responseData = await checkout(payload); 
       
-      // 5. PHÂN NHÁNH LOGIC DỰA TRÊN PHƯƠNG THỨC THANH TOÁN
-      if (paymentMethod === 'momo') {
-        // 5a. Logic MoMo
+      if (paymentMethod === 'momo' || paymentMethod === 'zalopay') {
         if (responseData && responseData.payUrl) {
-          // Lấy payUrl từ backend và chuyển hướng người dùng
-          console.log("Đã nhận payUrl từ backend, đang chuyển hướng sang MoMo...");
+          console.log(`Đã nhận payUrl ${paymentMethod}, đang chuyển hướng...`);
           window.location.href = responseData.payUrl;
         } else {
-          // Nếu không có payUrl, báo lỗi
-          throw new Error('Không nhận được link thanh toán MoMo.');
+          throw new Error(`Không nhận được link thanh toán ${paymentMethod}.`);
         }
       } else {
-        // 5b. Logic COD (hoặc bank) (Giữ nguyên logic cũ của bạn)
         window.dispatchEvent(new Event('cart:updated'));
         alert('Đặt hàng thành công!');
-        navigate('/orders'); // Chuyển đến trang lịch sử đơn hàng
+        navigate('/orders'); 
       }
 
     } catch (err) {
       console.error('Checkout error:', err);
-      // Hiển thị lỗi cụ thể hơn nếu có
       const errorMessage = err.response?.data?.error || 'Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại!';
       alert(errorMessage);
       setIsPlacingOrder(false);
     }
-    // Không tắt `setIsPlacingOrder(false)` ở đây
-    // Nếu là MoMo, trang sẽ chuyển đi, không cần tắt
-    // Nếu là COD, trang cũng chuyển đi, không cần tắt
-    // Nó chỉ được tắt khi có LỖI xảy ra
   };
-  // === 💡 THAY ĐỔI LỚN KẾT THÚC TẠI ĐÂY ===
-
 
   if (loading) {
     return <div className="loading">Đang tải...</div>;
@@ -255,7 +237,6 @@ function Checkout() {
 
   return (
     <div className="checkout-container">
-      {/* (TOÀN BỘ PHẦN JSX BÊN DƯỚI ĐƯỢC GIỮ NGUYÊN 100%) */}
       <div className="checkout-header">
         <h1>Thanh toán</h1>
         <div className="checkout-steps">
@@ -403,15 +384,16 @@ function Checkout() {
             </div>
           )}
 
-          {/* STEP 2 */}
+          {/* STEP 2 - ĐÃ SỬA ĐỔI ĐỂ HIỂN THỊ LOGO */}
           {step === 2 && (
             <div className="form-section">
               <h2>Phương thức thanh toán</h2>
               <div className="payment-methods">
                 {[
                   { id: 'cod', icon: '💵', label: 'Thanh toán khi nhận hàng (COD)' },
-                  { id: 'bank', icon: '🏦', label: 'Chuyển khoản ngân hàng' },
-                  { id: 'momo', icon: '📱', label: 'Ví điện tử MoMo' }
+                  // SỬA: Dùng biến ảnh đã import
+                  { id: 'zalopay', icon: zalopayLogo, label: 'Ví điện tử ZaloPay' },
+                  { id: 'momo', icon: momoLogo, label: 'Ví điện tử MoMo' }
                 ].map((method) => (
                   <label
                     key={method.id}
@@ -427,7 +409,14 @@ function Checkout() {
                       onChange={(e) => setPaymentMethod(e.target.value)}
                     />
                     <div className="payment-info">
-                      <span className="payment-icon">{method.icon}</span>
+                      <span className="payment-icon">
+                        {/* Logic kiểm tra: Nếu là COD thì hiển thị emoji, ngược lại hiển thị ảnh */}
+                        {method.id === 'cod' ? (
+                          method.icon
+                        ) : (
+                          <img src={method.icon} alt={method.label} />
+                        )}
+                      </span>
                       <div>
                         <strong>{method.label}</strong>
                       </div>
@@ -476,7 +465,7 @@ function Checkout() {
                 <div className="info-box">
                   <p>
                     {paymentMethod === 'cod' && '💵 Thanh toán khi nhận hàng (COD)'}
-                    {paymentMethod === 'bank' && '🏦 Chuyển khoản ngân hàng'}
+                    {paymentMethod === 'zalopay' && '⚡️ Ví điện tử ZaloPay'}
                     {paymentMethod === 'momo' && '📱 Ví điện tử MoMo'}
                   </p>
                 </div>

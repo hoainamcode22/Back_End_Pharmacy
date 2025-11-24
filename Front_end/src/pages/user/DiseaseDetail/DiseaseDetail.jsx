@@ -19,6 +19,9 @@ export default function DiseaseDetail() {
         
         if (response.success && response.disease) {
           setDisease(response.disease);
+          if (!response.disease.Content) {
+            setError("Nội dung đang được cập nhật.");
+          }
         } else {
           setError("Không tìm thấy thông tin bệnh");
         }
@@ -35,156 +38,62 @@ export default function DiseaseDetail() {
     }
   }, [slug]);
 
-  // Helper function để chuyển text có \n thành danh sách bullet, loại bỏ kí tự thừa
-  const renderContent = (text) => {
-    if (!text) return <p className="no-data">Chưa có thông tin</p>;
-    
-    // Loại bỏ kí tự thừa, khoảng trắng dư thừa
-    const lines = text
-      .split('\n')
-      .map(line => line.trim())
-      .filter(line => line.length > 0);
-    
-    if (lines.length === 0) {
-      return <p className="no-data">Chưa có thông tin</p>;
-    }
-    
-    if (lines.length === 1) {
-      return <p className="disease-text">{lines[0]}</p>;
-    }
-    
-    return (
-      <ul className="disease-list">
-        {lines.map((line, index) => (
-          <li key={index}>{line}</li>
-        ))}
-      </ul>
-    );
-  };
-
   if (loading) {
     return (
-      <div className="disease-detail-container">
-        <div className="loading-state">
-          <div className="spinner"></div>
-          <p>Đang tải thông tin bệnh...</p>
-        </div>
+      <div className="article-loading-state">
+        <div className="spinner"></div>
+        <p>Đang tải bài viết...</p>
       </div>
     );
   }
 
   if (error || !disease) {
     return (
-      <div className="disease-detail-container">
-        <div className="error-state">
-          <svg width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="#ff6b6b">
-            <circle cx="12" cy="12" r="10" strokeWidth="2"/>
-            <line x1="15" y1="9" x2="9" y2="15" strokeWidth="2"/>
-            <line x1="9" y1="9" x2="15" y2="15" strokeWidth="2"/>
-          </svg>
-          <h2>{error || "Không tìm thấy thông tin"}</h2>
-          <button className="btn-back" onClick={() => navigate("/diseases")}>
-            ← Quay lại trang tra cứu
-          </button>
-        </div>
+      <div className="article-container article-error-state">
+        <h2>{error || "Không tìm thấy thông tin"}</h2>
+        <button className="btn-back-article" onClick={() => navigate("/diseases")}>
+          ← Quay lại trang tra cứu
+        </button>
       </div>
     );
   }
 
   return (
-    <div className="disease-detail-container">
-      {/* Header */}
-      <div className="disease-header">
-        <button className="btn-back-small" onClick={() => navigate("/diseases")}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-            <path d="M19 12H5M12 19l-7-7 7-7" strokeWidth="2" strokeLinecap="round"/>
-          </svg>
-          Quay lại
-        </button>
-        <h1 className="disease-title">{disease.Name}</h1>
-        {disease.Category && (
-          <span className="disease-category-badge">{disease.Category}</span>
-        )}
-      </div>
-
-      {/* Content */}
-      <div className="disease-content">
-        {/* Tổng quan */}
-        {disease.Overview && (
-          <section className="disease-section overview-section">
-            <div className="section-icon">📋</div>
-            <div className="section-content">
-              <h2 className="section-title">Tổng quan</h2>
-              <div className="disease-overview">
-                {renderContent(disease.Overview)}
-              </div>
-            </div>
-          </section>
-        )}
-
-        {/* Triệu chứng */}
-        {disease.Symptoms && (
-          <section className="disease-section symptoms-section">
-            <div className="section-icon">🩺</div>
-            <div className="section-content">
-              <h2 className="section-title">Triệu chứng</h2>
-              <div className="disease-symptoms">
-                {renderContent(disease.Symptoms)}
-              </div>
-            </div>
-          </section>
-        )}
-
-        {/* Nguyên nhân */}
-        {disease.Causes && (
-          <section className="disease-section causes-section">
-            <div className="section-icon">🔬</div>
-            <div className="section-content">
-              <h2 className="section-title">Nguyên nhân</h2>
-              <div className="disease-causes">
-                {renderContent(disease.Causes)}
-              </div>
-            </div>
-          </section>
-        )}
-
-        {/* Điều trị */}
-        {disease.Treatment && (
-          <section className="disease-section treatment-section">
-            <div className="section-icon">💊</div>
-            <div className="section-content">
-              <h2 className="section-title">Điều trị</h2>
-              <div className="disease-treatment">
-                {renderContent(disease.Treatment)}
-              </div>
-            </div>
-          </section>
-        )}
-
-        {/* Phòng ngừa */}
-        {disease.Prevention && (
-          <section className="disease-section prevention-section">
-            <div className="section-icon">🛡️</div>
-            <div className="section-content">
-              <h2 className="section-title">Phòng ngừa</h2>
-              <div className="disease-prevention">
-                {renderContent(disease.Prevention)}
-              </div>
-            </div>
-          </section>
-        )}
-      </div>
-
-      {/* Footer note */}
-      <div className="disease-footer-note">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ffa500">
-          <circle cx="12" cy="12" r="10" strokeWidth="2"/>
-          <line x1="12" y1="16" x2="12" y2="12" strokeWidth="2"/>
-          <line x1="12" y1="8" x2="12.01" y2="8" strokeWidth="2"/>
+    <div className="article-container">
+      {/* Nút quay lại */}
+      <button className="btn-back-article" onClick={() => navigate("/diseases")}>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path d="M19 12H5M12 19l-7-7 7-7" strokeWidth="2" strokeLinecap="round"/>
         </svg>
+        Quay lại
+      </button>
+
+      {/* ✨ PHẦN HEADER ĐÃ ĐƯỢC DESIGN LẠI ✨ */}
+      <div className="article-header">
+        {disease.Category && (
+          <span className="article-category">{disease.Category}</span>
+        )}
+        <h1 className="article-title">{disease.Name}</h1>
+        <div className="article-meta">
+          <span>Cập nhật lần cuối: {new Date(disease.UpdatedAt || Date.now()).toLocaleDateString('vi-VN')}</span>
+        </div>
+      </div>
+
+      {/* ✨ ĐÃ XÓA ẢNH BÌA Ở ĐÂY ✨ */}
+
+      <div className="article-divider"></div>
+
+      {/* Nội dung chính */}
+      <div 
+        className="article-content"
+        dangerouslySetInnerHTML={{ __html: disease.Content }}
+      />
+      
+      {/* Footer note */}
+      <div className="article-footer-note">
         <p>
           <strong>Lưu ý:</strong> Thông tin chỉ mang tính chất tham khảo. 
-          Vui lòng tham khảo ý kiến bác sĩ để được chẩn đoán và điều trị chính xác.
+          Vui lòng tham khảo ý kiến bác sĩ chuyên khoa.
         </p>
       </div>
     </div>

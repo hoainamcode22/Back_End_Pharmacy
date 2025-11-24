@@ -1,17 +1,18 @@
 const db = require('../../db_config');
-// THÊM: Import momoService (dùng require và đúng đường dẫn)
 const { createMomoPayment } = require('../services/momoService');
+const { createPayment: createZaloPayPayment } = require('../services/zaloPayService');
 
-// Helper: map phương thức thanh toán (GIỮ NGUYÊN)
+
 const mapPaymentMethod = (method) => {
   const lowerMethod = String(method || '').toLowerCase();
-  if (lowerMethod === 'bank' || lowerMethod === 'banking') return 'Banking';
+  // BỔ SUNG: 'zalopay'
+  if (lowerMethod === 'zalopay') return 'ZaloPay';
   if (lowerMethod === 'momo') return 'Momo';
+  if (lowerMethod === 'bank' || lowerMethod === 'banking') return 'ZaloPay';
   return 'COD';
 };
 
 // =================== CHECKOUT ===================
-// SỬA ĐỔI HÀM CHECKOUT ĐỂ PHÂN NHÁNH LOGIC
 const checkout = async (req, res) => {
   const client = await db.pool.connect();
 
@@ -99,13 +100,12 @@ const checkout = async (req, res) => {
 
     const shippingFee = 30000;
     const finalTotal = subtotal + shippingFee;
-    const dbPaymentMethod = mapPaymentMethod(paymentMethod);
+    const dbPaymentMethod = mapPaymentMethod(paymentMethod); // [cite: orderController.js]
 
-    // SỬA ĐỔI: Phân nhánh trạng thái đơn hàng
-    // Nếu là COD, xác nhận luôn. Nếu online, chờ thanh toán.
+    // SỬA ĐỔI: Phân nhánh trạng thái đơn hàng (GIỮ NGUYÊN)
     const orderStatus = (dbPaymentMethod === 'COD') ? 'confirmed' : 'pending';
 
-    // ✅ Tạo đơn hàng (SỬA LẠI Status VÀ Thêm RETURNING "Code")
+    // ✅ Tạo đơn hàng (GIỮ NGUYÊN) [cite: orderController.js]
     const orderQuery = `
       INSERT INTO "Orders" 
         ("UserId", "Total", "Address", "Phone", "Note", "PaymentMethod", "Status", "CreatedAt")
@@ -117,7 +117,7 @@ const checkout = async (req, res) => {
     ]);
     const order = orderResult.rows[0];
 
-    // ✅ Lưu thông tin người nhận (GIỮ NGUYÊN)
+    // ✅ Lưu thông tin người nhận (GIỮ NGUYÊN) [cite: orderController.js]
     await client.query('SAVEPOINT sp_recipients');
     try {
       await client.query(`
@@ -141,7 +141,7 @@ const checkout = async (req, res) => {
       await client.query('RELEASE SAVEPOINT sp_recipients');
     }
 
-    // ✅ Thêm OrderItems VÀ Cập nhật kho (SỬA ĐỔI)
+    // ✅ Thêm OrderItems VÀ Cập nhật kho (GIỮ NGUYÊN) [cite: orderController.js]
     for (const item of itemsWithUrls) {
       // Thêm OrderItems (GIỮ NGUYÊN)
       await client.query(`
@@ -150,7 +150,7 @@ const checkout = async (req, res) => {
         VALUES ($1, $2, $3, $4, $5, $6)
       `, [order.Id, item.ProductId, item.ProductName, item.ProductImage, item.Qty, item.Price]);
 
-      // SỬA ĐỔI: Chỉ trừ kho nếu là COD
+      // SỬA ĐỔI: Chỉ trừ kho nếu là COD (GIỮ NGUYÊN)
       if (dbPaymentMethod === 'COD') {
         await client.query(
           'UPDATE "Products" SET "Stock" = "Stock" - $1 WHERE "Id" = $2',
@@ -161,10 +161,10 @@ const checkout = async (req, res) => {
 
     // === SỬA ĐỔI LỚN: LOGIC XÓA GIỎ VÀ TRẢ VỀ ===
     
-    // Tạo response body (dùng chung)
+    // Tạo response body (dùng chung) (GIỮ NGUYÊN)
     const orderResponse = {
       Id: order.Id,
-      Code: order.Code, // Giờ đã có Code
+      Code: order.Code, 
       Total: order.Total,
       Status: order.Status,
       Address: fullAddress,
@@ -174,24 +174,37 @@ const checkout = async (req, res) => {
     };
 
     if (dbPaymentMethod === 'COD') {
-      // LOGIC COD (Giống file gốc)
-      // ✅ Xóa giỏ hàng
+      // LOGIC COD (Giống file gốc) [cite: orderController.js]
       await client.query('DELETE FROM "CartItems" WHERE "UserId" = $1', [userId]);
       await client.query('COMMIT');
       res.status(201).json({ order: orderResponse });
 
     } else if (dbPaymentMethod === 'Momo') {
-      // LOGIC MOMO (Mới)
-      // KHÔNG trừ kho (đã làm ở trên)
-      
-      // 1. Tạo link thanh toán MoMo
-      const orderInfo = `Thanh toan don hang ${order.Code || order.Id}`; // Dùng Code (nếu có)
+      // LOGIC MOMO (Giữ nguyên logic của bạn) [cite: orderController.js]
+      const orderInfo = `Thanh toan don hang ${order.Code || order.Id}`; 
       const momoResponse = await createMomoPayment(order.Id, finalTotal, orderInfo);
-
-      // ============ ⭐️ BỔ SUNG FIX 1 ⭐️ ============
-      // 2. Xóa giỏ hàng
       await client.query('DELETE FROM "CartItems" WHERE "UserId" = $1', [userId]);
-      // =============================================
+      await client.query('COMMIT');
+
+      res.status(201).json({
+        order: orderResponse,
+        payUrl: momoResponse.payUrl
+      });
+      
+    // BỔ SUNG: LOGIC ZALOPAY (Mirror logic MoMo)
+    } else if (dbPaymentMethod === 'ZaloPay') {
+      // 1. Tạo link thanh toán ZaloPay
+      // Chúng ta sẽ dùng Order.Code làm apptransid (giống MoMo dùng Order.Id)
+      const orderInfo = `Thanh toan don hang ${order.Code}`;
+      const zaloPayResponse = await createZaloPayPayment({
+        apptransid: order.Code, // Dùng Code làm mã giao dịch
+        totalAmount: finalTotal,
+        description: orderInfo,
+        userId: userId
+      });
+
+      // 2. Xóa giỏ hàng (Giống MoMo)
+      await client.query('DELETE FROM "CartItems" WHERE "UserId" = $1', [userId]);
 
       // 3. Commit
       await client.query('COMMIT');
@@ -199,18 +212,12 @@ const checkout = async (req, res) => {
       // 4. Trả về payUrl cho frontend
       res.status(201).json({
         order: orderResponse,
-        payUrl: momoResponse.payUrl // 💡 Trả về link MoMo
+        payUrl: zaloPayResponse.payUrl // 💡 Trả về link ZaloPay
       });
-      
-    } else { // Xử lý 'Banking' và các trường hợp khác
-      // LOGIC CHUYỂN KHOẢN (hoặc khác)
-      // KHÔNG trừ kho
 
-      // ============ ⭐️ BỔ SUNG FIX 1 ⭐️ ============
-      // 1. Xóa giỏ hàng
+    } else { 
+      // LOGIC KHÁC (Fall-back)
       await client.query('DELETE FROM "CartItems" WHERE "UserId" = $1', [userId]);
-      // =============================================
-
       await client.query('COMMIT');
       res.status(201).json({ order: orderResponse });
     }
@@ -225,12 +232,9 @@ const checkout = async (req, res) => {
 };
 
 // =================== CÁC HÀM KHÁC GIỮ NGUYÊN ===================
-// ... (getOrders, getOrderById, cancelOrder, ...)
-// ... (getAllOrders, getOrderByIdAdmin, updateOrderStatus, ...)
-// =============================================================
-
 // (GIỮ NGUYÊN)
 const getOrders = async (req, res) => {
+  // ... (code gốc của bạn) [cite: orderController.js]
   try {
     const userId = req.user.Id;
     const { status } = req.query;
@@ -259,6 +263,7 @@ const getOrders = async (req, res) => {
 
 // (GIỮ NGUYÊN)
 const getOrderById = async (req, res) => {
+  // ... (code gốc của bạn) [cite: orderController.js]
   try {
     const userId = req.user.Id;
     const { id } = req.params;
@@ -297,8 +302,9 @@ const getOrderById = async (req, res) => {
   }
 };
 
-// (SỬA ĐỔI logic để an toàn hơn)
+// (GIỮ NGUYÊN)
 const cancelOrder = async (req, res) => {
+  // ... (code gốc của bạn) [cite: orderController.js]
   const client = await db.pool.connect();
   try {
     const userId = req.user.Id;
@@ -321,7 +327,7 @@ const cancelOrder = async (req, res) => {
     }
 
     // SỬA ĐỔI: Chỉ hoàn kho nếu đơn hàng là 'confirmed' (COD)
-    // Vì đơn 'pending' (MoMo) chưa hề bị trừ kho
+    // Vì đơn 'pending' (MoMo/ZaloPay) chưa hề bị trừ kho
     if (currentStatus === 'confirmed') {
       const itemsQuery = `SELECT "ProductId", "Qty" FROM "OrderItems" WHERE "OrderId" = $1`;
       const itemsResult = await client.query(itemsQuery, [id]);
@@ -352,9 +358,10 @@ const cancelOrder = async (req, res) => {
 };
 
 /**
- * ============== ADMIN FUNCTIONS ==============
+ * ============== ADMIN FUNCTIONS (GIỮ NGUYÊN) ==============
  */
 const getAllOrders = async (req, res) => {
+  // ... (code gốc của bạn) [cite: orderController.js]
   try {
     // Check admin role
     if (req.user.Role !== 'admin') {
@@ -436,6 +443,7 @@ const getAllOrders = async (req, res) => {
 };
 
 const getOrderByIdAdmin = async (req, res) => {
+  // ... (code gốc của bạn) [cite: orderController.js]
   try {
     // Check admin role
     if (req.user.Role !== 'admin') {
@@ -492,6 +500,7 @@ const getOrderByIdAdmin = async (req, res) => {
 };
 
 const updateOrderStatus = async (req, res) => {
+  // ... (code gốc của bạn) [cite: orderController.js]
   try {
     // Check admin role
     if (req.user.Role !== 'admin') {
@@ -533,6 +542,7 @@ const updateOrderStatus = async (req, res) => {
 };
 
 const getOrderStatistics = async (req, res) => {
+  // ... (code gốc của bạn) [cite: orderController.js]
   try {
     // Check admin role
     if (req.user.Role !== 'admin') {

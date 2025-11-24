@@ -1,16 +1,17 @@
-/* Header.css đã được viết lại cho "đồng đều" với theme xanh lá */
+/* Header.css - Updated with Icons & Alignment */
 .site-header {
   background: linear-gradient(135deg, #00a859 0%, #00c16e 100%);
-  padding: 14px 0;
+  padding: 12px 0;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   position: sticky;
   top: 0;
   z-index: 1000;
   color: white;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 .header-container.bar {
-  max-width: 1400px; /* Giống .shop-container */
+  max-width: 1400px;
   margin: 0 auto;
   padding: 0 24px;
   display: flex;
@@ -18,149 +19,185 @@
   align-items: center;
 }
 
+/* --- BRAND / LOGO --- */
 .brand {
   font-weight: 800;
-  font-size: 24px;
+  font-size: 26px;
   color: white;
   text-decoration: none;
   display: flex;
   align-items: center;
-  gap: 8px;
+  /* gap: 8px; -> Đã xử lý margin ở SVG trong JSX */
+  text-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
+.brand svg {
+  color: #fff;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+}
+.brand::before {
+  content: none !important; /* Lệnh này sẽ xóa icon 💊 nếu nó được tạo bằng CSS */
+  display: none !important;
+}
+
+.brand {
+  /* Đảm bảo không có hình nền nào */
+  background-image: none !important; 
+}
+
+/* --- NAV MENU --- */
 .nav {
   display: flex;
-  gap: 32px;
+  gap: 24px;
 }
 
 .nav a {
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(255, 255, 255, 0.9);
   font-weight: 600;
   text-decoration: none;
-  font-size: 16px;
+  font-size: 15px;
   transition: all 0.2s ease;
   position: relative;
-  padding: 4px 0;
+  padding: 6px 12px;
+  border-radius: 8px;
+  
+  /* Flex để căn icon và text */
+  display: flex;
+  align-items: center;
+  gap: 8px; 
 }
 
 .nav a:hover {
+  background: rgba(255, 255, 255, 0.15);
   color: #fff;
 }
 
 .nav a.active {
+  background: rgba(255, 255, 255, 0.25);
   color: #fff;
   font-weight: 700;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
-.nav a.active::after {
-  content: '';
-  position: absolute;
-  bottom: -4px;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: #ffffff;
-  border-radius: 2px;
+/* Icon trong menu */
+.nav a svg {
+  width: 18px;
+  height: 18px;
+  opacity: 0.9;
 }
 
+/* --- RIGHT SECTION (GIỎ HÀNG + USER + LOGOUT) --- */
 .right {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px; /* Khoảng cách đều giữa các nút */
 }
 
+/* Đồng bộ kiểu dáng cho Tên User */
 .user-name {
   font-size: 14px;
-  color: #f0fdf4;
-  font-weight: 500;
+  color: #fff;
+  font-weight: 600;
+  background: rgba(255, 255, 255, 0.15); /* Nền mờ nhẹ */
+  padding: 0 16px;
+  height: 40px; /* Chiều cao cố định */
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid transparent;
+  white-space: nowrap;
+  transition: all 0.2s ease;
 }
 
+.user-name:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+/* Đồng bộ nút Giỏ hàng và Đăng xuất */
 .btn.ghost {
   background: transparent;
   border: 1px solid rgba(255, 255, 255, 0.7);
   color: white;
-  padding: 8px 16px;
+  padding: 0 16px;
+  height: 40px; /* Chiều cao cố định bằng user-name */
   border-radius: 8px;
   font-weight: 600;
   font-size: 14px;
   cursor: pointer;
   transition: all 0.2s ease;
+  
+  /* Flex để căn giữa nội dung */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  white-space: nowrap;
 }
 
 .btn.ghost:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: white;
+  color: #00a859;
   border-color: white;
 }
 
-/* Subtle pulse animation when cart updates */
-@keyframes pulseCart {
-  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,255,255,0.5); }
-  50% { transform: scale(1.06); box-shadow: 0 0 0 8px rgba(255,255,255,0); }
-  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255,255,255,0); }
+/* Nút Đăng xuất riêng biệt */
+.logout-btn {
+  border-color: rgba(255, 100, 100, 0.5);
 }
 
-#cart-icon-button.pulse-cart {
-  animation: pulseCart 0.6s ease;
+.logout-btn:hover {
+  background: #ffecec;
+  color: #d32f2f;
+  border-color: #d32f2f;
 }
 
-/* * * ===== 📍 FIX LỖI NẰM Ở ĐÂY =====
- * Thêm position: relative cho nút giỏ hàng
- * để làm thẻ cha cho .cart-badge (position: absolute)
- * */
+/* Badge giỏ hàng */
 #cart-icon-button {
   position: relative;
 }
 
-/* Badge số lượng giỏ hàng */
-.cart-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 20px;
-  height: 20px;
-  padding: 0 6px;
-  margin-left: 8px;
-  background: #e53935;
-  color: #fff;
-  border-radius: 10px;
-  font-size: 12px;
-  font-weight: 700;
-  border: 2px solid #fff;
-}
-
-/* Nút giỏ hàng (chứa badge) */
-.btn.badge {
-  position: relative;
-  padding-right: 16px;
-}
-
-/* Style cho cái "số" trên giỏ hàng */
 .cart-badge {
   position: absolute;
-  top: -8px;
-  right: -8px;
-  background: #e53935; /* Màu đỏ nổi bật */
+  top: -6px;
+  right: -6px;
+  background: #ef4444; /* Đỏ tươi */
   color: white;
   border-radius: 50%;
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
-  font-weight: 700;
+  font-size: 11px;
+  font-weight: 800;
   border: 2px solid white;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+/* --- RESPONSIVE --- */
+@media (max-width: 1200px) {
+  .nav a span { display: none; } /* Ẩn chữ, chỉ hiện icon trên màn hình trung bình */
+  .nav a { padding: 8px; }
 }
 
 @media (max-width: 768px) {
   .header-container.bar {
     flex-direction: column;
     gap: 12px;
+    padding: 12px 16px;
   }
+  
   .nav {
     flex-wrap: wrap;
     justify-content: center;
-    gap: 16px;
+    gap: 8px;
+  }
+  
+  .nav a span { display: inline; } /* Hiện lại chữ trên mobile cho dễ bấm */
+  
+  .right {
+    width: 100%;
+    justify-content: center;
   }
 }

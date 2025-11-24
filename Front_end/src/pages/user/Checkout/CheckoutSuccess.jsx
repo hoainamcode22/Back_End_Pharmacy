@@ -1,43 +1,43 @@
-// SỬA: Thêm useContext
+/*
+ * Tên file: Front_end/src/pages/user/Checkout/CheckoutSuccess.jsx
+ * (Cập nhật)
+ */
+// SỬA: Thêm useContext (GIỮ NGUYÊN)
 import React, { useEffect, useContext } from 'react'; 
 import { Link, useSearchParams } from 'react-router-dom';
 import './CheckoutSuccess.css';
 
-// SỬA: Import AuthContext (dựa theo README.md)
-// Giả định file này nằm ở: src/pages/user/Checkout/CheckoutSuccess.jsx
-// Đường dẫn đến context sẽ là:
+// SỬA: Import AuthContext (GIỮ NGUYÊN) [cite: CheckoutSuccess.jsx]
+// (Giả sử đường dẫn này là đúng)
 import { AuthContext } from '../../../context/AuthContext/AuthContext'; 
 
 function CheckoutSuccess() {
   const [searchParams] = useSearchParams();
 
-  // SỬA: Lấy hàm cập nhật giỏ hàng từ AuthContext
-  // LƯU Ý: Tôi đoán tên hàm là "setCartCount". 
-  // Hãy thay "setCartCount" bằng ĐÚNG tên hàm trong AuthContext của bạn
-  // (Ví dụ: "updateCartCount", "clearCartBadge", v.v.)
+  // SỬA: Lấy hàm cập nhật giỏ hàng từ AuthContext (GIỮ NGUYÊN) [cite: CheckoutSuccess.jsx]
   const { setCartCount } = useContext(AuthContext); 
 
-  // Đọc các tham số MoMo trả về (để kiểm tra)
-  const resultCode = searchParams.get('resultCode');
-  const message = searchParams.get('message');
-  const orderId = searchParams.get('orderId'); // Đây là orderId của MoMo
+  // Đọc các tham số MoMo trả về (để kiểm tra) [cite: CheckoutSuccess.jsx]
+  const momoResultCode = searchParams.get('resultCode');
+  const momoMessage = searchParams.get('message');
+  const momoOrderId = searchParams.get('orderId'); 
+  
+  // BỔ SUNG: Đọc các tham số ZaloPay trả về
+  // ZaloPay (sandbox) trả về: status=1 (thành công), status=0 (thất bại)
+  const zaloStatus = searchParams.get('status');
+  const zaloAppTransID = searchParams.get('apptransid'); // Mã đơn hàng
 
-  const isSuccess = resultCode === '0';
+  // BỔ SUNG: Kiểm tra cả MoMo và ZaloPay
+  const isSuccess = momoResultCode === '0' || zaloStatus === '1';
 
-  // Xóa giỏ hàng (nếu thành công)
+  // Xóa giỏ hàng (nếu thành công) (GIỮ NGUYÊN LOGIC) [cite: CheckoutSuccess.jsx]
   useEffect(() => {
     if (isSuccess) {
-      
-      // SỬA: Không dispatch event (vì nó gây ra race condition)
-      // window.dispatchEvent(new Event('cart:updated')); 
-      
-      // SỬA: Gọi trực tiếp hàm từ Context để set badge về 0
       if (typeof setCartCount === 'function') {
         console.log("Thanh toán thành công, cập nhật badge giỏ hàng về 0.");
         setCartCount(0); // Cập nhật badge về 0
       }
     }
-    // SỬA: Thêm dependency
   }, [isSuccess, setCartCount]); 
 
   return (
@@ -48,14 +48,19 @@ function CheckoutSuccess() {
             <div className="success-icon success">✓</div>
             <h1>Thanh toán thành công!</h1>
             <p>Cảm ơn bạn đã mua hàng. Đơn hàng của bạn đang được xử lý.</p>
-            <p>Mã giao dịch MoMo: {orderId}</p>
+            {/* BỔ SUNG: Hiển thị mã giao dịch ZaloPay hoặc MoMo */}
+            {momoOrderId && <p>Mã giao dịch MoMo: {momoOrderId}</p>}
+            {zaloAppTransID && <p>Mã đơn hàng ZaloPay: {zaloAppTransID}</p>}
           </>
         ) : (
           <>
             <div className="success-icon fail">✕</div>
             <h1>Thanh toán thất bại</h1>
             <p>Đã có lỗi xảy ra trong quá trình thanh toán.</p>
-            <p>Thông báo từ MoMo: {message || 'Không có thông báo'}</p>
+            {/* BỔ SUNG: Hiển thị thông báo lỗi MoMo hoặc ZaloPay */}
+            {(momoMessage || zaloStatus) && 
+              <p>Thông báo: {momoMessage || `Trạng thái ZaloPay: ${zaloStatus === '0' ? 'Giao dịch bị hủy' : `Lỗi ${zaloStatus}`}`}</p>
+            }
           </>
         )}
         

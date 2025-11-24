@@ -357,7 +357,6 @@ const chatController = {
         senderResult.rows[0]?.Username ||
         'Unknown';
 
-      // Sửa: Lấy thông tin sản phẩm (nếu có)
       let productData = null;
       if (message.AttachedProductId) {
         const host = req.get('host');

@@ -202,6 +202,19 @@
 
 .payment-icon {
   font-size: 32px;
+  /* Thêm dòng này để căn giữa ảnh nếu cần */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+}
+
+/* === BỔ SUNG: Style cho logo ảnh === */
+.payment-icon img {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  border-radius: 6px;
 }
 
 .payment-info strong {

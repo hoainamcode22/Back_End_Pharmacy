@@ -1,12 +1,17 @@
+/*
+ * Tên file: Back_End/src/controllers/paymentController.js
+ * (Cập nhật)
+ */
 const db = require('../../db_config');
 const crypto = require('crypto');
+// BỔ SUNG: Import service ZaloPay
+const { verifyCallback: verifyZaloPayCallback } = require('../services/zaloPayService');
 
 // Lấy key từ .env để xác thực chữ ký của MoMo
 const secretKey = process.env.MOMO_SECRET_KEY;
 
 /**
- * Xử lý IPN (Instant Payment Notification) từ MoMo
- * Đây là nơi MoMo gọi ngầm để xác nhận thanh toán
+ * Xử lý IPN (Instant Payment Notification) từ MoMo (GIỮ NGUYÊN)
  */
 const handleMomoIPN = async (req, res) => {
   const {
@@ -121,6 +126,107 @@ const handleMomoIPN = async (req, res) => {
   }
 };
 
+// BỔ SUNG: HÀM XỬ LÝ ZALOPAY IPN (Mirror logic MoMo)
+const handleZaloPayIPN = async (req, res) => {
+  const { data, mac } = req.body;
+
+  console.log("--- Đã nhận ZaloPay IPN ---:", req.body);
+
+  try {
+    // 1. Xác thực MAC
+    const verification = verifyZaloPayCallback(data, mac);
+
+    if (verification.return_code !== 1) {
+      // MAC không hợp lệ
+      console.error("ZaloPay IPN: Chữ ký không hợp lệ!");
+      return res.status(200).json(verification); // Trả 200 cho ZaloPay
+    }
+
+    // 2. MAC hợp lệ, xử lý logic đơn hàng
+    const zaloData = JSON.parse(data);
+    const app_trans_id = zaloData.apptransid; // Mã đơn hàng (Order.Code)
+
+    // 3. Kiểm tra trạng thái thanh toán
+    if (zaloData.return_code == 1) {
+      // Thanh toán THÀNH CÔNG
+      console.log(`Thanh toán ZaloPay thành công cho đơn hàng (Code): ${app_trans_id}`);
+      const client = await db.pool.connect();
+      try {
+        await client.query('BEGIN');
+
+        // 3a. Tìm đơn hàng 'pending' bằng Order.Code (chính là app_trans_id)
+        const orderResult = await client.query(
+          'SELECT * FROM "Orders" WHERE "Code" = $1 AND "Status" = $2 FOR UPDATE',
+          [app_trans_id, 'pending']
+        );
+
+        if (orderResult.rows.length === 0) {
+          console.warn(`ZaloPay IPN: Không tìm thấy đơn hàng ${app_trans_id} hoặc đã xử lý.`);
+          await client.query('ROLLBACK');
+          return res.status(200).json(verification);
+        }
+
+        const order = orderResult.rows[0];
+        const orderId_internal = order.Id;
+        const userId = order.UserId;
+
+        // 3b. Lấy các sản phẩm trong đơn hàng
+        const itemsResult = await client.query(
+          'SELECT "ProductId", "Qty" FROM "OrderItems" WHERE "OrderId" = $1',
+          [orderId_internal]
+        );
+        const orderItems = itemsResult.rows;
+
+        // 3c. TRỪ KHO (Logic giống MoMo IPN)
+        for (const item of orderItems) {
+          await client.query(
+            'UPDATE "Products" SET "Stock" = "Stock" - $1 WHERE "Id" = $2',
+            [item.Qty, item.ProductId]
+          );
+        }
+        
+        // 3d. XÓA GIỎ HÀNG (Logic giống MoMo IPN)
+        // (Về lý thuyết giỏ hàng đã bị xóa lúc checkout, nhưng chạy lại cho chắc)
+        await client.query('DELETE FROM "CartItems" WHERE "UserId" = $1', [userId]);
+
+        // 3e. CẬP NHẬT TRẠNG THÁI ĐƠN HÀNG
+        await client.query(
+          'UPDATE "Orders" SET "Status" = $1 WHERE "Id" = $2',
+          ['confirmed', orderId_internal] // Chuyển sang 'confirmed'
+        );
+        
+        await client.query('COMMIT');
+        console.log(`Đã xử lý thành công (Trừ kho) cho đơn hàng ${orderId_internal}.`);
+        
+        return res.status(200).json(verification); // Trả 200 cho ZaloPay
+
+      } catch (error) {
+        console.error("Lỗi nghiêm trọng khi xử lý ZaloPay IPN:", error);
+        await client.query('ROLLBACK');
+        return res.status(500).json({ return_code: 99, return_message: 'Server Error' });
+      } finally {
+        client.release();
+      }
+      
+    } else {
+      // Thanh toán thất bại (resultCode != 0)
+      console.warn(`Thanh toán ZaloPay thất bại cho ${app_trans_id}`);
+      await db.pool.query(
+        'UPDATE "Orders" SET "Status" = $1 WHERE "Code" = $2 AND "Status" = $3', 
+        ['cancelled', app_trans_id, 'pending']
+      );
+      
+      return res.status(200).json(verification);
+    }
+  } catch (error) {
+    console.error("handleZaloPayIPN Error:", error);
+    res.status(500).json({ return_code: -1, return_message: "Server Error" });
+  }
+};
+
+
+// SỬA ĐỔI: Thêm handleZaloPayIPN
 module.exports = {
-  handleMomoIPN
+  handleMomoIPN,
+  handleZaloPayIPN
 };

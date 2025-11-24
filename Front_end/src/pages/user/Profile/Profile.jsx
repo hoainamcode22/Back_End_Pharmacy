@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../../../context/AuthContext/AuthContext.jsx";
 import { getMe, updateMe, changePassword } from "../../../api";
 import "./Profile.css";
+import Orders from '../Orders/Orders'; // Đã import Orders
 
 export default function Profile() {
   const { user, login } = useAuth();
@@ -9,8 +10,9 @@ export default function Profile() {
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState(null);
-  const [avatarFile, setAvatarFile] = useState(null);
-
+  
+  // ✨ FIX 1: Đã xóa dòng `useState` của `avatarFile` (Lỗi dòng 13)
+  
   const fileInputRef = useRef(null);
   
   const [formData, setFormData] = useState({
@@ -87,7 +89,8 @@ export default function Profile() {
         return;
       }
       
-      setAvatarFile(file);
+      // ✨ FIX 1: Đã xóa dòng `setAvatarFile(file)`
+      
       const reader = new FileReader();
       reader.onloadend = () => {
         setAvatarPreview(reader.result);
@@ -120,7 +123,8 @@ export default function Profile() {
         updateData.avatar = avatarPreview; // Send base64 to server
       }
       
-      const updatedUser = await updateMe(updateData);
+      // ✨ FIX 2: Xóa `const updatedUser =` (Lỗi dòng 124)
+      await updateMe(updateData);
       
       // Update auth context with new user data
       const currentAuth = JSON.parse(localStorage.getItem("ph_auth") || "{}");
@@ -140,7 +144,8 @@ export default function Profile() {
       
       setMessage("✓ Cập nhật thông tin thành công!");
       setIsEditing(false);
-      setAvatarFile(null);
+      
+      // ✨ FIX 1: Đã xóa dòng `setAvatarFile(null)`
       
       // Auto clear message after 3s
       setTimeout(() => setMessage(""), 3000);
@@ -336,21 +341,9 @@ export default function Profile() {
           </div>
         )}
 
+        {/* Đã thay thế bằng component Orders */}
         {activeTab === "orders" && (
-          <div className="orders-section">
-            <h2>Đơn hàng của tôi</h2>
-            <div className="empty-state">
-              <svg width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="#dfe6e9">
-                <circle cx="9" cy="21" r="1" strokeWidth="2"/>
-                <circle cx="20" cy="21" r="1" strokeWidth="2"/>
-                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" strokeWidth="2"/>
-              </svg>
-              <p>Bạn chưa có đơn hàng nào</p>
-              <button className="btn-shop-now" onClick={() => window.location.href="/shop"}>
-                Mua sắm ngay
-              </button>
-            </div>
-          </div>
+          <Orders />
         )}
 
         {activeTab === "security" && (

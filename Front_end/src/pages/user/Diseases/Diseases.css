@@ -168,24 +168,55 @@
   gap: 24px;
 }
 
-/* ===== DISEASE CARD ===== */
+/* ===== DISEASE CARD (ĐÃ SỬA) ===== */
 .disease-card {
   background: white;
   border-radius: 20px;
-  padding: 28px;
+  /* XÓA PADDING Ở ĐÂY */
+  /* padding: 28px; */
   box-shadow: 0 4px 16px rgba(0,0,0,0.06);
   border: 2px solid rgba(0,168,89,0.08);
   cursor: pointer;
   transition: all 0.3s ease;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  /* BỎ GAP VÀ THÊM OVERFLOW */
+  /* gap: 16px; */
+  overflow: hidden; 
 }
 
 .disease-card:hover {
   box-shadow: 0 12px 32px rgba(0,168,89,0.2);
   border-color: #00a859;
   transform: translateY(-4px);
+}
+
+/* ✨ THÊM KHUNG ẢNH MỚI ✨ */
+.disease-card-image {
+  width: 100%;
+  height: 180px; /* Chiều cao cố định cho ảnh thumbnail */
+  overflow: hidden;
+  background-color: #f0f4f3;
+}
+
+.disease-card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* Giúp ảnh không bị méo */
+  transition: transform 0.3s ease;
+}
+
+.disease-card:hover .disease-card-image img {
+  transform: scale(1.05); /* Hiệu ứng zoom khi hover */
+}
+
+/* ✨ THÊM DIV BỌC TEXT MỚI ✨ */
+.disease-card-content {
+  padding: 24px; /* Dán padding vào đây */
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  flex: 1; /* Giúp đẩy footer xuống dưới */
 }
 
 .disease-card-header {
@@ -220,7 +251,7 @@
   line-height: 1.7;
   color: #6b7280;
   margin: 0;
-  flex: 1;
+  flex: 1; /* QUAN TRỌNG: Đẩy footer xuống dưới cùng */
 }
 
 .disease-card-footer {
@@ -368,8 +399,9 @@
     gap: 16px;
   }
 
-  .disease-card {
-    padding: 20px;
+
+  .disease-card-content {
+    padding: 20px; /* Di chuyển padding vào đây */
   }
 
   .disease-card-title {

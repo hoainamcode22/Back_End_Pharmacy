@@ -17,7 +17,7 @@ const AboutPage = () => {
       <h1 className="about-title">Giới Thiệu Về Nhà Thuốc Trực Tuyến</h1>
 
       <p className="about-intro">
-        Nhà Thuốc Trực Tuyến [Tên thương hiệu của bạn] được thành lập với sứ
+        Nhà Thuốc Trực Tuyến Hiệu Thuốc Trực Tuyến được thành lập với sứ
         mệnh mang đến giải pháp chăm sóc sức khỏe toàn diện, tiện lợi và đáng
         tin cậy cho mọi gia đình Việt. Trong thời đại số, chúng tôi tin rằng
         việc tiếp cận các sản phẩm y tế chất lượng và nhận được sự tư vấn chuyên
@@ -63,7 +63,7 @@ const AboutPage = () => {
 
         <h3>Tầm nhìn</h3>
         <p>
-          Đến năm 2030, [Tên thương hiệu của bạn] đặt mục tiêu trở thành nền tảng
+          Đến năm 2030, Hiệu Thuốc Trực Tuyến đặt mục tiêu trở thành nền tảng
           nhà thuốc trực tuyến (HealthTech) hàng đầu tại Việt Nam, ứng dụng
           công nghệ AI và Big Data để cá nhân hóa trải nghiệm tư vấn và chăm
           sóc, giúp mọi người dân, dù ở bất kỳ đâu, cũng có thể tiếp cận dịch

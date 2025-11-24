@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react"; // <--- Bỏ "useCallback" đi
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react"; 
+import { Link, useSearchParams } from "react-router-dom"; // <--- 1. THÊM useSearchParams
 import ProductCard from "../../../components/ProductCard/ProductCard.jsx";
 import SearchBar from "../../../components/SearchBar/SearchBar.jsx";
 import { fetchProducts, addToCart } from "../../../api";
 import "./Shop.css";
 
-// Vẫn import 6 ảnh voucher
+// Import ảnh voucher
 import voucher1 from "../../../assets/voucher1.jpg";
 import voucher2 from "../../../assets/voucher2.jpg";
 import voucher3 from "../../../assets/voucher3.jpg";
@@ -13,7 +13,7 @@ import voucher4 from "../../../assets/voucher4.jpg";
 import voucher5 from "../../../assets/voucher5.jpg";
 import voucher6 from "../../../assets/voucher6.jpg";
 
-// CATEGORIES - (Giữ nguyên)
+// CATEGORIES - Khóa (key) ở đây phải trùng với link bên Footer
 const CATEGORIES = [
   { id: 1, name: "Thuốc", icon: "💊", key: "thuoc" },
   { id: 2, name: "Vitamin & Chức năng", icon: "🌿", key: "vitamin" },
@@ -21,7 +21,6 @@ const CATEGORIES = [
   { id: 4, name: "Thiết bị y tế", icon: "🩺", key: "thiet-bi" },
 ];
 
-// Gom 6 voucher vào 1 mảng để chạy slide
 const banners = [voucher1, voucher2, voucher3, voucher4, voucher5, voucher6];
 
 export default function Shop() {
@@ -31,14 +30,14 @@ export default function Shop() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
+  // <--- 2. KHAI BÁO SEARCH PARAMS
+  const [searchParams] = useSearchParams(); 
+
   const [currentSlide, setCurrentSlide] = useState(0);
 
-  // === 💡 ĐOẠN SỬA LỖI BANNER (THEO CÁCH 2) ===
-
   const slidesPerView = 2;
-  const maxSlidePage = Math.ceil(banners.length / slidesPerView) - 1; // (6 / 2) - 1 = 2
+  const maxSlidePage = Math.ceil(banners.length / slidesPerView) - 1; 
 
-  // ⭐️ Hàm chuyển slide (Giữ nguyên, chỉ dùng cho nút bấm)
   const nextSlide = () => {
     setCurrentSlide(s => (s === maxSlidePage ? 0 : s + 1));
   };
@@ -46,20 +45,31 @@ export default function Shop() {
     setCurrentSlide(s => (s === 0 ? maxSlidePage : s - 1));
   };
 
-  // ⭐️ useEffect (Đã sửa lại)
   useEffect(() => {
-    // Đặt logic tự động chạy trực tiếp vào đây
     const slideInterval = setInterval(() => {
       setCurrentSlide(s => (s === maxSlidePage ? 0 : s + 1));
     }, 3000);
     
-    return () => clearInterval(slideInterval); // Dọn dẹp khi component unmount
-  }, [maxSlidePage]); // Phụ thuộc vào maxSlidePage (là hằng số)
-  
-  // === 💡 KẾT THÚC ĐOẠN SỬA LỖI BANNER ===
+    return () => clearInterval(slideInterval); 
+  }, [maxSlidePage]); 
 
+  // <--- 3. THÊM USE EFFECT ĐỂ BẮT URL TỪ FOOTER
+  useEffect(() => {
+    const categoryParam = searchParams.get('category'); // Lấy chữ 'thuoc', 'vitamin'... trên URL
+    if (categoryParam) {
+      // Tìm xem category trên URL có khớp với cái nào trong mảng CATEGORIES không
+      const foundCategory = CATEGORIES.find(cat => cat.key === categoryParam);
+      if (foundCategory) {
+        setSelectedCategory(foundCategory.id); // Tự động click vào nút đó
+        
+        // Cuộn trang lên đầu để người dùng thấy danh sách
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+  }, [searchParams]);
+  // <--- KẾT THÚC ĐOẠN MỚI THÊM
 
-  // Fetch products từ API (Giữ nguyên)
+  // Fetch products từ API
   useEffect(() => {
     const loadProducts = async () => {
       try {
@@ -83,7 +93,6 @@ export default function Shop() {
     loadProducts();
   }, [selectedCategory, searchTerm]);
 
-  // (Các hàm mapCategoryToId, transformedProducts giữ nguyên)
   const mapCategoryToId = (category) => {
     const categoryMap = {
       "thuoc": 1,
@@ -117,12 +126,11 @@ export default function Shop() {
       id: cat.id,
       name: cat.name,
       icon: cat.icon,
-      products: categoryProducts.slice(0, 6), // Vẫn lấy 6 sản phẩm
+      products: categoryProducts.slice(0, 6),
       totalProducts: categoryProducts.length
     };
   }).filter(group => group.products.length > 0);
 
-  // handleAddToCart (Giữ nguyên)
   const handleAddToCart = async (product) => {
     try {
       await addToCart(product.id, 1);
@@ -141,7 +149,7 @@ export default function Shop() {
 
   return (
     <div className="shop-container">
-      {/* Header Section (Giữ nguyên) */}
+      {/* Header Section */}
       <div className="shop-header">
         <div className="shop-hero">
           <h1 className="shop-title">Cửa Hàng Dược Phẩm</h1>
@@ -176,7 +184,7 @@ export default function Shop() {
         </div>
       </div>
 
-      {/* BANNER CAROUSEL (Giữ nguyên) */}
+      {/* BANNER CAROUSEL */}
       <div className="banner-carousel-container">
         <div className="banner-carousel">
           <div className="carousel-track" style={{ transform: `translateX(-${currentSlide * 100}%)` }}>
@@ -188,13 +196,12 @@ export default function Shop() {
               </div>
             ))}
           </div>
-          {/* Nút bấm vẫn dùng hàm `nextSlide` và `prevSlide` bình thường */}
           <button className="carousel-btn prev" onClick={prevSlide}>&#10094;</button>
           <button className="carousel-btn next" onClick={nextSlide}>&#10095;</button>
         </div>
       </div>
       
-      {/* MARQUEE (Giữ nguyên) */}
+      {/* MARQUEE */}
       <div className="marquee-section">
         <div className="marquee-content">
           <span>🎉 Giảm giá áp dụng từ ngày 15/11/2025 - 15/12/2025</span>
@@ -206,7 +213,7 @@ export default function Shop() {
         </div>
       </div>
       
-      {/* Products Section (Giữ nguyên) */}
+      {/* Products Section */}
       <div className="products-section">
         {loading ? (
           <div className="loading">
