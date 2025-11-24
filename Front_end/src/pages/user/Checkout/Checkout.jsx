@@ -3,6 +3,7 @@
  * (Cập nhật Logo MoMo và ZaloPay)
  */
 import { useState, useEffect } from 'react';
+import Swal from 'sweetalert2';
 import { useNavigate } from 'react-router-dom';
 import { getCart, checkout } from '../../../api'; 
 import * as provinces from 'vietnam-provinces';
@@ -119,12 +120,20 @@ function Checkout() {
         setCartItems(transformedItems);
 
         if (transformedItems.length === 0) {
-          alert('Giỏ hàng trống!');
+          Swal.fire({
+            icon: 'warning',
+            title: 'Giỏ hàng trống!',
+            confirmButtonText: 'OK'
+          });
           navigate('/cart');
         }
       } catch (err) {
         console.error('Error loading cart:', err);
-        alert('Không thể tải giỏ hàng.');
+        Swal.fire({
+          icon: 'error',
+          title: 'Không thể tải giỏ hàng.',
+          confirmButtonText: 'OK'
+        });
         navigate('/cart');
       } finally {
         setLoading(false);
@@ -175,7 +184,11 @@ function Checkout() {
       !formData.district ||
       !formData.ward
     ) {
-      alert('Vui lòng điền đầy đủ các trường thông tin có dấu *');
+      Swal.fire({
+        icon: 'warning',
+        title: 'Vui lòng điền đầy đủ các trường thông tin có dấu *',
+        confirmButtonText: 'OK'
+      });
       return false;
     }
     return true;
@@ -184,7 +197,11 @@ function Checkout() {
   const handlePlaceOrder = async () => {
     const termsCheckbox = document.getElementById('termsCheckbox');
     if (!termsCheckbox.checked) {
-      alert('Bạn phải đồng ý với điều khoản và điều kiện để đặt hàng.');
+      Swal.fire({
+        icon: 'warning',
+        title: 'Bạn phải đồng ý với điều khoản và điều kiện để đặt hàng.',
+        confirmButtonText: 'OK'
+      });
       return;
     }
     
@@ -219,14 +236,22 @@ function Checkout() {
         }
       } else {
         window.dispatchEvent(new Event('cart:updated'));
-        alert('Đặt hàng thành công!');
+        Swal.fire({
+          icon: 'success',
+          title: 'Đặt hàng thành công!',
+          confirmButtonText: 'OK'
+        });
         navigate('/orders'); 
       }
 
     } catch (err) {
       console.error('Checkout error:', err);
       const errorMessage = err.response?.data?.error || 'Có lỗi xảy ra khi đặt hàng. Vui lòng thử lại!';
-      alert(errorMessage);
+      Swal.fire({
+        icon: 'error',
+        title: errorMessage,
+        confirmButtonText: 'OK'
+      });
       setIsPlacingOrder(false);
     }
   };

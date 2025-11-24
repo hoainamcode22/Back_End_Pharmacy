@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { getOrders, cancelOrder, getOrderDetail } from '../../../api';
 import ReviewModal from '../../../components/ReviewModal/ReviewModal';
 import './Orders.css';
+import Swal from 'sweetalert2';
 
 function Orders() {
   const navigate = useNavigate();
@@ -54,17 +55,33 @@ function Orders() {
   }, [activeFilter]);
 
   const handleCancelOrder = async (orderId) => {
-    if (window.confirm('Bạn có chắc muốn hủy đơn hàng này?')) {
-      try {
-        await cancelOrder(orderId);
-        alert('Đã hủy đơn hàng thành công!');
-        // Reload orders by toggling filter
-        setActiveFilter(activeFilter === 'all' ? 'pending' : 'all');
-        setTimeout(() => setActiveFilter('all'), 100);
-      } catch (err) {
-        alert(err.response?.data?.message || 'Không thể hủy đơn hàng.');
+    Swal.fire({
+      title: 'Bạn có chắc muốn hủy đơn hàng này?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'OK',
+      cancelButtonText: 'Hủy'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await cancelOrder(orderId);
+          Swal.fire({
+            icon: 'success',
+            title: 'Đã hủy đơn hàng thành công!',
+            confirmButtonText: 'OK'
+          });
+          // Reload orders by toggling filter
+          setActiveFilter(activeFilter === 'all' ? 'pending' : 'all');
+          setTimeout(() => setActiveFilter('all'), 100);
+        } catch (err) {
+          Swal.fire({
+            icon: 'error',
+            title: err.response?.data?.message || 'Không thể hủy đơn hàng.',
+            confirmButtonText: 'OK'
+          });
+        }
       }
-    }
+    });
   };
 
   // Handle review button - load order products and show modal
@@ -84,11 +101,19 @@ function Orders() {
         setSelectedProduct(firstProduct);
         setShowReviewModal(true);
       } else {
-        alert('Không tìm thấy sản phẩm trong đơn hàng này');
+        Swal.fire({
+          icon: 'error',
+          title: 'Không tìm thấy sản phẩm trong đơn hàng này',
+          confirmButtonText: 'OK'
+        });
       }
     } catch (error) {
       console.error('Error loading order products:', error);
-      alert('Không thể tải thông tin sản phẩm');
+      Swal.fire({
+        icon: 'error',
+        title: 'Không thể tải thông tin sản phẩm',
+        confirmButtonText: 'OK'
+      });
     } finally {
       setLoadingProducts(false);
     }
