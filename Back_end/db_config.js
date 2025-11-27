@@ -5,7 +5,10 @@ const { Pool } = require('pg');
 const poolConfig = process.env.DATABASE_URL
   ? { 
       connectionString: process.env.DATABASE_URL,
-      client_encoding: 'UTF8' // <--- THÊM VÀO ĐÂY
+      ssl: { 
+          // Cài đặt này thường cần thiết cho Node.js trên Render
+          rejectUnauthorized: false
+      }
     }
   : {
       user: process.env.DB_USER || 'postgres',
