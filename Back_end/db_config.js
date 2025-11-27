@@ -3,27 +3,29 @@ const { Pool } = require('pg');
 
 // Hỗ trợ cả DATABASE_URL (ưu tiên) hoặc các biến DB_*
 const poolConfig = process.env.DATABASE_URL
-  ? { 
-      connectionString: process.env.DATABASE_URL,
-      client_encoding: 'UTF8',
+  ? { 
+      connectionString: process.env.DATABASE_URL,
+      client_encoding: 'UTF8',
+      // [QUAN TRỌNG] THÊM CẤU HÌNH SSL BẮT BUỘC CHO RENDER/SUPABASE (cho URI)
+      ssl: { 
+          rejectUnauthorized: false 
+      }
+    }
+  : {
+      // Khối này sẽ được sử dụng khi chạy trên Render (dùng các biến riêng lẻ)
+      user: process.env.DB_USER || 'postgres',
+      host: process.env.DB_HOST || 'localhost',
+      database: process.env.DB_NAME || 'pharmacy_db',
+      password: process.env.DB_PASS || '123456',
+      port: parseInt(process.env.DB_PORT, 10) || 5432,
+      options: '-c search_path=public',
+      client_encoding: 'UTF8',
+      // [QUAN TRỌNG] THÊM SSL BẮT BUỘC (cho cấu hình từng biến)
       ssl: { 
           rejectUnauthorized: false
       }
-    }
-  : {
-      // Khối này sẽ được sử dụng khi chạy trên Render
-      user: process.env.DB_USER || 'postgres',
-      host: process.env.DB_HOST || 'localhost',
-      database: process.env.DB_NAME || 'pharmacy_db',
-      password: process.env.DB_PASS || '123456',
-      port: parseInt(process.env.DB_PORT, 10) || 5432,
-      // THÊM SSL/TLS CHO KẾT NỐI SỬ DỤNG BIẾN RIÊNG LẺ
-      ssl: { 
-          rejectUnauthorized: false
-      },
-      options: '-c search_path=public',
-      client_encoding: 'UTF8'
-    };
+    };
+
 
 // Tạo Pool kết nối PostgreSQL
 const pool = new Pool(poolConfig);
