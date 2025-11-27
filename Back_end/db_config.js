@@ -2,17 +2,17 @@ require('dotenv').config();
 const { Pool } = require('pg');
 
 // Hỗ trợ cả DATABASE_URL (ưu tiên) hoặc các biến DB_*
+const isProduction = process.env.NODE_ENV === 'production';
+
 const poolConfig = process.env.DATABASE_URL
   ? { 
       connectionString: process.env.DATABASE_URL,
       client_encoding: 'UTF8',
-      // [QUAN TRỌNG] THÊM CẤU HÌNH SSL BẮT BUỘC CHO RENDER/SUPABASE (cho URI)
       ssl: { 
-          rejectUnauthorized: false 
+          rejectUnauthorized: false
       }
     }
   : {
-      // Khối này sẽ được sử dụng khi chạy trên Render (dùng các biến riêng lẻ)
       user: process.env.DB_USER || 'postgres',
       host: process.env.DB_HOST || 'localhost',
       database: process.env.DB_NAME || 'pharmacy_db',
@@ -20,12 +20,9 @@ const poolConfig = process.env.DATABASE_URL
       port: parseInt(process.env.DB_PORT, 10) || 5432,
       options: '-c search_path=public',
       client_encoding: 'UTF8',
-      // [QUAN TRỌNG] THÊM SSL BẮT BUỘC (cho cấu hình từng biến)
-      ssl: { 
-          rejectUnauthorized: false
-      }
+      // [QUAN TRỌNG] BẬT SSL CHỈ KHI LÀ EXTERNAL/PRODUCTION
+      ssl: isProduction ? { rejectUnauthorized: false } : false
     };
-
 
 // Tạo Pool kết nối PostgreSQL
 const pool = new Pool(poolConfig);
