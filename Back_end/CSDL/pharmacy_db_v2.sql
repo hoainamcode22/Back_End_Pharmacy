@@ -1,3 +1,5 @@
+-- Active: 1763481687156@@127.0.0.1@5432@pharmacy_db
+-- Active: 1763481687156@@127.0.0.1@5432@pharmacy_dby_db
 -- =============================================
 -- PHARMACY DATABASE SCHEMA - VERSION 2.0
 -- Cập nhật: 28/10/2025
