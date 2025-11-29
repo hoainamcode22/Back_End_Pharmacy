@@ -7,22 +7,21 @@ const swaggerUi = require("swagger-ui-express");
 const path = require("path");
 const cors = require("cors");
 
-// Định nghĩa danh sách các domain được phép truy cập
-const allowedOrigins = [
-  "http://localhost:5173", 
-  "http://localhost:3000",
-  "https://your-frontend-project.vercel.app", // <--- THAY LINK VERCEL CỦA BẠN VÀO ĐÂY
-  process.env.FRONTEND_URL // Hoặc dùng biến môi trường nếu muốn linh hoạt
-];
-
 dotenv.config();
 const app = express();
 const server = http.createServer(app);
 
-// Cấu hình Socket.IO CORS
+// 1. CẤU HÌNH LIST CÁC DOMAIN ĐƯỢC PHÉP TRUY CẬP
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:3000",
+  "https://pharmacy01-woad.vercel.app" 
+];
+
+// 2. CẤU HÌNH CHO SOCKET.IO
 const io = new Server(server, {
   cors: {
-    origin: allowedOrigins, // Sử dụng danh sách allowedOrigins
+    origin: allowedOrigins, // Dùng biến allowedOrigins
     methods: ["GET", "POST"],
     credentials: true
   }
@@ -30,9 +29,9 @@ const io = new Server(server, {
 
 const PORT = process.env.PORT || 5001;
 
-// Cấu hình Express CORS
+// 3. CẤU HÌNH CHO API (EXPRESS)
 app.use(cors({
-  origin: allowedOrigins, // Sử dụng danh sách allowedOrigins
+  origin: allowedOrigins, // Dùng biến allowedOrigins
   credentials: true
 }));
 
