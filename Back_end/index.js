@@ -7,12 +7,21 @@ const swaggerUi = require("swagger-ui-express");
 const path = require("path");
 const cors = require("cors");
 
+// === KHU VỰC CẦN SỬA: ĐỊNH NGHĨA CÁC URL ĐƯỢC PHÉP TRUY CẬP (CORS) ===
+const ALLOWED_ORIGINS = [
+  "http://localhost:5173",
+  "http://localhost:3000",
+  "https://fe-three-tau.vercel.app" // <<< THÊM URL FRONTEND ĐÃ DEPLOY VÀO ĐÂY
+];
+// =====================================================================
+
 dotenv.config();
 const app = express();
 const server = http.createServer(app);
+
 const io = new Server(server, {
   cors: {
-    origin: ["http://localhost:5173", "http://localhost:3000"], // Frontend URLs
+    origin: ALLOWED_ORIGINS, // Đã sử dụng mảng URL mới
     methods: ["GET", "POST"],
     credentials: true
   }
@@ -20,9 +29,27 @@ const io = new Server(server, {
 
 const PORT = process.env.PORT || 5001;
 
+// Import database (Đảm bảo đã import để kết nối)
+const db = require("./src/config/db");
+db.connect();
+
+// Import routes
+const authRoutes = require("./src/routes/authRoute");
+const productRoutes = require("./src/routes/productRoute");
+const cartRoutes = require("./src/routes/cartRoute");
+const userRoutes = require("./src/routes/userRoute");
+const categoryRoutes = require("./src/routes/categoryRoute");
+const commentRoutes = require("./src/routes/commentRoute");
+const diseaseRoutes = require("./src/routes/diseaseRoute");
+const chatRoutes = require("./src/routes/chatRoute");
+const dashboardRoutes = require("./src/routes/dashboardRoute");
+const uploadRoutes = require("./src/routes/uploadRoute");
+const orderRoutes = require("./src/routes/orderRoute");
+const paymentRoutes = require("./src/routes/paymentRoute");
+
 // Middleware
 app.use(cors({
-  origin: ["http://localhost:5173", "http://localhost:3000"],
+  origin: ALLOWED_ORIGINS, // Đã sử dụng mảng URL mới
   credentials: true
 }));
 
@@ -36,36 +63,15 @@ app.set('io', io);
 
 // Serve static images (so backend can serve product images if needed)
 // Place your images under Back_end/public/images/products/
-app.use('/images', express.static(path.join(__dirname, 'public', 'images')));
+app.use(express.static(path.join(__dirname, 'public')));
+
 
 // Routes
-const authRoutes = require("./src/routes/authRoutes");
-const productRoutes = require("./src/routes/productRoutes");
-const cartRoutes = require("./src/routes/cartRoutes");
-const orderRoutes = require("./src/routes/orderRoutes");
-const userRoutes = require("./src/routes/userRoutes");
-const announcementRoutes = require("./src/routes/announcementRoutes");
-const commentRoutes = require("./src/routes/commentRoutes");
-const diseaseRoutes = require("./src/routes/diseaseRoutes");
-const chatRoutes = require("./src/routes/chatRoutes");
-const dashboardRoutes = require("./src/routes/dashboardRoutes");
-const uploadRoutes = require("./src/routes/uploadRoutes");
-
-// ... import các routes cho payment
-const paymentRoutes = require('./src/routes/paymentRoutes');
-
-// Xác thực
 app.use("/api/auth", authRoutes);
-// Sản phẩm
 app.use("/api/products", productRoutes);
-// Giỏ hàng
-app.use("/api/cart", cartRoutes);
-// Đơn hàng
-app.use("/api/orders", orderRoutes);
-// Người dùng
+app.use("/api/carts", cartRoutes);
 app.use("/api/users", userRoutes);
-// Thông báo
-app.use("/api/announcements", announcementRoutes);
+app.use("/api/categories", categoryRoutes);
 // Đánh giá sản phẩm
 app.use("/api/comments", commentRoutes);
 // Tra cứu bệnh
@@ -79,6 +85,7 @@ app.use("/api/upload", uploadRoutes); // 📸 Cloudinary upload routes
 app.use('/api/orders', orderRoutes);
 app.use('/api/payment', paymentRoutes);
 
+
 // Swagger setup
 const swaggerOptions = {
   definition: {
@@ -88,7 +95,8 @@ const swaggerOptions = {
       version: "1.0.0",
       description: "API cho website hiệu thuốc trực tuyến",
     },
-    servers: [{ url: `http://localhost:${PORT}` }],
+    // Thay đổi localhost thành URL Public của Render
+    servers: [{ url: `https://be-1-kh9g.onrender.com` }], 
   },
   apis: [
     path.join(__dirname, "./src/routes/*.js"),
@@ -96,6 +104,7 @@ const swaggerOptions = {
   ],
 };
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerJsdoc(swaggerOptions)));
+
 
 // Default route
 app.get("/", (req, res) => res.send("Pharmacy backend is running..."));
@@ -106,16 +115,9 @@ app.use((err, req, res, next) => {
   res.status(500).json({ message: "Internal server error" });
 });
 
-// Socket.IO Chat Implementation
-const chatService = require("./src/services/chatService");
-chatService.initializeSocketIO(io);
-
+// Start server
 server.listen(PORT, () => {
   console.log(`🚀 Server chạy tại http://localhost:${PORT}`);
   console.log(`📑 Swagger Docs: http://localhost:${PORT}/api-docs`);
   console.log(`💬 Socket.IO Chat đã sẵn sàng`);
 });
-
-
-
-
