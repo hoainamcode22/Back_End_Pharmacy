@@ -1,11 +1,18 @@
 // Cloudinary Configuration
 const cloudinary = require('cloudinary').v2;
 
+// Validate required environment variables
+if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+  console.error('❌ Missing Cloudinary credentials in .env file!');
+  console.error('Please set: CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET');
+  // Don't throw error to allow server to start, but log warning
+}
+
 // Configure Cloudinary
 cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'dd1onmi19',
-  api_key: process.env.CLOUDINARY_API_KEY || '697521727136735',
-  api_secret: process.env.CLOUDINARY_API_SECRET || 'U25GYEZbqBvbnFA8McAXtlamZVI'
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
 // Test connection
