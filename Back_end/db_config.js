@@ -2,10 +2,15 @@ require('dotenv').config();
 const { Pool } = require('pg');
 
 // Hỗ trợ cả DATABASE_URL (ưu tiên) hoặc các biến DB_*
+const isProduction = process.env.NODE_ENV === 'production';
+
 const poolConfig = process.env.DATABASE_URL
   ? { 
       connectionString: process.env.DATABASE_URL,
-      client_encoding: 'UTF8' // <--- THÊM VÀO ĐÂY
+      client_encoding: 'UTF8',
+      ssl: { 
+          rejectUnauthorized: false
+      }
     }
   : {
       user: process.env.DB_USER || 'postgres',
@@ -14,7 +19,9 @@ const poolConfig = process.env.DATABASE_URL
       password: process.env.DB_PASS || '123456',
       port: parseInt(process.env.DB_PORT, 10) || 5432,
       options: '-c search_path=public',
-      client_encoding: 'UTF8' // <--- VÀ THÊM VÀO ĐÂY
+      client_encoding: 'UTF8',
+      // [QUAN TRỌNG] BẬT SSL CHỈ KHI LÀ EXTERNAL/PRODUCTION
+      ssl: isProduction ? { rejectUnauthorized: false } : false
     };
 
 // Tạo Pool kết nối PostgreSQL
