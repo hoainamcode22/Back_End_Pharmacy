@@ -22,18 +22,11 @@ const app = express();
 const server = http.createServer(app);
 // ...existing code...
 
-// CORS Origins - Support both env variable and defaults
-const allowedOrigins = process.env.ALLOWED_ORIGINS
-  ? process.env.ALLOWED_ORIGINS.split(',')
-  : [
-      "http://localhost:5173",
-      "http://localhost:3000",
-      "https://fe-three-tau.vercel.app",
-      "https://fe-git-main-hoai-nams-projects-54a9c33f.vercel.app",
-      "https://fe-j1wro9qph-hoai-nams-projects-54a9c33f.vercel.app"
-    ];
-
-console.log('🌐 Allowed CORS origins:', allowedOrigins);
+// CORS Origins - Local development only
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:3000"
+];
 
 const io = new Server(server, {
   cors: {

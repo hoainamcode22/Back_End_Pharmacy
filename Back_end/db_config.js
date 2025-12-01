@@ -22,9 +22,13 @@ const pool = new Pool(poolConfig);
 
 // Kiểm tra kết nối ngay khi khởi động
 pool.connect()
-  .then(() => console.log('✅ Connected to PostgreSQL database!'))
+  .then(client => {
+    console.log('✅ Connected to PostgreSQL database!');
+    client.release();
+  })
   .catch(err => {
-    console.error('❌ Connection failed:', err.message);
+    console.error('❌ Database connection failed:', err.message);
+    console.error('❌ Check DATABASE_URL or DB_* environment variables');
     process.exit(1);
   });
 
