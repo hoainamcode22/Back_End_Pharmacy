@@ -119,8 +119,8 @@ Pharmacy Management System là nền tảng thương mại điện tử chuyên 
 ![Tra cứu bệnh](./screenshots/disease.png)
 *Tra cứu bệnh theo triệu chứng*
 
-![Gợi ý thuốc](./screenshots/disease1.png)
-*Gợi ý thuốc phù hợp cho từng bệnh*
+![Wikipedia](./screenshots/disease1.png)
+*wikipedia cho từng bệnh*
 
 #### **Chat Tư vấn**
 ![Chat với dược sĩ](./screenshots/chatUser.png)
@@ -161,7 +161,6 @@ Pharmacy Management System là nền tảng thương mại điện tử chuyên 
 
 ---
 
-> 📸 **Lưu ý**: Thêm ảnh screenshot của bạn vào folder `screenshots/`
 
 ---
 
