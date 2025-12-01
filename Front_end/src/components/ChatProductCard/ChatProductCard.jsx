@@ -62,7 +62,13 @@ const ChatProductCard = ({ product, isInMessage = true }) => {
   //   : 'https://via.placeholder.com/80x80?text=No+Image';
   // ============ ⭐️ SỬA LỖI ẢNH (KẾT THÚC) ⭐️ ============
 
-  console.log('📦 ChatProductCard render:', { productName, productPrice, productImage, imageUrl });
+  console.log('📦 ChatProductCard render:', { 
+    productName, 
+    productPrice, 
+    productImage, 
+    imageUrl,
+    fullProduct: product 
+  });
 
   // Kiểm tra có phải admin đang ở trang admin không
   const isAdminPage = location.pathname.startsWith('/admin');

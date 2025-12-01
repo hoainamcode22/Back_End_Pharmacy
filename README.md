@@ -80,28 +80,86 @@ Pharmacy Management System là nền tảng thương mại điện tử chuyên 
 
 ## **Hình ảnh Demo**
 
-### **User Interface**
+### **👤 User Interface**
+
+#### **Trang chủ & Sản phẩm**
 ![Trang chủ](./screenshots/home.png)
-*Trang chủ - Danh sách sản phẩm*
+*Trang chủ - Danh mục sản phẩm với banner khuyến mãi*
+
+![Trang chủ - Danh sách thuốc](./screenshots/home1.png)
+*Danh sách thuốc với tìm kiếm và filter theo danh mục*
 
 ![Chi tiết sản phẩm](./screenshots/product-detail.png)
-*Chi tiết sản phẩm với thông tin y tế đầy đủ*
+*Chi tiết sản phẩm với thông tin y tế, công dụng và đánh giá*
 
+#### **Giỏ hàng & Thanh toán**
 ![Giỏ hàng](./screenshots/cart.png)
-*Giỏ hàng và thanh toán*
+*Giỏ hàng - Quản lý sản phẩm trước khi thanh toán*
 
+![Thanh toán - Bước 1](./screenshots/thanhtoan.png)
+*Checkout - Nhập thông tin giao hàng*
+
+![Thanh toán - Bước 2](./screenshots/thanhtoan1.png)
+*Chọn phương thức thanh toán (COD/MoMo/ZaloPay)*
+
+![Thanh toán - MoMo](./screenshots/thanhtoan2.png)
+*Thanh toán qua MoMo - Quét QR hoặc nhập OTP*
+
+![Thanh toán thành công](./screenshots/thanhtoan3.png)
+*Xác nhận đơn hàng thành công*
+
+#### **Quản lý Đơn hàng**
+![Lịch sử đơn hàng](./screenshots/orders.png)
+*Danh sách đơn hàng đã đặt*
+
+![Chi tiết đơn hàng](./screenshots/orders1.png)
+*Chi tiết đơn hàng và theo dõi trạng thái giao hàng*
+
+#### **Tra cứu Bệnh**
 ![Tra cứu bệnh](./screenshots/disease.png)
 *Tra cứu bệnh theo triệu chứng*
 
-### **Admin Dashboard**
-![Dashboard](./screenshots/admin-dashboard.png)
-*Trang tổng quan với thống kê*
+![Gợi ý thuốc](./screenshots/disease1.png)
+*Gợi ý thuốc phù hợp cho từng bệnh*
 
-![Quản lý sản phẩm](./screenshots/admin-products.png)
-*Quản lý danh mục sản phẩm*
+#### **Chat Tư vấn**
+![Chat với dược sĩ](./screenshots/chatUser.png)
+*Chat trực tiếp với dược sĩ để được tư vấn*
 
-![Quản lý đơn hàng](./screenshots/admin-orders.png)
-*Quản lý và theo dõi đơn hàng*
+![Chat - Gửi tin nhắn](./screenshots/chatUser1.png)
+*Hỏi về bệnh và nhận tư vấn thuốc*
+
+![Chat - Gợi ý sản phẩm](./screenshots/chatUser2.png)
+*Dược sĩ gợi ý sản phẩm phù hợp trong chat*
+
+---
+
+### **👨‍💼 Admin Dashboard**
+
+#### **Thống kê & Tổng quan**
+![Dashboard Admin](./screenshots/TongQuanUIADMIN.png)
+*Trang tổng quan với biểu đồ doanh thu, đơn hàng và top sản phẩm bán chạy*
+
+#### **Quản lý Sản phẩm**
+![Quản lý sản phẩm](./screenshots/QuanLySanPham.png)
+*Danh sách sản phẩm với chức năng thêm/sửa/xóa*
+
+![Thêm/Sửa sản phẩm](./screenshots/QuanLySanPham1.png)
+*Form thêm sản phẩm mới với upload ảnh lên Cloudinary*
+
+#### **Quản lý Đơn hàng**
+![Quản lý đơn hàng](./screenshots/QuanLydonhang.png)
+*Danh sách đơn hàng với cập nhật trạng thái realtime*
+
+#### **Quản lý Người dùng**
+![Quản lý người dùng](./screenshots/QuanLyNguoiDung.png)
+*Danh sách người dùng và phân quyền admin/customer*
+
+#### **Quản lý Chat hỗ trợ**
+![Chat Management](./screenshots/ChatAdmin.png)
+*Quản lý chat - Trả lời câu hỏi và gợi ý sản phẩm cho khách hàng realtime*
+
+---
 
 > 📸 **Lưu ý**: Thêm ảnh screenshot của bạn vào folder `screenshots/`
 

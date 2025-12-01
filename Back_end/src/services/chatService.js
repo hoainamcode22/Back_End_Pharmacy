@@ -7,11 +7,33 @@ const db = require('../../db_config');
 const buildProductImageUrl = (host, dbImage, dbImageUrl) => {
   const cloudinaryCloudName = process.env.CLOUDINARY_CLOUD_NAME;
   
-  // Ưu tiên Cloudinary (dựa theo README.md)
-  if (cloudinaryCloudName && dbImageUrl) {
+  console.log('🖼️ [chatService] Building image URL:', { 
+    host, 
+    dbImage, 
+    dbImageUrl, 
+    cloudinaryCloudName,
+    hasCloudinary: !!(cloudinaryCloudName && cloudinaryCloudName !== 'your_cloud_name')
+  });
+  
+  // Nếu dbImageUrl đã là full URL (bắt đầu bằng http), dùng luôn
+  if (dbImageUrl && dbImageUrl.startsWith('http')) {
+    console.log('✅ [chatService] Using existing full URL:', dbImageUrl);
+    return dbImageUrl;
+  }
+  
+  // Nếu dbImage đã là full URL, dùng luôn
+  if (dbImage && dbImage.startsWith('http')) {
+    console.log('✅ [chatService] Using existing full URL from dbImage:', dbImage);
+    return dbImage;
+  }
+  
+  // Ưu tiên Cloudinary (dựa theo README.md) - Chỉ build khi chưa có full URL
+  if (cloudinaryCloudName && cloudinaryCloudName !== 'your_cloud_name' && dbImageUrl) {
     // dbImageUrl có thể lưu 'v176.../abc.jpg'
     const cloudinaryBase = `https://res.cloudinary.com/${cloudinaryCloudName}/image/upload/`;
-    return `${cloudinaryBase}${dbImageUrl.replace(/^\/+/, '')}`;
+    const finalUrl = `${cloudinaryBase}${dbImageUrl.replace(/^\/+/, '')}`;
+    console.log('✅ [chatService] Using Cloudinary URL:', finalUrl);
+    return finalUrl;
   }
   
   // Dùng ảnh local
@@ -167,8 +189,11 @@ class ChatService {
             if (productQuery.rows[0]) {
               const p = productQuery.rows[0];
 
+              console.log('📦 [Socket] Product from DB:', { Id: p.Id, Image: p.Image, ImageURL: p.ImageURL });
+
               // ============ ⭐️ SỬA: Build URL ảnh ⭐️ ============
               const imageUrl = buildProductImageUrl(host, p.Image, p.ImageURL);
+              console.log('🖼️ [Socket] Final image URL:', imageUrl);
               // ============ ⭐️ KẾT THÚC SỬA ⭐️ ============
               
               productData = {
