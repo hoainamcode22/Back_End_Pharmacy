@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { getAllOrders, updateOrderStatus } from "../../../api";
+import Swal from 'sweetalert2';
 import "./OrderManagement.css";
 
 export default function OrderManagement() {
@@ -27,7 +28,11 @@ export default function OrderManagement() {
       setPagination(data.pagination || {});
     } catch (err) {
       console.error("Error loading orders:", err);
-      alert(err.response?.data?.error || "Lỗi khi tải danh sách đơn hàng");
+      Swal.fire({
+        icon: 'error',
+        title: err.response?.data?.error || "Lỗi khi tải danh sách đơn hàng",
+        confirmButtonText: 'OK'
+      });
     } finally {
       setLoading(false);
     }
@@ -35,47 +40,56 @@ export default function OrderManagement() {
 
   // ============ ⭐️ BỔ SUNG FIX 2 (Hàm này được sửa) ⭐️ ============
   const handleStatusChange = async (orderId, newStatus) => {
-    if (
-      !window.confirm(
-        `Xác nhận chuyển trạng thái đơn hàng sang "${getStatusText(newStatus)}"?`
-      )
-    ) {
-      return;
-    }
+    Swal.fire({
+      title: `Xác nhận chuyển trạng thái đơn hàng sang "${getStatusText(newStatus)}"?`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'OK',
+      cancelButtonText: 'Hủy'
+    }).then(async (result) => {
+      if (!result.isConfirmed) return;
 
-    try {
-      // 1. Gọi API và nhận lại data (API của bạn đã trả về { order: ... })
-      const data = await updateOrderStatus(orderId, newStatus);
-      const updatedOrder = data.order; // Lấy đơn hàng đã cập nhật từ response
+      try {
+        // 1. Gọi API và nhận lại data (API của bạn đã trả về { order: ... })
+        const data = await updateOrderStatus(orderId, newStatus);
+        const updatedOrder = data.order; // Lấy đơn hàng đã cập nhật từ response
 
-      alert("✅ Đã cập nhật trạng thái đơn hàng!");
-      
-      // 2. Tắt hàm loadOrders()
-      // loadOrders(); // BÌNH LUẬN DÒNG NÀY LẠI
+        Swal.fire({
+          icon: 'success',
+          title: '✅ Đã cập nhật trạng thái đơn hàng!',
+          confirmButtonText: 'OK'
+        });
+        // 2. Tắt hàm loadOrders()
+        // loadOrders(); // BÌNH LUẬN DÒNG NÀY LẠI
 
-      // 3. Cập nhật state local (hiệu quả hơn)
-      setOrders((prevOrders) =>
-        prevOrders.map((order) =>
-          order.Id === orderId
-            ? { ...order, Status: updatedOrder.Status } // Cập nhật trạng thái mới
-            : order
-        )
-      );
+        // 3. Cập nhật state local (hiệu quả hơn)
+        setOrders((prevOrders) =>
+          prevOrders.map((order) =>
+            order.Id === orderId
+              ? { ...order, Status: updatedOrder.Status } // Cập nhật trạng thái mới
+              : order
+          )
+        );
 
-      // 4. (Tùy chọn) Nếu có filter,
-      // xóa đơn hàng khỏi danh sách NẾU nó không còn khớp
-      if (statusFilter && updatedOrder.Status !== statusFilter) {
-        setTimeout(() => {
-          setOrders((prevOrders) =>
-            prevOrders.filter((order) => order.Id !== orderId)
-          );
-        }, 1000); // Thêm 1s delay để admin thấy sự thay đổi
+        // 4. (Tùy chọn) Nếu có filter,
+        // xóa đơn hàng khỏi danh sách NẾU nó không còn khớp
+        if (statusFilter && updatedOrder.Status !== statusFilter) {
+          setTimeout(() => {
+            setOrders((prevOrders) =>
+              prevOrders.filter((order) => order.Id !== orderId)
+            );
+          }, 1000); // Thêm 1s delay để admin thấy sự thay đổi
+        }
+
+      } catch (err) {
+        console.error("Error updating order status:", err);
+        Swal.fire({
+          icon: 'error',
+          title: err.response?.data?.error || "Lỗi khi cập nhật trạng thái",
+          confirmButtonText: 'OK'
+        });
       }
-
-    } catch (err) {
-      console.error("Error updating order status:", err);
-      alert(err.response?.data?.error || "Lỗi khi cập nhật trạng thái");
-    }
+    });
   };
   // =============================================================
 

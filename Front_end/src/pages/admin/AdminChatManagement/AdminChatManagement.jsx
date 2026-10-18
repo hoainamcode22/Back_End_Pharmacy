@@ -45,19 +45,19 @@ const AdminChatManagement = () => {
 
     console.log('🔌 Setting up admin socket listeners...');
 
-    // ============ ⭐️ SỬA LỖI LẶP TIN (ADMIN) (BẮT ĐẦU) ⭐️ ============
+    // ============ ⭐️ FIX: Admin nhận tin nhắn từ User ⭐️ ============
     const handleNewMessage = (data) => {
       console.log('📩 New message received:', data);
+      console.log('📦 Message product data:', data.product);
 
-      // Sửa: Bỏ qua tin nhắn do chính mình gửi (vì đã có Optimistic Update)
-      // (user.id là ID của admin đang đăng nhập)
-      if (data.SenderId === user.id) {
-        console.log('Admin ignoring self-sent message from socket');
+      // Chỉ bỏ qua tin nhắn của chính admin (đã có Optimistic Update)
+      if (data.SenderId === user.id || data.senderId === user.id) {
+        console.log('🚫 Admin ignoring self-sent message');
         return;
       }
       
       const mappedMessage = {
-        id: data.Id || data.id || `msg_${Date.now()}`, // Fallback ID
+        id: data.Id || data.id || `msg_${Date.now()}`,
         threadId: data.ThreadId || data.threadId,
         senderId: data.SenderId || data.senderId,
         senderRole: data.SenderRole || data.senderRole,
@@ -67,11 +67,16 @@ const AdminChatManagement = () => {
         product: data.product || null
       };
       
+      console.log('✅ Mapped message:', mappedMessage);
+      
+      // Thêm tin nhắn vào thread đang mở
       if (selectedThread && mappedMessage.threadId === selectedThread.id) {
         setMessages(prev => {
           if (prev.some(m => m.id === mappedMessage.id)) {
+            console.log('⚠️ Message already exists:', mappedMessage.id);
             return prev;
           }
+          console.log('➕ Adding new message to current thread');
           return [...prev, mappedMessage];
         });
       }
@@ -83,7 +88,45 @@ const AdminChatManagement = () => {
           : thread
       ));
     };
-    // ============ ⭐️ SỬA LỖI LẶP TIN (ADMIN) (KẾT THÚC) ⭐️ ============
+
+    // Handle tin nhắn mới từ user (riêng cho admin)
+    const handleNewUserMessage = (data) => {
+      console.log('👤 New user message notification:', data);
+      console.log('📦 User message product data:', data.product);
+      
+      const mappedMessage = {
+        id: data.message?.Id || data.message?.id || `msg_${Date.now()}`,
+        threadId: data.threadId,
+        senderId: data.userId || data.message?.SenderId,
+        senderRole: 'user',
+        content: data.message?.Content || data.message?.content || '',
+        createdAt: data.message?.CreatedAt || data.message?.createdAt || new Date().toISOString(),
+        senderName: data.senderName || 'User',
+        product: data.product || null
+      };
+
+      console.log('✅ Mapped user message:', mappedMessage);
+
+      // Thêm tin nhắn vào thread đang mở
+      if (selectedThread && mappedMessage.threadId === selectedThread.id) {
+        setMessages(prev => {
+          if (prev.some(m => m.id === mappedMessage.id)) {
+            console.log('⚠️ User message already exists:', mappedMessage.id);
+            return prev;
+          }
+          console.log('➕ Adding new user message to current thread');
+          return [...prev, mappedMessage];
+        });
+      }
+
+      // Update thread list
+      setThreads(prev => prev.map(thread => 
+        thread.id === mappedMessage.threadId 
+          ? { ...thread, lastMessage: mappedMessage.content, lastMessageAt: mappedMessage.createdAt }
+          : thread
+      ));
+    };
+    // ============ ⭐️ KẾT THÚC FIX ⭐️ ============
 
     const handleNewThread = (thread) => {
       console.log('🆕 New thread notification:', thread);
@@ -101,6 +144,7 @@ const AdminChatManagement = () => {
     };
 
     socket.on('new_message', handleNewMessage);
+    socket.on('new_user_message', handleNewUserMessage); // ⭐️ THÊM EVENT MỚI
     socket.on('new_thread', handleNewThread);
     socket.on('new_thread_notification', handleNewThread);
     socket.on('thread_closed', handleThreadClosed);
@@ -108,11 +152,12 @@ const AdminChatManagement = () => {
     return () => {
       console.log('🔌 Cleaning up admin socket listeners...');
       socket.off('new_message', handleNewMessage);
+      socket.off('new_user_message', handleNewUserMessage); // ⭐️ THÊM CLEANUP
       socket.off('new_thread', handleNewThread);
       socket.off('new_thread_notification', handleNewThread);
       socket.off('thread_closed', handleThreadClosed);
     };
-  }, [socket, selectedThread, user]); // Sửa: Thêm 'user' vào dependency
+  }, [socket, selectedThread, user]);
 
   const loadAllThreads = async () => {
     try {

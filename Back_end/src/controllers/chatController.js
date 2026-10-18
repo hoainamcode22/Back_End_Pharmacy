@@ -7,11 +7,33 @@ const chatService = require('../services/chatService'); // Biến này chưa đ�
 const buildProductImageUrl = (host, dbImage, dbImageUrl) => {
   const cloudinaryCloudName = process.env.CLOUDINARY_CLOUD_NAME;
   
-  // Ưu tiên Cloudinary
-  if (cloudinaryCloudName && dbImageUrl) {
+  console.log('🖼️ [chatController] Building image URL:', { 
+    host, 
+    dbImage, 
+    dbImageUrl, 
+    cloudinaryCloudName,
+    hasCloudinary: !!(cloudinaryCloudName && cloudinaryCloudName !== 'your_cloud_name')
+  });
+  
+  // Nếu dbImageUrl đã là full URL (bắt đầu bằng http), dùng luôn
+  if (dbImageUrl && dbImageUrl.startsWith('http')) {
+    console.log('✅ [chatController] Using existing full URL:', dbImageUrl);
+    return dbImageUrl;
+  }
+  
+  // Nếu dbImage đã là full URL, dùng luôn
+  if (dbImage && dbImage.startsWith('http')) {
+    console.log('✅ [chatController] Using existing full URL from dbImage:', dbImage);
+    return dbImage;
+  }
+  
+  // Ưu tiên Cloudinary - Chỉ build khi chưa có full URL
+  if (cloudinaryCloudName && cloudinaryCloudName !== 'your_cloud_name' && dbImageUrl) {
     const cloudinaryBase = `https://res.cloudinary.com/${cloudinaryCloudName}/image/upload/`;
     // Đảm bảo không bị lặp /
-    return `${cloudinaryBase}${dbImageUrl.replace(/^\/+/, '')}`;
+    const finalUrl = `${cloudinaryBase}${dbImageUrl.replace(/^\/+/, '')}`;
+    console.log('✅ [chatController] Using Cloudinary URL:', finalUrl);
+    return finalUrl;
   }
   
   // Dùng ảnh local

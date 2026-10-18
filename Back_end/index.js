@@ -8,20 +8,29 @@ const path = require("path");
 const cors = require("cors");
 
 dotenv.config();
+
+// Validate critical environment variables
+const requiredEnvVars = ['JWT_SECRET', 'DB_NAME'];
+const missingVars = requiredEnvVars.filter(varName => !process.env[varName]);
+if (missingVars.length > 0) {
+  console.error(`❌ Missing required environment variables: ${missingVars.join(', ')}`);
+  console.error('Please check your .env file!');
+  // Don't exit, just warn
+}
+
 const app = express();
 const server = http.createServer(app);
+// ...existing code...
 
-// 1. CẤU HÌNH LIST CÁC DOMAIN ĐƯỢC PHÉP TRUY CẬP
+// CORS Origins - Local development only
 const allowedOrigins = [
   "http://localhost:5173",
-  "http://localhost:3000",
-  "https://pharmacy01-woad.vercel.app" 
+  "http://localhost:3000"
 ];
 
-// 2. CẤU HÌNH CHO SOCKET.IO
 const io = new Server(server, {
   cors: {
-    origin: allowedOrigins, // Dùng biến allowedOrigins
+    origin: allowedOrigins, // Frontend URLs
     methods: ["GET", "POST"],
     credentials: true
   }
@@ -29,9 +38,9 @@ const io = new Server(server, {
 
 const PORT = process.env.PORT || 5001;
 
-// 3. CẤU HÌNH CHO API (EXPRESS)
+// Middleware
 app.use(cors({
-  origin: allowedOrigins, // Dùng biến allowedOrigins
+  origin: allowedOrigins,
   credentials: true
 }));
 
@@ -85,7 +94,6 @@ app.use("/api/chat", chatRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/upload", uploadRoutes); // 📸 Cloudinary upload routes
 // Payment routes
-app.use('/api/orders', orderRoutes);
 app.use('/api/payment', paymentRoutes);
 
 // Swagger setup
@@ -124,7 +132,5 @@ server.listen(PORT, () => {
   console.log(`📑 Swagger Docs: http://localhost:${PORT}/api-docs`);
   console.log(`💬 Socket.IO Chat đã sẵn sàng`);
 });
-
-
 
 

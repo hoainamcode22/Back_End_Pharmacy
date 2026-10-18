@@ -199,7 +199,8 @@ export default function ProductDetail() {
 
       try {
         const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001';
-        const token = localStorage.getItem('token');
+        const auth = JSON.parse(localStorage.getItem('ph_auth') || '{}');
+        const token = auth.token;
         const response = await axios.get(`${baseURL}/api/comments/check/${id}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
@@ -268,7 +269,8 @@ export default function ProductDetail() {
 
     try {
       const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001';
-      const token = localStorage.getItem('token');
+      const auth = JSON.parse(localStorage.getItem('ph_auth') || '{}');
+      const token = auth.token;
       
       await axios.post(`${baseURL}/api/comments`, {
         productId: id,
@@ -324,7 +326,8 @@ export default function ProductDetail() {
 
     try {
       const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5001';
-      const token = localStorage.getItem('token');
+      const auth = JSON.parse(localStorage.getItem('ph_auth') || '{}');
+      const token = auth.token;
       
       await axios.post(`${baseURL}/api/comments`, {
         productId: id,

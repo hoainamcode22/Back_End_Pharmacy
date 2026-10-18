@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getCart, updateCartItem, removeFromCart } from '../../../api';
 import './Cart.css';
+import Swal from 'sweetalert2';
 
 const BACKEND_URL = import.meta.env.VITE_API_BASE?.replace('/api', '') || 'http://localhost:5001';
 
@@ -48,20 +49,36 @@ function Cart() {
       await loadCart(); // Reload cart
       window.dispatchEvent(new Event('cart:updated')); // Cập nhật header
     } catch {
-      alert("Không thể cập nhật số lượng. Vui lòng thử lại.");
+      Swal.fire({
+        icon: 'error',
+        title: 'Không thể cập nhật số lượng. Vui lòng thử lại.',
+        confirmButtonText: 'OK'
+      });
     }
   };
 
   const removeItem = async (id) => {
-    if (window.confirm('Bạn có chắc muốn xóa sản phẩm này?')) {
-      try {
-        await removeFromCart(id);
-        await loadCart(); // Reload cart
-        window.dispatchEvent(new Event('cart:updated')); // Cập nhật header
-      } catch {
-        alert("Không thể xóa sản phẩm. Vui lòng thử lại.");
+    Swal.fire({
+      title: 'Bạn có chắc muốn xóa sản phẩm này?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'OK',
+      cancelButtonText: 'Hủy'
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          await removeFromCart(id);
+          await loadCart(); // Reload cart
+          window.dispatchEvent(new Event('cart:updated')); // Cập nhật header
+        } catch {
+          Swal.fire({
+            icon: 'error',
+            title: 'Không thể xóa sản phẩm. Vui lòng thử lại.',
+            confirmButtonText: 'OK'
+          });
+        }
       }
-    }
+    });
   };
 
   const calculateSubtotal = () => {

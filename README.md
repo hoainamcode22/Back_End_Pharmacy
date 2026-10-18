@@ -1,959 +1,461 @@
-# 🏗️ CẤU TRÚC PROJECT PHARMACY - FULL STACK
+# 💊 Pharmacy Management System
 
-## 📁 CẤU TRÚC THƯ MỤC
+> Hệ thống quản lý và bán thuốc trực tuyến, hỗ trợ tra cứu bệnh, tư vấn sức khỏe và thanh toán online.
+
+---
+
+## **Mục lục**
+- [Giới thiệu](#giới-thiệu)
+- [Công nghệ sử dụng](#công-nghệ-sử-dụng)
+- [Tính năng](#tính-năng)
+- [Hình ảnh Demo](#hình-ảnh-demo)
+- [Cài đặt và chạy](#cài-đặt-và-chạy)
+- [Cấu trúc Project](#cấu-trúc-project)
+- [API Documentation](#api-documentation)
+- [Environment Variables](#environment-variables)
+- [Troubleshooting](#troubleshooting)
+- [Tác giả](#tác-giả)
+
+---
+
+## **Giới thiệu**
+
+Pharmacy Management System là nền tảng thương mại điện tử chuyên về dược phẩm, được xây dựng để:
+- **Người dùng**: Mua thuốc online, tra cứu bệnh, nhận tư vấn sức khỏe qua chat
+- **Nhà thuốc**: Quản lý kho hàng, đơn hàng, khách hàng một cách hiệu quả
+- **Mục tiêu**: Số hóa quy trình mua bán thuốc, tăng khả năng tiếp cận dược phẩm cho người dân
+
+**Điểm đặc biệt**:
+- ✅ Tra cứu bệnh và gợi ý thuốc phù hợp
+- ✅ Chat trực tiếp với dược sĩ
+- ✅ Thanh toán đa dạng (COD, MoMo, ZaloPay)
+- ✅ Quản lý đơn hàng realtime
+- ✅ Upload ảnh lên Cloud (Cloudinary)
+
+---
+
+## **Công nghệ sử dụng**
+
+### **Frontend**
+- React 19.2 + Vite 7
+- React Router DOM v7
+- Socket.IO Client
+- Axios
+- TailwindCSS + CSS3
+- SweetAlert2
+
+### **Backend**
+- Node.js + Express.js
+- PostgreSQL
+- JWT Authentication
+- Socket.IO (Real-time)
+- Multer + Cloudinary
+- MoMo & ZaloPay Payment
+- Swagger UI
+
+---
+
+## **Tính năng**
+
+### **👤 Người dùng**
+- ✅ Đăng ký, đăng nhập, quản lý profile
+- ✅ Xem và tìm kiếm sản phẩm theo danh mục
+- ✅ Chi tiết sản phẩm với đầy đủ thông tin y tế
+- ✅ Giỏ hàng và checkout
+- ✅ Thanh toán COD/MoMo/ZaloPay
+- ✅ Theo dõi đơn hàng
+- ✅ Tra cứu bệnh theo triệu chứng
+- ✅ Chat với dược sĩ realtime
+- ✅ Đánh giá và review sản phẩm
+
+### **👨‍💼 Admin**
+- ✅ Dashboard với thống kê và biểu đồ
+- ✅ Quản lý sản phẩm (CRUD + upload ảnh)
+- ✅ Quản lý đơn hàng (cập nhật trạng thái)
+- ✅ Quản lý người dùng
+- ✅ Chat management với khách hàng
+- ✅ Phân quyền admin/customer
+
+---
+
+## **Hình ảnh Demo**
+
+### **👤 User Interface**
+
+#### **Trang chủ & Sản phẩm**
+![Trang chủ](./screenshots/home.png)
+*Trang chủ - Danh mục sản phẩm với banner khuyến mãi*
+
+![Trang chủ - Danh sách thuốc](./screenshots/home1.png)
+*Danh sách thuốc với tìm kiếm và filter theo danh mục*
+
+![Chi tiết sản phẩm](./screenshots/product-detail.png)
+*Chi tiết sản phẩm với thông tin y tế, công dụng và đánh giá*
+
+#### **Giỏ hàng & Thanh toán**
+![Giỏ hàng](./screenshots/cart.png)
+*Giỏ hàng - Quản lý sản phẩm trước khi thanh toán*
+
+![Thanh toán - Bước 1](./screenshots/thanhtoan.png)
+*Checkout - Nhập thông tin giao hàng*
+
+![Thanh toán - Bước 2](./screenshots/thanhtoan1.png)
+*Chọn phương thức thanh toán (COD/MoMo/ZaloPay)*
+
+![Thanh toán - MoMo](./screenshots/thanhtoan2.png)
+*Thanh toán qua MoMo - Quét QR hoặc nhập OTP*
+
+![Thanh toán thành công](./screenshots/thanhtoan3.png)
+*Xác nhận đơn hàng thành công*
+
+#### **Quản lý Đơn hàng**
+![Lịch sử đơn hàng](./screenshots/orders.png)
+*Danh sách đơn hàng đã đặt*
+
+![Chi tiết đơn hàng](./screenshots/orders1.png)
+*Chi tiết đơn hàng và theo dõi trạng thái giao hàng*
+
+#### **Tra cứu Bệnh**
+![Tra cứu bệnh](./screenshots/disease.png)
+*Tra cứu bệnh theo triệu chứng*
+
+![Wikipedia](./screenshots/disease1.png)
+*wikipedia cho từng bệnh*
+
+#### **Chat Tư vấn**
+![Chat với dược sĩ](./screenshots/chatUser.png)
+*Chat trực tiếp với dược sĩ để được tư vấn*
+
+![Chat - Gửi tin nhắn](./screenshots/chatUser1.png)
+*Hỏi về bệnh và nhận tư vấn thuốc*
+
+![Chat - Gợi ý sản phẩm](./screenshots/chatUser2.png)
+*Dược sĩ gợi ý sản phẩm phù hợp trong chat*
+
+---
+
+### **👨‍💼 Admin Dashboard**
+
+#### **Thống kê & Tổng quan**
+![Dashboard Admin](./screenshots/TongQuanUIADMIN.png)
+*Trang tổng quan với biểu đồ doanh thu, đơn hàng và top sản phẩm bán chạy*
+
+#### **Quản lý Sản phẩm**
+![Quản lý sản phẩm](./screenshots/QuanLySanPham.png)
+*Danh sách sản phẩm với chức năng thêm/sửa/xóa*
+
+![Thêm/Sửa sản phẩm](./screenshots/QuanLySanPham1.png)
+*Form thêm sản phẩm mới với upload ảnh lên Cloudinary*
+
+#### **Quản lý Đơn hàng**
+![Quản lý đơn hàng](./screenshots/QuanLydonhang.png)
+*Danh sách đơn hàng với cập nhật trạng thái realtime*
+
+#### **Quản lý Người dùng**
+![Quản lý người dùng](./screenshots/QuanLyNguoiDung.png)
+*Danh sách người dùng và phân quyền admin/customer*
+
+#### **Quản lý Chat hỗ trợ**
+![Chat Management](./screenshots/ChatAdmin.png)
+*Quản lý chat - Trả lời câu hỏi và gợi ý sản phẩm cho khách hàng realtime*
+
+---
+
+
+---
+
+## **Cài đặt và chạy**
+
+### **Yêu cầu**
+- Node.js >= 18.x
+- PostgreSQL >= 14.x
+- npm >= 9.x
+
+### **1. Clone project**
+```bash
+git clone https://github.com/hoainamcode22/Back_End_Pharmacy.git
+cd Back_End_Pharmacy
+```
+
+### **2. Setup Database**
+```bash
+# Tạo database
+createdb pharmacy_db
+
+# Hoặc dùng psql
+psql -U postgres
+CREATE DATABASE pharmacy_db;
+
+# Import schema (optional)
+psql -U postgres -d pharmacy_db < Back_end/CSDL/pharmacy_db_v2.sql
+```
+
+### **3. Setup Backend**
+```bash
+cd Back_end
+
+# Install
+npm install
+
+# Tạo .env
+cat > .env << EOL
+PORT=5001
+DB_USER=postgres
+DB_HOST=localhost
+DB_NAME=pharmacy_db
+DB_PASS=your_password
+DB_PORT=5432
+JWT_SECRET=your_secret_key_here
+CLOUDINARY_CLOUD_NAME=your_cloud
+CLOUDINARY_API_KEY=your_key
+CLOUDINARY_API_SECRET=your_secret
+EOL
+
+# Start
+npm start
+```
+
+Backend → `http://localhost:5001`
+
+### **4. Setup Frontend**
+```bash
+# Terminal mới
+cd Front_end
+
+# Install
+npm install
+
+# Tạo .env
+echo "VITE_API_BASE_URL=http://localhost:5001/api" > .env
+echo "VITE_SOCKET_URL=http://localhost:5001" >> .env
+
+# Start
+npm run dev
+```
+
+Frontend → `http://localhost:5173`
+
+---
+
+## **Cấu trúc Project**
 
 ```
 Back_End_Pharmacy/
 │
-├── 📂 Back_end/                          # BACKEND - Node.js + Express + PostgreSQL + Socket.IO
-│   ├── 📂 CSDL/
-│   │   ├── pharmacy_db_v2.sql           # Script tạo database & sample data
-│   │   └── migration_add_product_to_chat.sql # Migration thêm sản phẩm vào chat
-│   │
-│   ├── 📂 public/
-│   │   └── 📂 images/                    # Thư mục chứa ảnh sản phẩm (30 files)
-│   │       ├── paracetamol.jpg
-│   │       ├── vitamin-c.jpg
-│   │       ├── amoxicillin.jpg
-│   │       ├── ... (27 files khác)
-│   │       └── default.jpg              # Ảnh mặc định khi lỗi
-│   │
-│   ├── 📂 src/
-│   │   ├── 📂 controllers/              # Business Logic
-│   │   │   ├── authController.js        # Đăng ký, Đăng nhập
-│   │   │   ├── productController.js     # Lấy sản phẩm, Chi tiết SP
-│   │   │   ├── cartController.js        # Giỏ hàng (CRUD)
-│   │   │   ├── orderController.js       # Đặt hàng, Lịch sử đơn
-│   │   │   ├── userController.js        # Profile, Đổi mật khẩu
-│   │   │   ├── chatController.js        # 💬 Chat - Tạo thread, gửi tin nhắn
-│   │   │   ├── commentController.js     # Đánh giá sản phẩm
-│   │   │   ├── diseaseController.js     # Tra cứu bệnh
-│   │   │   ├── dashboardController.js   # Dashboard admin
-│   │   │   └── announcementController.js # Thông báo
-│   │   │
-│   │   ├── 📂 middleware/
-│   │   │   └── auth.js                  # Xác thực JWT token
-│   │   │
-│   │   ├── 📂 services/                 # Business Logic Layer
-│   │   │   └── chatService.js           # � Chat service logic
-│   │   │
-│   │   └── �📂 routes/                   # API Routes
-│   │       ├── authRoutes.js            # POST /api/auth/register, /login
-│   │       ├── productRoutes.js         # GET /api/products, /products/:id
-│   │       ├── cartRoutes.js            # GET/POST/PATCH/DELETE /api/cart
-│   │       ├── orderRoutes.js           # POST /api/orders/checkout, GET /orders
-│   │       ├── userRoutes.js            # GET/PATCH /api/users/me
-│   │       ├── chatRoutes.js            # 💬 GET/POST /api/chat/*
-│   │       ├── commentRoutes.js         # Comment routes
-│   │       ├── diseaseRoutes.js         # Disease routes
-│   │       ├── dashboardRoutes.js       # Dashboard routes
-│   │       └── announcementRoutes.js    # GET /api/announcements
-│   │
-│   ├── db_config.js                     # Cấu hình kết nối PostgreSQL
-│   ├── index.js                         # Server entry point (Express app)
-│   ├── package.json                     # Dependencies
-│   └── .env                             # Environment variables
+├── Back_end/                 # Backend API
+│   ├── CSDL/                # Database scripts
+│   ├── public/images/       # Product images
+│   ├── src/
+│   │   ├── config/         # Cloudinary config
+│   │   ├── controllers/    # Business logic
+│   │   ├── middleware/     # Auth, upload
+│   │   ├── routes/         # API routes
+│   │   └── services/       # Chat, payment
+│   ├── index.js            # Entry point
+│   └── db_config.js        # DB connection
 │
+├── Front_end/               # Frontend React
+│   ├── src/
+│   │   ├── components/     # UI components
+│   │   ├── context/        # Auth, Chat context
+│   │   ├── pages/          # Pages
+│   │   │   ├── admin/     # Admin pages
+│   │   │   ├── auth/      # Login, Register
+│   │   │   └── user/      # User pages
+│   │   ├── api.jsx         # API calls
+│   │   └── config.js       # API config
+│   └── package.json
 │
-├── 📂 Front_end/                         # FRONTEND - React + Vite
-│   ├── 📂 public/
-│   │   └── 📂 images/
-│   │       ├── 📂 categories/           # Icon danh mục
-│   │       └── 📂 products/             # (Không dùng - ảnh từ backend)
-│   │
-│   ├── 📂 src/
-│   │   ├── 📂 assets/                   # Static assets
-│   │   │
-│   │   ├── 📂 components/               # Reusable Components
-│   │   │   ├── 📂 Header/
-│   │   │   │   ├── Header.jsx          # Menu điều hướng, Logo
-│   │   │   │   └── Header.css
-│   │   │   │
-│   │   │   ├── 📂 Footer/
-│   │   │   │   └── Footer.jsx          # Footer
-│   │   │   │
-│   │   │   ├── 📂 SearchBar/
-│   │   │   │   ├── SearchBar.jsx       # Thanh tìm kiếm
-│   │   │   │   └── SearchBar.css
-│   │   │   │
-│   │   │   ├── 📂 ProductCard/
-│   │   │   │   ├── ProductCard.jsx     # Card hiển thị sản phẩm
-│   │   │   │   └── ProductCard.css
-│   │   │   │
-│   │   │   ├── 📂 ProtectedRoute/
-│   │   │   │   └── ProtectedRoute.jsx  # Route yêu cầu đăng nhập
-│   │   │   │
-│   │   │   ├── 📂 UserLayout/
-│   │   │   │   └── UserLayout.jsx      # Layout cho user (Header + Content + FloatingChat)
-│   │   │   │
-│   │   │   ├── 📂 AdminLayout/
-│   │   │   │   ├── AdminLayout.jsx     # Layout cho admin
-│   │   │   │   └── AdminLayout.css
-│   │   │   │
-│   │   │   ├── 📂 FloatingChatButton/
-│   │   │   │   ├── FloatingChatButton.jsx  # 💬 Nút chat nổi
-│   │   │   │   └── FloatingChatButton.css
-│   │   │   │
-│   │   │   ├── 📂 ChatProductCard/
-│   │   │   │   ├── ChatProductCard.jsx     # 🛍️ Card sản phẩm trong chat
-│   │   │   │   └── ChatProductCard.css
-│   │   │   │
-│   │   │   └── 📂 ProductPickerModal/
-│   │   │       ├── ProductPickerModal.jsx  # 📦 Modal chọn sản phẩm
-│   │   │       └── ProductPickerModal.css
-│   │   │
-│   │   ├── 📂 context/                  # React Context (State Management)
-│   │   │   ├── 📂 AuthContext/
-│   │   │   │   └── AuthContext.jsx     # Quản lý auth state
-│   │   │   │
-│   │   │   └── 📂 ChatContext/         # 💬 CHAT CONTEXT
-│   │   │       ├── ChatContext.jsx     # Socket.IO + Chat state management
-│   │   │       └── useChatHook.js      # Custom hook để sử dụng ChatContext
-│   │   │
-│   │   ├── 📂 pages/                    # Pages/Screens
-│   │   │   │
-│   │   │   ├── 📂 auth/                 # Authentication Pages
-│   │   │   │   └── 📂 Login/
-│   │   │   │       ├── Login.jsx       # Đăng nhập
-│   │   │   │       └── Register.jsx    # Đăng ký
-│   │   │   │
-│   │   │   ├── 📂 user/                 # User Pages
-│   │   │   │   ├── 📂 Shop/            ⭐ TRANG CHÍNH - SHOP
-│   │   │   │   │   ├── Shop.jsx        # Hiển thị danh sách SP
-│   │   │   │   │   └── Shop.css
-│   │   │   │   │
-│   │   │   │   ├── 📂 ProductDetail/
-│   │   │   │   │   ├── ProductDetail.jsx  # Chi tiết sản phẩm
-│   │   │   │   │   └── ProductDetail.css
-│   │   │   │   │
-│   │   │   │   ├── 📂 Cart/            🛒 GIỎ HÀNG
-│   │   │   │   │   ├── Cart.jsx        # Xem/Sửa giỏ hàng
-│   │   │   │   │   └── Cart.css
-│   │   │   │   │
-│   │   │   │   ├── 📂 Checkout/        💳 THANH TOÁN
-│   │   │   │   │   ├── Checkout.jsx    # Form đặt hàng
-│   │   │   │   │   └── Checkout.css
-│   │   │   │   │
-│   │   │   │   ├── 📂 Orders/          📦 LỊCH SỬ ĐƠN HÀNG
-│   │   │   │   │   ├── Orders.jsx      # Danh sách đơn hàng
-│   │   │   │   │   └── Orders.css
-│   │   │   │   │
-│   │   │   │   ├── 📂 OrderDetail/     📋 CHI TIẾT ĐƠN HÀNG
-│   │   │   │   │   ├── OrderDetail.jsx # Chi tiết 1 đơn
-│   │   │   │   │   └── OrderDetail.css
-│   │   │   │   │
-│   │   │   │   ├── 📂 Profile/         👤 HỒ SƠ
-│   │   │   │   │   ├── Profile.jsx     # Thông tin cá nhân
-│   │   │   │   │   └── Profile.css
-│   │   │   │   │
-│   │   │   │   ├── 📂 SupportChat/     💬 HỖ TRỢ (REALTIME CHAT)
-│   │   │   │   │   ├── SupportChat.jsx # Chat user-admin (Socket.IO)
-│   │   │   │   │   └── SupportChat.css
-│   │   │   │   │
-│   │   │   │   ├── 📂 Diseases/        🏥 TRA CỨU BỆNH
-│   │   │   │   │   ├── Diseases.jsx
-│   │   │   │   │   └── Diseases.css
-│   │   │   │   │
-│   │   │   │   └── 📂 DiseaseDetail/
-│   │   │   │       ├── DiseaseDetail.jsx
-│   │   │   │       └── DiseaseDetail.css
-│   │   │   │
-│   │   │   └── 📂 admin/                # Admin Pages
-│   │   │       ├── 📂 AdminDashboard/
-│   │   │       │   ├── AdminDashboard.jsx    # Trang tổng quan
-│   │   │       │   ├── AdminDashboard.css
-│   │   │       │   ├── MedicineManagement.jsx # Quản lý thuốc
-│   │   │       │   └── MedicineManagement.css
-│   │   │       │
-│   │   │       ├── 📂 AdminChatManagement/   # 💬 QUẢN LÝ CHAT (ADMIN)
-│   │   │       │   ├── AdminChatManagement.jsx # Chat admin với users
-│   │   │       │   └── AdminChatManagement.css
-│   │   │       │
-│   │   │       ├── 📂 UserManagement/
-│   │   │       │   └── UserManagement.jsx    # Quản lý người dùng
-│   │   │       │
-│   │   │       └── 📂 OrderManagement/
-│   │   │           └── OrderManagement.jsx   # Quản lý đơn hàng
-│   │   │
-│   │   ├── api.jsx                      # Axios instance & API calls
-│   │   ├── config.js                    # 🔧 API base URL + SOCKET_URL
-│   │   ├── App.jsx                      # Root component (Router)
-│   │   ├── App.css                      # Global styles
-│   │   ├── main.jsx                     # Entry point (AuthProvider + ChatProvider + App)
-│   │   └── index.css                    # Global CSS reset
-│   │
-│   ├── index.html                       # HTML template
-│   ├── package.json                     # Dependencies
-│   ├── vite.config.js                   # Vite config
-│   └── .env                             # Environment variables
-│
-│
-├── 📄 SUMMARY_FIXES.md                  # Tóm tắt các sửa đổi
-├── 📄 PRODUCT_LIST.md                   # Danh sách 30 sản phẩm
-├── 📄 DEPLOYMENT_CHECKLIST.md           # Hướng dẫn triển khai
-└── 📄 TEST_VERIFICATION.md              # Xác nhận các file đã sửa
+├── screenshots/             # Demo images
+└── README.md               # This file
 ```
 
 ---
 
-## 🔥 CÁC CHỨC NĂNG CHÍNH
+## **API Documentation**
 
-### 👤 **1. AUTHENTICATION (Xác thực)**
+**Base URL**: `http://localhost:5001/api`
 
-**Frontend:**
-- `Login.jsx` - Đăng nhập
-- `Register.jsx` - Đăng ký tài khoản mới
-- `AuthContext.jsx` - Quản lý trạng thái đăng nhập
+**Swagger UI**: `http://localhost:5001/api-docs`
 
-**Backend:**
-- `authController.js`
-  - `POST /api/auth/register` - Đăng ký
-  - `POST /api/auth/login` - Đăng nhập (trả về JWT token)
-  - `POST /api/auth/admin-init` - Tạo tài khoản admin
+### **Endpoints chính**
 
-**Database:**
-- Bảng `Users`: Lưu thông tin user (Username, Email, Password hash, Role)
+#### Authentication
+- `POST /auth/register` - Đăng ký tài khoản
+- `POST /auth/login` - Đăng nhập
 
-**Flow:**
-```
-User điền form → Frontend gọi API → Backend validate → 
-Bcrypt hash password → Lưu DB → Trả về JWT token → 
-Frontend lưu token vào localStorage → Tự động set Authorization header
-```
+#### Products
+- `GET /products` - Danh sách sản phẩm (public)
+- `GET /products/:id` - Chi tiết sản phẩm
+- `POST /products/admin` - Tạo sản phẩm (admin only)
+- `PATCH /products/admin/:id` - Sửa sản phẩm
+- `DELETE /products/admin/:id` - Xóa sản phẩm
 
----
+#### Cart
+- `GET /cart` - Lấy giỏ hàng
+- `POST /cart/items` - Thêm vào giỏ
+- `PATCH /cart/items/:id` - Cập nhật số lượng
+- `DELETE /cart/items/:id` - Xóa sản phẩm
 
-### 🛍️ **2. PRODUCT MANAGEMENT (Quản lý sản phẩm)**
+#### Orders
+- `POST /orders/checkout` - Tạo đơn hàng
+- `GET /orders` - Lịch sử đơn
+- `GET /orders/:id` - Chi tiết đơn
+- `PATCH /orders/:id/cancel` - Hủy đơn
 
-**Frontend:**
-- `Shop.jsx` - Hiển thị danh sách sản phẩm (có filter, search)
-- `ProductCard.jsx` - Card hiển thị từng sản phẩm
-- `ProductDetail.jsx` - Chi tiết 1 sản phẩm
-- `SearchBar.jsx` - Tìm kiếm sản phẩm
+#### Admin
+- `GET /dashboard/statistics` - Thống kê tổng quan
+- `GET /users/admin/all` - Danh sách users
+- `PATCH /orders/admin/:id/status` - Cập nhật đơn hàng
 
-**Backend:**
-- `productController.js`
-  - `GET /api/products` - Lấy danh sách (có filter category, search, pagination)
-  - `GET /api/products/:id` - Lấy chi tiết 1 sản phẩm
-
-**Database:**
-- Bảng `Products`: 30 sản phẩm (Id, Name, Image, Price, Stock, Category...)
-
-**Flow:**
-```
-Frontend gọi API → Backend query DB → Build absolute image URL → 
-Trả về JSON → Frontend hiển thị → Click sản phẩm → 
-Navigate đến /product/:id → Gọi API detail → Hiển thị chi tiết
-```
-
-**Xử lý ảnh:**
-```
-Database: "paracetamol.jpg"
-Backend: Build URL → "http://localhost:5001/images/paracetamol.jpg"
-Frontend: Hiển thị <img src="{absolute URL}" />
-```
+Xem chi tiết: [API_DOCUMENTATION.md](./API_DOCUMENTATION.md)
 
 ---
 
-### 🛒 **3. SHOPPING CART (Giỏ hàng)**
-
-**Frontend:**
-- `Cart.jsx` - Xem giỏ hàng, tăng/giảm số lượng, xóa sản phẩm
-- `ProductCard.jsx` - Nút "Thêm vào giỏ"
-
-**Backend:**
-- `cartController.js`
-  - `GET /api/cart` - Lấy giỏ hàng của user
-  - `POST /api/cart/items` - Thêm sản phẩm vào giỏ
-  - `PATCH /api/cart/items/:id` - Cập nhật số lượng
-  - `DELETE /api/cart/items/:id` - Xóa sản phẩm khỏi giỏ
-
-**Database:**
-- Bảng `CartItems`: Lưu giỏ hàng (UserId, ProductId, Qty)
-
-**Flow:**
-```
-User click "Thêm vào giỏ" → Frontend gọi POST /api/cart/items → 
-Backend kiểm tra stock → Thêm vào DB → 
-User vào /cart → Gọi GET /api/cart → Hiển thị danh sách → 
-User tăng/giảm số lượng → Gọi PATCH → Update DB
-```
-
----
-
-### 💳 **4. CHECKOUT & ORDERS (Đặt hàng)**
-
-**Frontend:**
-- `Checkout.jsx` - Form đặt hàng (3 bước: Thông tin → Thanh toán → Xác nhận)
-- `Orders.jsx` - Danh sách đơn hàng đã đặt
-- `OrderDetail.jsx` - Chi tiết 1 đơn hàng
-
-**Backend:**
-- `orderController.js`
-  - `POST /api/orders/checkout` - Tạo đơn hàng từ giỏ
-  - `GET /api/orders` - Lấy danh sách đơn hàng
-  - `GET /api/orders/:id` - Chi tiết đơn hàng
-  - `PATCH /api/orders/:id/cancel` - Hủy đơn hàng
-
-**Database:**
-- Bảng `Orders`: Đơn hàng (UserId, Total, Address, Phone, Status, PaymentMethod)
-- Bảng `OrderItems`: Chi tiết SP trong đơn (OrderId, ProductId, Qty, Price, ProductImage)
-
-**Flow:**
-```
-User click "Thanh toán" → Navigate /checkout → 
-Điền form (địa chỉ, SĐT) → Chọn phương thức thanh toán → 
-Xác nhận → Frontend gọi POST /api/orders/checkout → 
-
-BACKEND XỬ LÝ:
-1. BEGIN TRANSACTION
-2. Lấy giỏ hàng từ CartItems
-3. Kiểm tra tồn kho
-4. Tạo Order mới (tự động sinh Code)
-5. Tạo OrderItems (lưu ProductName, ProductImage, Price tại thời điểm mua)
-6. Trừ Stock trong Products
-7. Xóa CartItems
-8. COMMIT TRANSACTION
-
-→ Trả về thông tin đơn hàng → Frontend chuyển đến /orders → 
-User click xem chi tiết → Gọi GET /api/orders/:id → 
-Backend build absolute URL cho ảnh → Hiển thị chi tiết đơn
-```
-
----
-
-### 👤 **5. USER PROFILE (Hồ sơ cá nhân)**
-
-**Frontend:**
-- `Profile.jsx` - Xem/Sửa thông tin cá nhân, đổi mật khẩu
-
-**Backend:**
-- `userController.js`
-  - `GET /api/users/me` - Lấy thông tin user hiện tại
-  - `PATCH /api/users/me` - Cập nhật thông tin
-  - `PATCH /api/users/change-password` - Đổi mật khẩu
-
-**Database:**
-- Bảng `Users`: Fullname, Email, Phone, Address
-
-**Flow:**
-```
-User vào /profile → Gọi GET /api/users/me → Hiển thị form → 
-User sửa thông tin → Click "Cập nhật" → Gọi PATCH /api/users/me → 
-Backend validate → Update DB → Trả về thành công
-```
-
----
-
-### 💬 **6. SUPPORT CHAT (Hỗ trợ realtime với Socket.IO)**
-
-**Frontend:**
-- `SupportChat.jsx` - Giao diện chat user với admin
-- `AdminChatManagement.jsx` - Giao diện admin quản lý chat
-- `ChatProductCard.jsx` - Hiển thị sản phẩm trong chat
-- `ProductPickerModal.jsx` - Modal chọn sản phẩm đính kèm
-- `FloatingChatButton.jsx` - Nút chat nổi (chỉ user)
-- `ChatContext.jsx` - Quản lý Socket.IO connection, trạng thái chat
-- `useChatHook.js` - Custom hook để sử dụng ChatContext
-
-**Backend:**
-- `chatController.js` - REST API endpoints
-  - `GET /api/chat/threads` - Lấy danh sách threads
-  - `GET /api/chat/threads/:id/messages` - Lấy tin nhắn
-  - `PATCH /api/chat/threads/:id/close` - Đóng thread
-  - `GET /api/chat/stats` - Thống kê chat (admin)
-- `chatService.js` - Socket.IO event handlers
-  - `authenticate` - Xác thực socket connection
-  - `create_chat_thread` - Tạo thread mới
-  - `join_thread` - Join vào thread
-  - `send_message` - Gửi tin nhắn
-  - `typing` / `stop_typing` - Hiệu ứng đang nhập
-  - `admin_join_all_threads` - Admin join tất cả threads
-
-**Database:**
-- Bảng `ChatThreads`: Cuộc hội thoại (Title, UserId, AttachmentType, Status)
-- Bảng `ChatMessages`: Tin nhắn (Content, SenderId, SenderRole, AttachedProductId)
-
-**Flow:**
-```
-1. USER TẠO THREAD MỚI
-   Frontend: Click "Bắt đầu hội thoại" → Socket emit 'create_chat_thread'
-   Backend: INSERT ChatThreads → Emit 'thread_created' + 'new_thread_notification'
-   Admin: Nhận notification thread mới
-
-2. GỬI TIN NHẮN
-   Frontend: User nhập tin → Socket emit 'send_message'
-   Backend: 
-     - INSERT ChatMessages
-     - Nếu có AttachedProductId → Lưu ProductId
-     - Emit 'new_message' đến tất cả users trong thread
-   Frontend: Nhận realtime, hiển thị tin nhắn mới
-
-3. ĐÍNH KÈM SẢN PHẨM
-   Frontend: Click 📎 → Mở ProductPickerModal → Chọn sản phẩm
-   Backend: Khi gửi message → Query Products để lấy thông tin đầy đủ
-   Frontend: Hiển thị ChatProductCard với ảnh + tên + giá
-
-4. TYPING INDICATOR
-   Frontend: User đang nhập → Socket emit 'typing'
-   Backend: Broadcast 'user_typing' đến các users khác
-   Frontend: Hiển thị "Bác sĩ đang nhập..."
-
-5. ADMIN QUẢN LÝ
-   Admin: Vào /admin/chat → Xem tất cả threads
-   Socket: Auto join tất cả threads khi authenticated
-   Admin: Click thread → Xem messages → Trả lời realtime
-```
-
----
-
-### 🏥 **7. DISEASE LOOKUP (Tra cứu bệnh)**
-
-**Frontend:**
-- `Diseases.jsx` - Tra cứu thông tin bệnh
-
-**Backend:**
-- API tra cứu bệnh (nếu có)
-
----
-
-### 🔧 **8. ADMIN PANEL (Quản trị)**
-
-**Frontend:**
-- `AdminDashboard.jsx` - Tổng quan
-- `MedicineManagement.jsx` - Quản lý thuốc
-
-**Backend:**
-- Admin routes (CRUD products, users, orders)
-
----
-
-## 🔄 LUỒNG DỮ LIỆU TỔNG QUAN
-
-### **A. FLOW MUA HÀNG (E-COMMERCE)**
-
-```
-1. USER VÀO TRANG SHOP
-   Frontend: Shop.jsx → Gọi GET /api/products
-   Backend: productController.getProducts() → Query Products table
-   Response: { products: [...], pagination: {...} }
-   Frontend: Hiển thị ProductCard cho mỗi sản phẩm
-
-2. USER CLICK SẢN PHẨM
-   Frontend: Navigate /product/:id → Gọi GET /api/products/:id
-   Backend: productController.getProductById() → Query 1 product
-   Response: { id, name, price, image, description, stock... }
-   Frontend: Hiển thị chi tiết
-
-3. USER THÊM VÀO GIỎ HÀNG
-   Frontend: Click "Chọn sản phẩm" → Gọi POST /api/cart/items
-   Backend: cartController.addToCart()
-     - Kiểm tra product tồn tại
-     - Kiểm tra stock đủ không
-     - Nếu đã có trong giỏ → Update số lượng
-     - Nếu chưa có → Insert mới vào CartItems
-   Response: { message: "Đã thêm vào giỏ hàng!" }
-
-4. USER VÀO GIỎ HÀNG
-   Frontend: Navigate /cart → Gọi GET /api/cart
-   Backend: cartController.getCart()
-     - JOIN CartItems với Products
-     - Build absolute image URL
-     - Tính subtotal
-   Response: { cartItems: [...], total: 150000 }
-   Frontend: Hiển thị danh sách + tổng tiền
-
-5. USER TĂNG/GIẢM SỐ LƯỢNG
-   Frontend: Click +/- → Gọi PATCH /api/cart/items/:id
-   Backend: cartController.updateCartItem()
-     - Kiểm tra stock
-     - Update Qty trong CartItems
-   Response: { message: "Đã cập nhật!" }
-
-6. USER THANH TOÁN
-   Frontend: Click "Thanh toán" → Navigate /checkout
-   Step 1: Điền địa chỉ, SĐT
-   Step 2: Chọn phương thức thanh toán (COD/Banking/Momo)
-   Step 3: Xác nhận → Gọi POST /api/orders/checkout
-   
-   Backend: orderController.checkout()
-     - BEGIN TRANSACTION
-     - Query CartItems + Products
-     - Validate stock
-     - INSERT vào Orders (tự động sinh Code = ORD20251106XXXX)
-     - INSERT vào OrderItems (lưu ProductName, ProductImage, Price)
-     - UPDATE Products.Stock (trừ số lượng)
-     - DELETE CartItems (xóa giỏ hàng)
-     - COMMIT
-   
-   Response: { message: "Đặt hàng thành công!", order: {...} }
-   Frontend: Navigate /orders
-
-7. USER XEM LỊCH SỬ ĐƠN HÀNG
-   Frontend: Navigate /orders → Gọi GET /api/orders
-   Backend: orderController.getOrders()
-     - Query Orders WHERE UserId = current user
-     - JOIN với OrderItems để đếm số lượng sản phẩm
-   Response: { orders: [...] }
-   Frontend: Hiển thị danh sách đơn
-
-8. USER XEM CHI TIẾT ĐƠN HÀNG
-   Frontend: Click đơn hàng → Navigate /orders/:id → Gọi GET /api/orders/:id
-   Backend: orderController.getOrderById()
-     - Query Orders WHERE Id = :id AND UserId = current user
-     - Query OrderItems WHERE OrderId = :id
-     - Build absolute image URL cho từng item
-   Response: { ...order, items: [...] }
-   Frontend: Hiển thị chi tiết đơn + danh sách sản phẩm + ảnh
-
-9. USER HỦY ĐƠN HÀNG (NẾU STATUS = PENDING)
-   Frontend: Click "Hủy đơn" → Gọi PATCH /api/orders/:id/cancel
-   Backend: orderController.cancelOrder()
-     - BEGIN TRANSACTION
-     - Kiểm tra status = 'pending'
-     - UPDATE Orders.Status = 'cancelled'
-     - UPDATE Products.Stock (hoàn lại số lượng)
-     - COMMIT
-   Response: { message: "Đã hủy đơn hàng!" }
-```
-
----
-
-### **B. FLOW XÁC THỰC (AUTHENTICATION)**
-
-```
-1. ĐĂNG KÝ
-   Frontend: Register.jsx → User điền form → POST /api/auth/register
-   Backend: authController.register()
-     - Validate email chưa tồn tại
-     - Hash password bằng bcrypt
-     - INSERT vào Users (Role = 'customer')
-   Response: { message: "Đăng ký thành công!" }
-
-2. ĐĂNG NHẬP
-   Frontend: Login.jsx → User điền email, password → POST /api/auth/login
-   Backend: authController.login()
-     - Query Users WHERE Email = ?
-     - Compare password với bcrypt
-     - Tạo JWT token (payload: { Id, Username, Email, Role })
-     - Token expire: 7 days
-   Response: { token: "eyJhbGc...", user: {...} }
-   
-   Frontend:
-     - Lưu vào localStorage: { token, user }
-     - Set axios default header: Authorization: Bearer {token}
-     - Navigate đến /shop
-
-3. AUTO-LOGIN (KHI REFRESH PAGE)
-   Frontend: App.jsx → useEffect()
-     - Đọc localStorage
-     - Nếu có token → Set axios header
-     - Set AuthContext state
-
-4. PROTECTED ROUTES
-   Frontend: ProtectedRoute.jsx
-     - Kiểm tra có token không
-     - Nếu không → Redirect /login
-     - Nếu có → Render component
-
-5. API CALLS (VỚI TOKEN)
-   Frontend: Mọi API call → Axios tự động thêm header
-   Backend: middleware/auth.js
-     - Đọc header Authorization
-     - Verify JWT token
-     - Nếu hợp lệ → req.user = decoded payload → next()
-     - Nếu không → 401 Unauthorized
-
-6. TOKEN HẾT HẠN
-   Backend: Token verify fail → 401
-   Frontend: Axios interceptor
-     - Bắt lỗi 401
-     - Xóa localStorage
-     - Alert "Phiên đăng nhập hết hạn"
-     - Redirect /login
-```
-
----
-
-### **C. FLOW XỬ LÝ ẢNH (IMAGE HANDLING)**
-
-```
-1. LƯU ẢNH TRONG DATABASE
-   Database: Products.Image = "paracetamol.jpg" (chỉ tên file)
-
-2. BACKEND BUILD URL TUYỆT ĐỐI
-   productController.getProducts():
-     const baseUrl = `${req.protocol}://${req.get('host')}`;
-     // baseUrl = "http://localhost:5001"
-     
-     const image = row.Image; // "paracetamol.jpg"
-     
-     if (image.startsWith('http')) {
-       imageUrl = image; // Already absolute
-     } else if (image.startsWith('/images/')) {
-       imageUrl = `${baseUrl}${image}`; // /images/xxx.jpg
-     } else {
-       imageUrl = `${baseUrl}/images/${image}`; // xxx.jpg
-     }
-     // imageUrl = "http://localhost:5001/images/paracetamol.jpg"
-
-3. BACKEND TRẢ VỀ FRONTEND
-   Response: {
-     id: 1,
-     name: "Paracetamol",
-     image: "paracetamol.jpg",
-     imageUrl: "http://localhost:5001/images/paracetamol.jpg"
-   }
-
-4. FRONTEND HIỂN THỊ
-   Shop.jsx:
-     const product = response.products[0];
-     <img src={product.imageUrl} /> 
-     // Trình duyệt request: http://localhost:5001/images/paracetamol.jpg
-
-5. BACKEND SERVE ẢNH
-   index.js:
-     app.use('/images', express.static('public/images'));
-   
-   Express tự động serve file từ: Back_end/public/images/paracetamol.jpg
-```
-
----
-
-## 🗄️ DATABASE SCHEMA
-
-```sql
-Users (Người dùng)
-├── Id (PK)
-├── Username
-├── Password (bcrypt hash)
-├── Email
-├── Phone
-├── Address
-├── Role (admin/customer)
-└── CreatedAt, UpdatedAt
-
-Products (Sản phẩm)
-├── Id (PK)
-├── Name
-├── Slug
-├── ShortDesc
-├── Description
-├── Category (thuoc/vitamin/cham-soc/thiet-bi)
-├── Brand
-├── Image (tên file: "paracetamol.jpg")
-├── Price
-├── Stock
-├── IsActive
-└── CreatedAt, UpdatedAt
-
-CartItems (Giỏ hàng)
-├── Id (PK)
-├── UserId (FK → Users)
-├── ProductId (FK → Products)
-├── Qty
-└── AddedAt
-
-Orders (Đơn hàng)
-├── Id (PK)
-├── Code (auto: ORD20251106XXXX)
-├── UserId (FK → Users)
-├── Status (pending/confirmed/shipping/delivered/cancelled)
-├── Total
-├── Address
-├── Phone
-├── Note
-├── PaymentMethod (COD/Banking/Momo)
-├── ETA
-└── CreatedAt, UpdatedAt
-
-OrderItems (Chi tiết đơn hàng)
-├── Id (PK)
-├── OrderId (FK → Orders)
-├── ProductId (FK → Products)
-├── ProductName (snapshot tại thời điểm mua)
-├── ProductImage (snapshot tại thời điểm mua)
-├── Qty
-└── Price (snapshot tại thời điểm mua)
-
-ChatThreads (Cuộc hội thoại)
-├── Id (PK)
-├── UserId (FK → Users)
-├── Title
-├── AttachmentType (product/order/general)
-├── Status (active/closed)
-└── CreatedAt, UpdatedAt
-
-ChatMessages (Tin nhắn)
-├── Id (PK)
-├── ThreadId (FK → ChatThreads)
-├── SenderId (FK → Users)
-├── SenderRole (admin/customer)
-├── Content
-├── AttachedProductId (FK → Products, nullable)  # 🆕 Sản phẩm đính kèm
-└── CreatedAt
-
-Comments (Đánh giá)
-├── Id (PK)
-├── UserId (FK → Users)
-├── ProductId (FK → Products)
-├── Rating (1-5)
-├── Content
-└── CreatedAt
-```
-
----
-
-## 🚀 TECH STACK
-
-### **Backend:**
-- **Runtime:** Node.js v22
-- **Framework:** Express.js
-- **Database:** PostgreSQL (pg)
-- **Realtime:** Socket.IO v4 (WebSocket)
-- **Authentication:** JWT (jsonwebtoken)
-- **Password:** bcrypt
-- **Documentation:** Swagger (swagger-jsdoc, swagger-ui-express)
-- **Environment:** dotenv
-- **CORS:** cors
-
-### **Frontend:**
-- **Framework:** React 18
-- **Build Tool:** Vite
-- **Router:** React Router DOM v6
-- **HTTP Client:** Axios
-- **Realtime:** Socket.IO Client v4
-- **State Management:** React Context API (AuthContext + ChatContext)
-- **Styling:** CSS Modules / Plain CSS
-
----
-
-## 🌐 API ENDPOINTS
-
-```
-AUTH
-├── POST   /api/auth/register          Đăng ký
-├── POST   /api/auth/login             Đăng nhập
-└── POST   /api/auth/admin-init        Tạo admin
-
-PRODUCTS
-├── GET    /api/products                Danh sách sản phẩm
-└── GET    /api/products/:id            Chi tiết sản phẩm
-
-CART
-├── GET    /api/cart                    Lấy giỏ hàng
-├── POST   /api/cart/items              Thêm sản phẩm
-├── PATCH  /api/cart/items/:id          Cập nhật số lượng
-└── DELETE /api/cart/items/:id          Xóa sản phẩm
-
-ORDERS
-├── POST   /api/orders/checkout         Đặt hàng
-├── GET    /api/orders                  Danh sách đơn hàng
-├── GET    /api/orders/:id              Chi tiết đơn hàng
-└── PATCH  /api/orders/:id/cancel       Hủy đơn hàng
-
-USERS
-├── GET    /api/users/me                Thông tin cá nhân
-├── PATCH  /api/users/me                Cập nhật thông tin
-└── PATCH  /api/users/change-password   Đổi mật khẩu
-
-ANNOUNCEMENTS
-└── GET    /api/announcements           Thông báo
-
-CHAT (REST API)
-├── GET    /api/chat/threads            Lấy danh sách threads
-├── GET    /api/chat/threads/:id/messages  Lấy tin nhắn
-├── PATCH  /api/chat/threads/:id/close  Đóng thread
-└── GET    /api/chat/stats              Thống kê (admin)
-
-SOCKET.IO EVENTS
-├── authenticate                         Xác thực socket connection
-├── create_chat_thread                   Tạo thread mới
-├── join_thread                          Join vào thread
-├── send_message                         Gửi tin nhắn
-├── typing / stop_typing                 Hiệu ứng đang nhập
-├── admin_join_all_threads               Admin join tất cả threads
-├── thread_created                       [Emit] Thread mới được tạo
-├── new_message                          [Emit] Tin nhắn mới
-├── user_typing                          [Emit] User đang nhập
-├── thread_closed                        [Emit] Thread bị đóng
-└── new_thread_notification              [Emit] Thông báo thread mới cho admin
-```
-
----
-
-## 📦 DEPENDENCIES
-
-### **Backend (package.json):**
-```json
-{
-  "dependencies": {
-    "express": "^4.x",
-    "pg": "^8.x",
-    "bcrypt": "^5.x",
-    "jsonwebtoken": "^9.x",
-    "dotenv": "^16.x",
-    "cors": "^2.x",
-    "socket.io": "^4.x",
-    "swagger-jsdoc": "^6.x",
-    "swagger-ui-express": "^5.x"
-  }
-}
-```
-
-### **Frontend (package.json):**
-```json
-{
-  "dependencies": {
-    "react": "^18.x",
-    "react-dom": "^18.x",
-    "react-router-dom": "^6.x",
-    "axios": "^1.x",
-    "socket.io-client": "^4.x"
-  },
-  "devDependencies": {
-    "@vitejs/plugin-react": "^4.x",
-    "vite": "^5.x",
-    "eslint": "^9.x",
-    "eslint-plugin-react": "^7.x"
-  }
-}
-```
-
----
-
----
-
-## 🎯 ĐIỂM NỔI BẬT CỦA PROJECT
-
-### 1. **Realtime Chat với Socket.IO**
-- ✅ Chat realtime giữa user và admin
-- ✅ Typing indicator (hiển thị đang nhập)
-- ✅ Đính kèm sản phẩm trong tin nhắn
-- ✅ Admin tự động join tất cả threads
-- ✅ Notification thread mới cho admin
-- ✅ Quản lý trạng thái thread (active/closed)
-
-### 2. **E-commerce Core**
-- ✅ Giỏ hàng realtime với badge counter
-- ✅ Transaction atomic khi checkout
-- ✅ Snapshot sản phẩm trong order (giá, ảnh, tên)
-- ✅ Quản lý tồn kho tự động
-- ✅ Hủy đơn và hoàn tồn kho
-
-### 3. **Image Handling**
-- ✅ Backend build absolute URL
-- ✅ Frontend hiển thị ảnh từ backend
-- ✅ Snapshot ảnh sản phẩm trong order và chat
-- ✅ Default image fallback
-
-### 4. **Security**
-- ✅ JWT authentication
-- ✅ Bcrypt password hashing
-- ✅ Protected routes (frontend + backend)
-- ✅ Socket.IO authentication middleware
-- ✅ Role-based access control
-
-### 5. **State Management**
-- ✅ AuthContext (auth state)
-- ✅ ChatContext (socket + chat state)
-- ✅ Cart badge update event
-- ✅ Auto-rehydrate từ localStorage
-
----
-
-## 📝 NOTES
-
-### Database Migration
-- File `migration_add_product_to_chat.sql` để thêm cột `AttachedProductId` vào `ChatMessages`
-- Chạy sau khi setup database ban đầu
-
-### Environment Variables
-**Backend (.env):**
-```
+## **Environment Variables**
+
+### **Backend (.env)**
+```env
+# Server
 PORT=5001
-DB_HOST=localhost
-DB_PORT=5432
+
+# Database
 DB_USER=postgres
-DB_PASSWORD=your_password
+DB_HOST=localhost
 DB_NAME=pharmacy_db
-JWT_SECRET=your_jwt_secret
+DB_PASS=your_password
+DB_PORT=5432
+
+# JWT
+JWT_SECRET=your_secret_key
+
+# Cloudinary (image upload)
+CLOUDINARY_CLOUD_NAME=your_cloud_name
+CLOUDINARY_API_KEY=your_api_key
+CLOUDINARY_API_SECRET=your_api_secret
+
+# MoMo Payment (Test)
+MOMO_PARTNER_CODE=your_partner_code
+MOMO_ACCESS_KEY=your_access_key
+MOMO_SECRET_KEY=your_secret_key
+MOMO_API_ENDPOINT=https://test-payment.momo.vn/v2/gateway/api/create
+MOMO_REDIRECT_URL=http://localhost:5173/checkout/success
+MOMO_IPN_URL=http://localhost:5001/api/payment/momo-ipn
+
+# ZaloPay (Test)
+ZALOPAY_APPID=your_app_id
+ZALOPAY_KEY1=your_key1
+ZALOPAY_KEY2=your_key2
+ZALOPAY_ENDPOINT=https://sandbox.zalopay.com.vn/v001/tpe/createorder
+ZALOPAY_REDIRECT_URL=http://localhost:5173/checkout/success
+ZALOPAY_IPN_URL=http://localhost:5001/api/payment/zalopay-ipn
 ```
 
-**Frontend (.env):**
-```
+### **Frontend (.env)**
+```env
 VITE_API_BASE_URL=http://localhost:5001/api
 VITE_SOCKET_URL=http://localhost:5001
 ```
 
-### Running the Project
-**Backend:**
+---
+
+## **Troubleshooting**
+
+### Backend không start
 ```bash
-cd Back_end
-npm install
-npm start
+# Check PostgreSQL
+pg_isready
+
+# Check port
+netstat -ano | findstr :5001
+
+# Verify .env
+cat .env
 ```
 
-**Frontend:**
+### Frontend không gọi API
+- ✅ Check backend đang chạy
+- ✅ Verify `VITE_API_BASE_URL` trong `.env`
+- ✅ Check browser console (F12) → Network tab
+
+### Database connection error
+- ✅ PostgreSQL đang chạy?
+- ✅ Username/password đúng?
+- ✅ Database `pharmacy_db` đã tạo?
+
+### CORS error
+- ✅ Backend CORS config có `http://localhost:5173`
+- ✅ Restart cả backend và frontend
+
+---
+
+## **Testing**
+
+### Test Backend
 ```bash
-cd Front_end
-npm install
-npm run dev
+# Health check
+curl http://localhost:5001
+
+# Products API
+curl http://localhost:5001/api/products
 ```
 
-**Database:**
-```bash
-psql -U postgres
-CREATE DATABASE pharmacy_db;
-\c pharmacy_db
-\i Back_end/CSDL/pharmacy_db_v2.sql
-\i Back_end/CSDL/migration_add_product_to_chat.sql
+### Test Frontend
+1. Mở `http://localhost:5173`
+2. Đăng ký tài khoản
+3. Đăng nhập
+4. Test: Xem sản phẩm → Thêm giỏ → Checkout
+
+---
+
+## **Database Schema**
+
+### Các bảng chính
+- **Users** - Người dùng, admin
+- **Products** - Sản phẩm thuốc
+- **CartItems** - Giỏ hàng
+- **Orders** - Đơn hàng
+- **OrderItems** - Chi tiết đơn
+- **Comments** - Đánh giá
+- **Diseases** - Bệnh tật
+- **ChatThreads** - Chat threads
+- **ChatMessages** - Tin nhắn
+- **Announcements** - Thông báo
+
+### Relationships
+```
+Users (1:N) Orders
+Users (1:N) CartItems  
+Orders (1:N) OrderItems
+Products (1:N) OrderItems
+Products (1:N) Comments
 ```
 
 ---
 
-**Ngày tạo:** 06/11/2025  
-**Cập nhật cuối:** 10/11/2025  
-**Version:** 2.0 (Thêm Chat Feature)  
-**Status:** 📚 DOCUMENTATION COMPLETE ✅
+## **Tác giả**
 
+👤 **Hoài Nam**
+- GitHub: [@hoainamcode22](https://github.com/hoainamcode22)
+- Email: hoainamcode22@gmail.com
 
-1️⃣ Quy trình quản lý sản phẩm (Admin)
-A. Thêm sản phẩm mới
-Admin vào trang "Quản lý sản phẩm" (MedicineManagement.jsx)
-Nhấn "➕ Thêm sản phẩm mới"
-Nhập thông tin: tên, mô tả, giá, tồn kho, chọn ảnh sản phẩm
-Nếu chọn ảnh, ảnh sẽ được upload lên Cloudinary (CDN lưu trữ ảnh)
-Sau khi upload, frontend gửi thông tin sản phẩm + link ảnh Cloudinary lên backend
-Backend lưu thông tin vào bảng Products trong database
-B. Sửa sản phẩm
-Nhấn nút "✏️" để sửa sản phẩm
-Có thể đổi thông tin và đổi ảnh mới
-Nếu đổi ảnh, ảnh mới sẽ được upload lên Cloudinary, backend cập nhật lại đường dẫn ảnh
-C. Xóa sản phẩm
-Nhấn nút "🗑️" để xóa (thực chất là chuyển trạng thái IsActive=false, không xóa vật lý)
-2️⃣ Cách lưu trữ và hiển thị hình ảnh
-A. Lưu trữ
-Ảnh sản phẩm được upload lên Cloudinary (https://res.cloudinary.com/...)
-Khi upload xong, Cloudinary trả về:
-imageUrl: Đường dẫn đầy đủ ảnh trên Cloudinary (dùng cho frontend)
-fileName: Tên file gốc (dùng cho trường Image trong DB)
-Backend lưu:
-Image: tên file gốc (vd: paracetamol.jpg)
-ImageURL: đường dẫn Cloudinary sau /upload/ (vd: v1762926289/abcxyz.jpg)
-B. Hiển thị
-Khi lấy danh sách sản phẩm, backend sẽ build lại link ảnh:
-Nếu có ImageURL: build thành https://res.cloudinary.com/dd1onmi19/image/upload/ + ImageURL
-Nếu không có ImageURL: dùng ảnh local /images/tenfile.jpg (chỉ cho sản phẩm mẫu cũ)
-Frontend nhận được link ảnh đầy đủ, hiển thị trực tiếp trong bảng sản phẩm
-3️⃣ Tóm tắt luồng dữ liệu
-Admin chọn ảnh → Ảnh upload lên Cloudinary
-Cloudinary trả về link → Frontend gửi link + info lên backend
-Backend lưu vào DB (Products)
-Khi load sản phẩm, backend build link ảnh trả về frontend
-Frontend hiển thị ảnh đúng cho từng sản phẩm
-4️⃣ Ưu điểm
-Ảnh luôn được lưu trữ an toàn, tốc độ cao trên Cloudinary
-Không cần lưu ảnh trên server backend
-Dữ liệu ảnh và sản phẩm đồng bộ, dễ quản lý
-Có thể đổi ảnh bất cứ lúc nào, không ảnh hưởng sản phẩm cũ
+---
+
+## **License**
+
+Project phát triển cho mục đích học tập và demo kỹ năng.
+
+---
+
+## **Đóng góp**
+
+Mọi đóng góp đều được chào đón!
+1. Fork repo
+2. Tạo branch (`git checkout -b feature/AmazingFeature`)
+3. Commit (`git commit -m 'Add AmazingFeature'`)
+4. Push (`git push origin feature/AmazingFeature`)
+5. Tạo Pull Request
+
+---
+
+⭐ **Star repo này nếu thấy hữu ích!** ⭐
